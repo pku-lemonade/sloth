@@ -1,0 +1,140 @@
+import simpy
+from config import LinkConfig, RouterConfig, NoCConfig
+from sim_type import Data
+
+class Link:
+    def __init__(self, env, config: LinkConfig):
+        self.env = env
+        self.width = config.width
+        self.delay = config.delay
+        self.store = simpy.Store(env)
+
+    def transmit(self, size):
+        transmission_time = size / self.width
+        latency = self.delay + transmission_time
+
+        self.store.put(size)
+        yield self.env.timeout(latency)
+        self.store.get(size)
+
+
+class Router:
+    def __init__(self, env, config: RouterConfig, id: int, x: int, y:int):
+        self.env = env
+        self.type = config.type
+        self.vc = config.vc
+        self.x = x
+        self.y = y
+        self.output_links = {}
+        self.id = id
+
+        self.route_queue_len = 0
+        self.compute_queue_len = 0
+        self.route_queue = simpy.Store(self.env)
+
+        self.core_link = None
+        self.core = None
+
+        self.env.process(self.run())
+
+    def connect(self, link: Link, neighbor_router):
+        self.output_links[neighbor_router.id] = (link, neighbor_router)
+
+    def bound_with_core(self, link: Link, core):
+        self.core_link = link
+        self.core = core
+
+    def route(self, data: Data, next_router_id: int):
+        if next_router_id not in self.output_links:
+            raise ValueError(f"There is no connection between Router{self.router_id} and Router{next_router_id}.")
+
+        link, next_router = self.output_links[next_router_id]
+
+        yield self.env.process(link.transmit(data.size))
+        next_router.route_queue_len += 1
+        yield next_router.route_queue.put(data)
+
+    def run(self):
+        while True:
+            data = yield self.route_queue.get()
+            self.route_queue_len -= 1
+
+            if data.dst == self.id:
+                yield self.env.process(self.core_link.transmit(data.size))
+                self.compute_queue_len += 1
+                yield self.core.data_queue.put(data)
+            else:
+                print(f"Router{self.id} is sending data to router{data.dst} at time {self.env.now:.2f}")
+                next_router = self.calculate_next_router(data.dst)
+                self.env.process(self.route(data, next_router))
+
+    def calculate_next_router(self, target_id):
+        if self.type == "XY":
+            # switch id
+            now_x, now_y = self.to_xy(self.id)
+            tar_x, tar_y = self.to_xy(target_id)
+
+            # X first
+            if now_x != tar_x:
+                if tar_x > now_x:
+                    return self.to_x(now_x + 1, now_y)
+                else:
+                    return self.to_x(now_x - 1, now_y)
+        
+            # then Y
+            if now_y != tar_y:
+                if tar_y > now_y:
+                    return self.to_x(now_x, now_y + 1)
+                else:
+                    return self.to_x(now_x, now_y - 1)
+        else:
+            return target_id
+
+    # to1D id, 0-indexed
+    def to_x(self, x, y):
+        return x * self.y + y
+    
+    # to2D id, 0-indexed
+    def to_xy(self, id):
+        x = id // self.y
+        y = id % self.y
+        return x, y
+
+
+class NoC:
+    def __init__(self, env, config: NoCConfig):
+        self.env = env
+        self.x = config.x
+        self.y = config.y
+        self.router_config = config.router
+        self.link_config = config.link
+        self.routers = []
+        self.links = []
+
+    # connections between routers
+    def build_connection(self):
+        for id in range(self.x * self.y):
+            self.id = id
+            self.routers.append(Router(self.env, self.router_config, id, self.x, self.y))
+        
+        for row in range(self.x):
+            for col in range(self.y):
+                router_id = row * self.y + col
+                # connect with the right Router
+                if col < self.y - 1:
+                    right_router_id = row * self.y + (col + 1)
+                    link = Link(self.env, self.link_config)
+                    # a couple of directed edges
+                    self.routers[router_id].connect(link, self.routers[right_router_id])
+                    self.routers[right_router_id].connect(link, self.routers[router_id])
+
+                self.links.append(link)
+                # connect with the down Router
+                if row < self.x - 1:
+                    down_router_id = (row + 1) * self.y + col
+                    link = Link(self.env, self.link_config)
+                    self.routers[router_id].connect(link, self.routers[down_router_id])
+                    self.routers[down_router_id].connect(link, self.routers[router_id])
+
+                self.links.append(link)
+    
