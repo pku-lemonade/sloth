@@ -15,6 +15,7 @@ class CoreConfig(BaseModel):
     x: int
     y: int
     width: int
+    blk_size: int
     spm: SPMConfig
     tpu: TPUConfig
     lsu: LSUConfig

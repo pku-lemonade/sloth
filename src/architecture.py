@@ -1,8 +1,8 @@
 import simpy
-from core import Core
-from noc import NoC, Link
-from config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
-from sim_type import Instruction
+from src.core import Core
+from src.noc import NoC, Link
+from src.config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
+from src.sim_type import Instruction
 from typing import List
 
 class Arch:

@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import List
 from pydantic import BaseModel
 
 class Data(BaseModel):
@@ -26,7 +27,9 @@ class ComputeTask(Task):
     size: int = 0
     index: int = -1
     num_operands: int = 2
-
+    para: list[Data] = []
+    feat: list[Data] = []
+        
 class CommunicationTask(Task):
     dst: int
     src: int
@@ -42,6 +45,18 @@ class Instruction(BaseModel):
     position: int
     size: int
 
+class Operation(BaseModel):
+    operation: str
+    layer_id: int
+
+class PEworkload(BaseModel):
+    id: int
+    insts: List[Instruction]
+
+class Workload(BaseModel):
+    name: str
+    pes: List[PEworkload]
+
 class Read(IOTask):
     def run(self, core):
         with core.lsu.request() as req:
@@ -49,12 +64,24 @@ class Read(IOTask):
             yield core.env.timeout(self.size / core.lsu_bandwidth)
 
 class Write(IOTask):
+    num_operands: int = 1
+    feat: list[Data] = []
+
     def run(self, core):
         with core.lsu.request() as req:
             yield req
             yield core.env.timeout(self.size / core.lsu_bandwidth)
 
 class Conv(ComputeTask):
+    def calc_flops(self):
+        paras = 0
+        feats = 0
+        for para in self.para:
+            paras += para
+        for feat in self.feat:
+            feats += feat
+        self.flops = paras * feats
+
     def run(self, core):
         with core.tpu.request() as req:
             yield req
@@ -63,13 +90,23 @@ class Conv(ComputeTask):
 class Pool(ComputeTask):
     num_operands: int = 1
 
+    def calc_flops(self):
+        self.flops = self.oprands[0].size
+
     def run(self, core):
         with core.tpu.request() as req:
             yield req
             yield core.env.timeout(self.flops / core.tpu_flops)
 
 class FC(ComputeTask):
-    num_operands: int = 1
+    def calc_flops(self):
+        paras = 0
+        feats = 0
+        for para in self.para:
+            paras += para
+        for feat in self.feat:
+            feats += feat
+        self.flops = paras * feats
 
     def run(self, core):
         with core.tpu.request() as req:
@@ -77,6 +114,8 @@ class FC(ComputeTask):
             yield core.env.timeout(self.flops / core.tpu_flops)
 
 class Send(CommunicationTask):
+    num_operands: int = 1
+    feat: list[Data] = []
     src: int = -1
 
     def run(self, core):

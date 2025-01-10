@@ -1,6 +1,6 @@
 import simpy
-from config import LinkConfig, RouterConfig, NoCConfig
-from sim_type import Data
+from src.config import LinkConfig, RouterConfig, NoCConfig
+from src.sim_type import Data
 
 class Link:
     def __init__(self, env, config: LinkConfig):
@@ -15,7 +15,7 @@ class Link:
 
         self.store.put(size)
         yield self.env.timeout(latency)
-        self.store.get(size)
+        self.store.get()
 
 
 class Router:
