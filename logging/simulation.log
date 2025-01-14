@@ -1,0 +1,384 @@
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE0 is processing a <class 'src.sim_type.Read'> task(id:37)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE1 is processing a <class 'src.sim_type.Read'> task(id:40)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE2 is processing a <class 'src.sim_type.Read'> task(id:43)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE3 is processing a <class 'src.sim_type.Read'> task(id:46)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE4 is processing a <class 'src.sim_type.Read'> task(id:25)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE5 is processing a <class 'src.sim_type.Read'> task(id:28)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE6 is processing a <class 'src.sim_type.Read'> task(id:31)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE7 is processing a <class 'src.sim_type.Read'> task(id:34)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE8 is processing a <class 'src.sim_type.Read'> task(id:13)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE9 is processing a <class 'src.sim_type.Read'> task(id:16)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE10 is processing a <class 'src.sim_type.Read'> task(id:19)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE11 is processing a <class 'src.sim_type.Read'> task(id:22)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE12 is processing a <class 'src.sim_type.Read'> task(id:1)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE13 is processing a <class 'src.sim_type.Read'> task(id:4)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE14 is processing a <class 'src.sim_type.Read'> task(id:7)
+2025-01-14 16:58:10 - PE - INFO - Time 0.00: PE15 is processing a <class 'src.sim_type.Read'> task(id:10)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE0 finish processing a <class 'src.sim_type.Read'> task(id:37)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE0 is processing a <class 'src.sim_type.Read'> task(id:38)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE1 finish processing a <class 'src.sim_type.Read'> task(id:40)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE1 is processing a <class 'src.sim_type.Read'> task(id:41)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE2 finish processing a <class 'src.sim_type.Read'> task(id:43)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE2 is processing a <class 'src.sim_type.Read'> task(id:44)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE3 finish processing a <class 'src.sim_type.Read'> task(id:46)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE3 is processing a <class 'src.sim_type.Read'> task(id:47)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE4 finish processing a <class 'src.sim_type.Read'> task(id:25)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE4 is processing a <class 'src.sim_type.Read'> task(id:26)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE5 finish processing a <class 'src.sim_type.Read'> task(id:28)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE5 is processing a <class 'src.sim_type.Read'> task(id:29)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE6 finish processing a <class 'src.sim_type.Read'> task(id:31)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE6 is processing a <class 'src.sim_type.Read'> task(id:32)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE7 finish processing a <class 'src.sim_type.Read'> task(id:34)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE7 is processing a <class 'src.sim_type.Read'> task(id:35)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE8 finish processing a <class 'src.sim_type.Read'> task(id:13)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE8 is processing a <class 'src.sim_type.Read'> task(id:14)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE9 finish processing a <class 'src.sim_type.Read'> task(id:16)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE9 is processing a <class 'src.sim_type.Read'> task(id:17)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE10 finish processing a <class 'src.sim_type.Read'> task(id:19)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE10 is processing a <class 'src.sim_type.Read'> task(id:20)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE11 finish processing a <class 'src.sim_type.Read'> task(id:22)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE11 is processing a <class 'src.sim_type.Read'> task(id:23)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE12 finish processing a <class 'src.sim_type.Read'> task(id:1)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE12 is processing a <class 'src.sim_type.Read'> task(id:2)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE13 finish processing a <class 'src.sim_type.Read'> task(id:4)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE13 is processing a <class 'src.sim_type.Read'> task(id:5)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE14 finish processing a <class 'src.sim_type.Read'> task(id:7)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE14 is processing a <class 'src.sim_type.Read'> task(id:8)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE15 finish processing a <class 'src.sim_type.Read'> task(id:10)
+2025-01-14 16:58:10 - PE - INFO - Time 4.59: PE15 is processing a <class 'src.sim_type.Read'> task(id:11)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE0 finish processing a <class 'src.sim_type.Read'> task(id:38)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE0 is processing a <class 'src.sim_type.Read'> task(id:89)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE1 finish processing a <class 'src.sim_type.Read'> task(id:41)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE1 is processing a <class 'src.sim_type.Read'> task(id:91)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE2 finish processing a <class 'src.sim_type.Read'> task(id:44)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE2 is processing a <class 'src.sim_type.Read'> task(id:93)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE3 finish processing a <class 'src.sim_type.Read'> task(id:47)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE3 is processing a <class 'src.sim_type.Read'> task(id:95)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE4 finish processing a <class 'src.sim_type.Read'> task(id:26)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE4 is processing a <class 'src.sim_type.Read'> task(id:81)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE5 finish processing a <class 'src.sim_type.Read'> task(id:29)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE5 is processing a <class 'src.sim_type.Read'> task(id:83)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE6 finish processing a <class 'src.sim_type.Read'> task(id:32)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE6 is processing a <class 'src.sim_type.Read'> task(id:85)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE7 finish processing a <class 'src.sim_type.Read'> task(id:35)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE7 is processing a <class 'src.sim_type.Read'> task(id:87)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE8 finish processing a <class 'src.sim_type.Read'> task(id:14)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE8 is processing a <class 'src.sim_type.Read'> task(id:73)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE9 finish processing a <class 'src.sim_type.Read'> task(id:17)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE9 is processing a <class 'src.sim_type.Read'> task(id:75)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE10 finish processing a <class 'src.sim_type.Read'> task(id:20)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE10 is processing a <class 'src.sim_type.Read'> task(id:77)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE11 finish processing a <class 'src.sim_type.Read'> task(id:23)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE11 is processing a <class 'src.sim_type.Read'> task(id:79)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE12 finish processing a <class 'src.sim_type.Read'> task(id:2)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE12 is processing a <class 'src.sim_type.Read'> task(id:65)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE13 finish processing a <class 'src.sim_type.Read'> task(id:5)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE13 is processing a <class 'src.sim_type.Read'> task(id:67)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE14 finish processing a <class 'src.sim_type.Read'> task(id:8)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE14 is processing a <class 'src.sim_type.Read'> task(id:69)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE15 finish processing a <class 'src.sim_type.Read'> task(id:11)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE15 is processing a <class 'src.sim_type.Read'> task(id:71)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE0 finish processing a <class 'src.sim_type.Read'> task(id:89)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE0 is processing a <class 'src.sim_type.Read'> task(id:164)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE1 finish processing a <class 'src.sim_type.Read'> task(id:91)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE1 is processing a <class 'src.sim_type.Read'> task(id:167)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE2 finish processing a <class 'src.sim_type.Read'> task(id:93)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE2 is processing a <class 'src.sim_type.Read'> task(id:170)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE3 finish processing a <class 'src.sim_type.Read'> task(id:95)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE3 is processing a <class 'src.sim_type.Read'> task(id:173)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE4 finish processing a <class 'src.sim_type.Read'> task(id:81)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE4 is processing a <class 'src.sim_type.Read'> task(id:155)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE5 finish processing a <class 'src.sim_type.Read'> task(id:83)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE5 is processing a <class 'src.sim_type.Read'> task(id:133)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE6 finish processing a <class 'src.sim_type.Read'> task(id:85)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE6 is processing a <class 'src.sim_type.Read'> task(id:158)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE7 finish processing a <class 'src.sim_type.Read'> task(id:87)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE7 is processing a <class 'src.sim_type.Read'> task(id:161)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE8 finish processing a <class 'src.sim_type.Read'> task(id:73)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE8 is processing a <class 'src.sim_type.Read'> task(id:136)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE9 finish processing a <class 'src.sim_type.Read'> task(id:75)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE9 is processing a <class 'src.sim_type.Read'> task(id:113)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE10 finish processing a <class 'src.sim_type.Read'> task(id:77)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE10 is processing a <class 'src.sim_type.Read'> task(id:149)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE11 finish processing a <class 'src.sim_type.Read'> task(id:79)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE11 is processing a <class 'src.sim_type.Read'> task(id:152)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE12 finish processing a <class 'src.sim_type.Read'> task(id:65)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE12 is processing a <class 'src.sim_type.Read'> task(id:140)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE13 finish processing a <class 'src.sim_type.Read'> task(id:67)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE13 is processing a <class 'src.sim_type.Read'> task(id:130)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE14 finish processing a <class 'src.sim_type.Read'> task(id:69)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE14 is processing a <class 'src.sim_type.Read'> task(id:143)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE15 finish processing a <class 'src.sim_type.Read'> task(id:71)
+2025-01-14 16:58:10 - PE - INFO - Time 78.09: PE15 is processing a <class 'src.sim_type.Read'> task(id:146)
+2025-01-14 16:58:10 - PE - INFO - Time 110.09: PE9 finish processing a <class 'src.sim_type.Read'> task(id:113)
+2025-01-14 16:58:10 - PE - INFO - Time 110.09: PE9 is processing a <class 'src.sim_type.Conv'> task(id:18)
+2025-01-14 16:58:10 - PE - INFO - Time 110.67: PE9 finish processing a <class 'src.sim_type.Conv'> task(id:18)
+2025-01-14 16:58:10 - PE - INFO - Time 110.67: PE9 is processing a <class 'src.sim_type.Pool'> task(id:76)
+2025-01-14 16:58:10 - PE - INFO - Time 159.67: PE9 finish processing a <class 'src.sim_type.Pool'> task(id:76)
+2025-01-14 16:58:10 - PE - INFO - Time 159.67: PE9 is processing a <class 'src.sim_type.Write'> task(id:54)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE0 finish processing a <class 'src.sim_type.Read'> task(id:164)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE0 is processing a <class 'src.sim_type.Conv'> task(id:39)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE1 finish processing a <class 'src.sim_type.Read'> task(id:167)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE1 is processing a <class 'src.sim_type.Conv'> task(id:42)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE2 finish processing a <class 'src.sim_type.Read'> task(id:170)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE2 is processing a <class 'src.sim_type.Conv'> task(id:45)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE3 finish processing a <class 'src.sim_type.Read'> task(id:173)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE3 is processing a <class 'src.sim_type.Conv'> task(id:48)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE4 finish processing a <class 'src.sim_type.Read'> task(id:155)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE4 is processing a <class 'src.sim_type.Conv'> task(id:27)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE6 finish processing a <class 'src.sim_type.Read'> task(id:158)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE6 is processing a <class 'src.sim_type.Conv'> task(id:33)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE7 finish processing a <class 'src.sim_type.Read'> task(id:161)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE7 is processing a <class 'src.sim_type.Conv'> task(id:36)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE8 finish processing a <class 'src.sim_type.Read'> task(id:136)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE8 is processing a <class 'src.sim_type.Conv'> task(id:15)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE10 finish processing a <class 'src.sim_type.Read'> task(id:149)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE10 is processing a <class 'src.sim_type.Conv'> task(id:21)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE11 finish processing a <class 'src.sim_type.Read'> task(id:152)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE11 is processing a <class 'src.sim_type.Conv'> task(id:24)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE12 finish processing a <class 'src.sim_type.Read'> task(id:140)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE12 is processing a <class 'src.sim_type.Conv'> task(id:3)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE14 finish processing a <class 'src.sim_type.Read'> task(id:143)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE14 is processing a <class 'src.sim_type.Conv'> task(id:9)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE15 finish processing a <class 'src.sim_type.Read'> task(id:146)
+2025-01-14 16:58:10 - PE - INFO - Time 206.09: PE15 is processing a <class 'src.sim_type.Conv'> task(id:12)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE0 finish processing a <class 'src.sim_type.Conv'> task(id:39)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE0 is processing a <class 'src.sim_type.Pool'> task(id:90)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE1 finish processing a <class 'src.sim_type.Conv'> task(id:42)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE1 is processing a <class 'src.sim_type.Pool'> task(id:92)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE2 finish processing a <class 'src.sim_type.Conv'> task(id:45)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE2 is processing a <class 'src.sim_type.Pool'> task(id:94)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE3 finish processing a <class 'src.sim_type.Conv'> task(id:48)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE3 is processing a <class 'src.sim_type.Pool'> task(id:96)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE4 finish processing a <class 'src.sim_type.Conv'> task(id:27)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE4 is processing a <class 'src.sim_type.Pool'> task(id:82)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE6 finish processing a <class 'src.sim_type.Conv'> task(id:33)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE6 is processing a <class 'src.sim_type.Pool'> task(id:86)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE7 finish processing a <class 'src.sim_type.Conv'> task(id:36)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE7 is processing a <class 'src.sim_type.Pool'> task(id:88)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE8 finish processing a <class 'src.sim_type.Conv'> task(id:15)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE8 is processing a <class 'src.sim_type.Pool'> task(id:74)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE10 finish processing a <class 'src.sim_type.Conv'> task(id:21)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE10 is processing a <class 'src.sim_type.Pool'> task(id:78)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE11 finish processing a <class 'src.sim_type.Conv'> task(id:24)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE11 is processing a <class 'src.sim_type.Pool'> task(id:80)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE12 finish processing a <class 'src.sim_type.Conv'> task(id:3)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE12 is processing a <class 'src.sim_type.Pool'> task(id:66)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE14 finish processing a <class 'src.sim_type.Conv'> task(id:9)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE14 is processing a <class 'src.sim_type.Pool'> task(id:70)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE15 finish processing a <class 'src.sim_type.Conv'> task(id:12)
+2025-01-14 16:58:10 - PE - INFO - Time 206.67: PE15 is processing a <class 'src.sim_type.Pool'> task(id:72)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE0 finish processing a <class 'src.sim_type.Pool'> task(id:90)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE0 is processing a <class 'src.sim_type.Write'> task(id:61)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE1 finish processing a <class 'src.sim_type.Pool'> task(id:92)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE1 is processing a <class 'src.sim_type.Write'> task(id:62)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE2 finish processing a <class 'src.sim_type.Pool'> task(id:94)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE2 is processing a <class 'src.sim_type.Write'> task(id:63)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE3 finish processing a <class 'src.sim_type.Pool'> task(id:96)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE3 is processing a <class 'src.sim_type.Write'> task(id:64)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE4 finish processing a <class 'src.sim_type.Pool'> task(id:82)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE4 is processing a <class 'src.sim_type.Write'> task(id:57)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE6 finish processing a <class 'src.sim_type.Pool'> task(id:86)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE6 is processing a <class 'src.sim_type.Write'> task(id:59)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE7 finish processing a <class 'src.sim_type.Pool'> task(id:88)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE7 is processing a <class 'src.sim_type.Write'> task(id:60)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE8 finish processing a <class 'src.sim_type.Pool'> task(id:74)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE8 is processing a <class 'src.sim_type.Write'> task(id:53)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE10 finish processing a <class 'src.sim_type.Pool'> task(id:78)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE10 is processing a <class 'src.sim_type.Write'> task(id:55)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE11 finish processing a <class 'src.sim_type.Pool'> task(id:80)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE11 is processing a <class 'src.sim_type.Write'> task(id:56)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE12 finish processing a <class 'src.sim_type.Pool'> task(id:66)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE12 is processing a <class 'src.sim_type.Write'> task(id:49)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE14 finish processing a <class 'src.sim_type.Pool'> task(id:70)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE14 is processing a <class 'src.sim_type.Write'> task(id:51)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE15 finish processing a <class 'src.sim_type.Pool'> task(id:72)
+2025-01-14 16:58:10 - PE - INFO - Time 255.67: PE15 is processing a <class 'src.sim_type.Write'> task(id:52)
+2025-01-14 16:58:10 - PE - INFO - Time 366.09: PE5 finish processing a <class 'src.sim_type.Read'> task(id:133)
+2025-01-14 16:58:10 - PE - INFO - Time 366.09: PE5 is processing a <class 'src.sim_type.Conv'> task(id:30)
+2025-01-14 16:58:10 - PE - INFO - Time 366.09: PE13 finish processing a <class 'src.sim_type.Read'> task(id:130)
+2025-01-14 16:58:10 - PE - INFO - Time 366.09: PE13 is processing a <class 'src.sim_type.Conv'> task(id:6)
+2025-01-14 16:58:10 - PE - INFO - Time 366.67: PE5 finish processing a <class 'src.sim_type.Conv'> task(id:30)
+2025-01-14 16:58:10 - PE - INFO - Time 366.67: PE5 is processing a <class 'src.sim_type.Pool'> task(id:84)
+2025-01-14 16:58:10 - PE - INFO - Time 366.67: PE13 finish processing a <class 'src.sim_type.Conv'> task(id:6)
+2025-01-14 16:58:10 - PE - INFO - Time 366.67: PE13 is processing a <class 'src.sim_type.Pool'> task(id:68)
+2025-01-14 16:58:10 - PE - INFO - Time 415.67: PE5 finish processing a <class 'src.sim_type.Pool'> task(id:84)
+2025-01-14 16:58:10 - PE - INFO - Time 415.67: PE5 is processing a <class 'src.sim_type.Write'> task(id:58)
+2025-01-14 16:58:10 - PE - INFO - Time 415.67: PE13 finish processing a <class 'src.sim_type.Pool'> task(id:68)
+2025-01-14 16:58:10 - PE - INFO - Time 415.67: PE13 is processing a <class 'src.sim_type.Write'> task(id:50)
+2025-01-14 16:58:10 - PE - INFO - Time 1335.67: PE9 finish processing a <class 'src.sim_type.Write'> task(id:54)
+2025-01-14 16:58:10 - PE - INFO - Time 1335.67: PE9 is processing a <class 'src.sim_type.Write'> task(id:102)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE0 finish processing a <class 'src.sim_type.Write'> task(id:61)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE0 is processing a <class 'src.sim_type.Write'> task(id:109)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE1 finish processing a <class 'src.sim_type.Write'> task(id:62)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE1 is processing a <class 'src.sim_type.Write'> task(id:110)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE2 finish processing a <class 'src.sim_type.Write'> task(id:63)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE2 is processing a <class 'src.sim_type.Write'> task(id:111)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE3 finish processing a <class 'src.sim_type.Write'> task(id:64)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE3 is processing a <class 'src.sim_type.Write'> task(id:112)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE4 finish processing a <class 'src.sim_type.Write'> task(id:57)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE4 is processing a <class 'src.sim_type.Write'> task(id:105)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE6 finish processing a <class 'src.sim_type.Write'> task(id:59)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE6 is processing a <class 'src.sim_type.Write'> task(id:107)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE7 finish processing a <class 'src.sim_type.Write'> task(id:60)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE7 is processing a <class 'src.sim_type.Write'> task(id:108)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE8 finish processing a <class 'src.sim_type.Write'> task(id:53)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE8 is processing a <class 'src.sim_type.Write'> task(id:101)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE10 finish processing a <class 'src.sim_type.Write'> task(id:55)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE10 is processing a <class 'src.sim_type.Write'> task(id:103)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE11 finish processing a <class 'src.sim_type.Write'> task(id:56)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE11 is processing a <class 'src.sim_type.Write'> task(id:104)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE12 finish processing a <class 'src.sim_type.Write'> task(id:49)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE12 is processing a <class 'src.sim_type.Write'> task(id:97)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE14 finish processing a <class 'src.sim_type.Write'> task(id:51)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE14 is processing a <class 'src.sim_type.Write'> task(id:99)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE15 finish processing a <class 'src.sim_type.Write'> task(id:52)
+2025-01-14 16:58:10 - PE - INFO - Time 1431.67: PE15 is processing a <class 'src.sim_type.Write'> task(id:100)
+2025-01-14 16:58:10 - PE - INFO - Time 1591.67: PE5 finish processing a <class 'src.sim_type.Write'> task(id:58)
+2025-01-14 16:58:10 - PE - INFO - Time 1591.67: PE5 is processing a <class 'src.sim_type.Write'> task(id:106)
+2025-01-14 16:58:10 - PE - INFO - Time 1591.67: PE13 finish processing a <class 'src.sim_type.Write'> task(id:50)
+2025-01-14 16:58:10 - PE - INFO - Time 1591.67: PE13 is processing a <class 'src.sim_type.Write'> task(id:98)
+2025-01-14 16:58:10 - PE - INFO - Time 7607.67: PE9 finish processing a <class 'src.sim_type.Write'> task(id:102)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE0 finish processing a <class 'src.sim_type.Write'> task(id:109)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE0 is processing a <class 'src.sim_type.Send'> task(id:125)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE1 finish processing a <class 'src.sim_type.Write'> task(id:110)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE1 is processing a <class 'src.sim_type.Send'> task(id:126)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE2 finish processing a <class 'src.sim_type.Write'> task(id:111)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE2 is processing a <class 'src.sim_type.Send'> task(id:127)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE3 finish processing a <class 'src.sim_type.Write'> task(id:112)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE3 is processing a <class 'src.sim_type.Send'> task(id:128)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE4 finish processing a <class 'src.sim_type.Write'> task(id:105)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE4 is processing a <class 'src.sim_type.Send'> task(id:121)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE6 finish processing a <class 'src.sim_type.Write'> task(id:107)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE6 is processing a <class 'src.sim_type.Send'> task(id:123)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE7 finish processing a <class 'src.sim_type.Write'> task(id:108)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE7 is processing a <class 'src.sim_type.Send'> task(id:124)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE8 finish processing a <class 'src.sim_type.Write'> task(id:101)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE8 is processing a <class 'src.sim_type.Send'> task(id:118)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE10 finish processing a <class 'src.sim_type.Write'> task(id:103)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE10 is processing a <class 'src.sim_type.Send'> task(id:119)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE11 finish processing a <class 'src.sim_type.Write'> task(id:104)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE11 is processing a <class 'src.sim_type.Send'> task(id:120)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE12 finish processing a <class 'src.sim_type.Write'> task(id:97)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE12 is processing a <class 'src.sim_type.Send'> task(id:114)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE14 finish processing a <class 'src.sim_type.Write'> task(id:99)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE14 is processing a <class 'src.sim_type.Send'> task(id:116)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE15 finish processing a <class 'src.sim_type.Write'> task(id:100)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE15 is processing a <class 'src.sim_type.Send'> task(id:117)
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router0 send data125 to router4.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router0 finished sending data125 to router4.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router1 send data126 to router5.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router1 finished sending data126 to router5.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router2 send data127 to router6.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router2 finished sending data127 to router6.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router3 send data128 to router7.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router3 finished sending data128 to router7.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router4 send data121 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router4 finished sending data121 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router6 send data123 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router6 finished sending data123 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router7 send data124 to router11.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router7 finished sending data124 to router11.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router8 send data118 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router8 finished sending data118 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router10 send data119 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router10 finished sending data119 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router11 send data120 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router11 finished sending data120 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router12 send data114 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router12 finished sending data114 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router14 send data116 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router14 finished sending data116 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router15 send data117 to router11.
+2025-01-14 16:58:10 - NoC - INFO - Time 7703.67: Router15 finished sending data117 to router11.
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE0 finish processing a <class 'src.sim_type.Send'> task(id:125)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE1 finish processing a <class 'src.sim_type.Send'> task(id:126)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE2 finish processing a <class 'src.sim_type.Send'> task(id:127)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE3 finish processing a <class 'src.sim_type.Send'> task(id:128)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE4 finish processing a <class 'src.sim_type.Send'> task(id:121)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE6 finish processing a <class 'src.sim_type.Send'> task(id:123)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE7 finish processing a <class 'src.sim_type.Send'> task(id:124)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE8 finish processing a <class 'src.sim_type.Send'> task(id:118)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE10 finish processing a <class 'src.sim_type.Send'> task(id:119)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE11 finish processing a <class 'src.sim_type.Send'> task(id:120)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE12 finish processing a <class 'src.sim_type.Send'> task(id:114)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE14 finish processing a <class 'src.sim_type.Send'> task(id:116)
+2025-01-14 16:58:10 - PE - INFO - Time 7703.67: PE15 finish processing a <class 'src.sim_type.Send'> task(id:117)
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE5 finish processing a <class 'src.sim_type.Write'> task(id:106)
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE5 is processing a <class 'src.sim_type.Send'> task(id:122)
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE13 finish processing a <class 'src.sim_type.Write'> task(id:98)
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE13 is processing a <class 'src.sim_type.Send'> task(id:115)
+2025-01-14 16:58:10 - NoC - INFO - Time 7863.67: Router5 send data122 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7863.67: Router5 finished sending data122 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7863.67: Router13 send data115 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7863.67: Router13 finished sending data115 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE5 finish processing a <class 'src.sim_type.Send'> task(id:122)
+2025-01-14 16:58:10 - PE - INFO - Time 7863.67: PE13 finish processing a <class 'src.sim_type.Send'> task(id:115)
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router4 send data125 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router4 finished sending data125 to router8.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router5 send data126 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router5 finished sending data126 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router6 send data127 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router6 finished sending data127 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router7 send data128 to router11.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router7 finished sending data128 to router11.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router8 send data121 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router8 finished sending data121 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 send data123 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 finished sending data123 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router11 send data124 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router11 finished sending data124 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router8 send data114 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router8 finished sending data114 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 send data120 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 finished sending data120 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router11 send data117 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router11 finished sending data117 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 send data116 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7900.67: Router10 finished sending data116 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 7999.67: Finish routing data118 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 7999.67: PE9 receive data118
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router8 send data125 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router8 finished sending data125 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 send data127 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 finished sending data127 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router11 send data128 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router11 finished sending data128 to router10.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 send data124 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 finished sending data124 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 send data117 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8097.67: Router10 finished sending data117 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8098.67: Finish routing data119 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8098.67: PE9 receive data119
+2025-01-14 16:58:10 - NoC - INFO - Time 8197.67: Finish routing data122 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8197.67: PE9 receive data122
+2025-01-14 16:58:10 - NoC - INFO - Time 8294.67: Router10 send data128 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8294.67: Router10 finished sending data128 to router9.
+2025-01-14 16:58:10 - NoC - INFO - Time 8296.67: Finish routing data115 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8296.67: PE9 receive data115
+2025-01-14 16:58:10 - NoC - INFO - Time 8395.67: Finish routing data126 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8395.67: PE9 receive data126
+2025-01-14 16:58:10 - NoC - INFO - Time 8494.67: Finish routing data121 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8494.67: PE9 receive data121
+2025-01-14 16:58:10 - NoC - INFO - Time 8593.67: Finish routing data123 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8593.67: PE9 receive data123
+2025-01-14 16:58:10 - NoC - INFO - Time 8692.67: Finish routing data114 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8692.67: PE9 receive data114
+2025-01-14 16:58:10 - NoC - INFO - Time 8791.67: Finish routing data120 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8791.67: PE9 receive data120
+2025-01-14 16:58:10 - NoC - INFO - Time 8890.67: Finish routing data116 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8890.67: PE9 receive data116
+2025-01-14 16:58:10 - NoC - INFO - Time 8989.67: Finish routing data125 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 8989.67: PE9 receive data125
+2025-01-14 16:58:10 - NoC - INFO - Time 9088.67: Finish routing data127 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 9088.67: PE9 receive data127
+2025-01-14 16:58:10 - NoC - INFO - Time 9187.67: Finish routing data124 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 9187.67: PE9 receive data124
+2025-01-14 16:58:10 - NoC - INFO - Time 9286.67: Finish routing data117 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 9286.67: PE9 receive data117
+2025-01-14 16:58:10 - PE - INFO - Time 9286.67: PE9 is processing a <class 'src.sim_type.Conv'> task(id:129)
+2025-01-14 16:58:10 - NoC - INFO - Time 9385.67: Finish routing data128 to router9.
+2025-01-14 16:58:10 - PE - INFO - Time 9482.67: PE9 finish processing a <class 'src.sim_type.Conv'> task(id:129)
+2025-01-14 16:58:10 - PE - INFO - Time 9482.67: PE9 receive data128
+2025-01-14 16:58:10 - PE - INFO - Time 9482.67: PE9 is processing a <class 'src.sim_type.Read'> task(id:203)
+2025-01-14 16:58:10 - PE - INFO - Time 9610.67: PE9 finish processing a <class 'src.sim_type.Read'> task(id:203)

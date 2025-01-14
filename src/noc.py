@@ -1,6 +1,9 @@
 import simpy
+import logging
 from src.config import LinkConfig, RouterConfig, NoCConfig
 from src.sim_type import Data
+
+logger = logging.getLogger("NoC")
 
 class Link:
     def __init__(self, env, config: LinkConfig):
@@ -51,22 +54,26 @@ class Router:
         link, next_router = self.output_links[next_router_id]
 
         yield self.env.process(link.transmit(data.size))
-        next_router.route_queue_len += 1
+        # next_router.route_queue_len += 1
         yield next_router.route_queue.put(data)
 
     def run(self):
         while True:
             data = yield self.route_queue.get()
-            self.route_queue_len -= 1
+            # self.route_queue_len -= 1
 
             if data.dst == self.id:
                 yield self.env.process(self.core_link.transmit(data.size))
-                self.compute_queue_len += 1
+                # self.compute_queue_len += 1
+                # print(f"put data{data.index} into core{self.core.id}")
+                logger.info(f"Time {self.env.now:.2f}: Finish routing data{data.index} to router{self.id}.")
                 yield self.core.data_queue.put(data)
             else:
-                print(f"Router{self.id} is sending data to router{data.dst} at time {self.env.now:.2f}")
+                # print(f"Router{self.id} is sending data{data.index} to router{data.dst} at time {self.env.now:.2f}")
                 next_router = self.calculate_next_router(data.dst)
+                logger.info(f"Time {self.env.now:.2f}: Router{self.id} send data{data.index} to router{next_router}.")
                 self.env.process(self.route(data, next_router))
+                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{data.index} to router{next_router}.")
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":

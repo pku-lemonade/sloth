@@ -1,9 +1,12 @@
 import simpy
+import logging
 from queue import Queue
 from src.config import CoreConfig, ScratchpadConfig
 from src.noc import Link, Router
-from src.sim_type import Task, Instruction, Read, Write, Conv, Pool, FC, Send, Data
+from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data
 from typing import List
+
+logger = logging.getLogger("PE")
 
 class SPMManager:
     def __init__(self, config: ScratchpadConfig):
@@ -145,12 +148,13 @@ class GraphScheduler:
                             return FC(flops=inst.size, layer_id=inst.layer_id)
 
 class TableScheduler:
-    def __init__(self, program, spm, block_size):
+    def __init__(self, program, spm, block_size, id):
         self.program = program
         self.spm = spm
         self.block_size = block_size
         self.block_ptr = -1
         self.block_counter = 0
+        self.id = id
 
         self.tasks = []
         self.trigger = [[] for _ in range(len(self.program))]
@@ -165,7 +169,7 @@ class TableScheduler:
             self.taskid2index[id] = inst.index
             match inst.inst_type:
                 case "RECV":
-                    self.tasks.append(Task(index=-1,size=-1,flops=-1,num_operands=-1))
+                    self.tasks.append(Recv(index=-1, size=-1, flops=-1, dst=-1, src=-1))
                 case "READ":
                     self.tasks.append(Read(index=inst.index, size=inst.size))
                 case "WRITE":
@@ -175,11 +179,11 @@ class TableScheduler:
                 case "COMP":
                     match inst.operation:
                         case "CONV":
-                            self.tasks.append(Conv(flops=inst.size, layer_id=inst.layer_id))
+                            self.tasks.append(Conv(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
                         case "POOL":
-                            self.tasks.append(Pool(flops=inst.size, layer_id=inst.layer_id))
+                            self.tasks.append(Pool(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
                         case "FC":
-                            self.tasks.append(FC(flops=inst.size, layer_id=inst.layer_id))
+                            self.tasks.append(FC(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
         
         self.build_trigger()
         self.task_block_update()
@@ -216,81 +220,133 @@ class TableScheduler:
                         case "RECV":
                             inputs.append(layer_inst)
                         case "WRITE":
-                            print("???")
+                            # print("???")
                             outputs.append(layer_inst)
                         case "SEND":
                             outputs.append(layer_inst)
                         case "COMP":
-                            print("!!!")
+                            # print("!!!")
                             comp_pos = layer_inst
                     
                 for input in inputs:
                     self.trigger[self.index2taskid[input.index]].append(comp_pos)
 
                 for output in outputs:
-                    print("insert")
-                    print(f"{self.index2taskid[comp_pos.index]} -> {self.index2taskid[output.index]}")
+                    # print("insert")
+                    # print(f"{self.index2taskid[comp_pos.index]} -> {self.index2taskid[output.index]}")
                     self.trigger[self.index2taskid[comp_pos.index]].append(output)
                     
                 last_layer = inst.layer_id
                 last_layer_ind = ind
 
     def task_block_update(self):
+        # print(f"PE{self.id} is task_blk_updating")
+        logger.debug(f"PE{self.id} is task_block_updating")
         self.block_counter = 0
         self.block_ptr += 1
         start = self.block_ptr * self.block_size
         end = min((self.block_ptr + 1) * self.block_size, len(self.program))
         for id, inst in enumerate(self.program[start:end], start=start):
+            # print("-"*30)
+            # print(f"inst_id is {id}, type is {inst.inst_type}")
+            logger.debug("-"*30)
+            logger.debug(f"inst_id is {id}, type is {inst.inst_type}")
             match inst.inst_type:
                 case "READ":
+                    # print(f"insert {id} into waiting queue")
+                    logger.debug(f"insert {id} into waiting queue")
                     self.waiting_queue.put(id)
                 case "COMP":
                     para = 1 if self.tasks[id].para else 0
                     feat = 1 if self.tasks[id].feat else 0
+                    # print(f"para is {para}, feat is {feat}")
+                    logger.debug(f"para is {para}, feat is {feat}")
                     if para + feat == self.tasks[id].num_operands:
+                        # print(f"insert {id} into waiting queue")
+                        logger.debug(f"insert {id} into waiting queue")
                         self.waiting_queue.put(id)
                 case "SEND":
                     if self.tasks[id].feat:
+                        # print(f"insert {id} into waiting queue")
+                        logger.debug(f"insert {id} into waiting queue")
                         self.waiting_queue.put(id)
                 case "WRITE":
                     if self.tasks[id].feat:
+                        # print(f"insert {id} into waiting queue")
+                        logger.debug(f"insert {id} into waiting queue")
                         self.waiting_queue.put(id)
+                case "RECV":
+                    if self.tasks[id].feat:
+                        self.block_counter += 1
+
+        if self.block_counter == self.block_size:
+            self.task_block_update()
         
     def update(self, data):
         task_id = self.index2taskid[data.index]
+
+        # print(f"updating {data.index}")
+        # print(f"{task_id} // {self.block_size} == {self.block_ptr}")
+        logger.debug(f"updating {data.index}")
+        logger.debug(f"{task_id} // {self.block_size} == {self.block_ptr}")
+        if task_id // self.block_size == self.block_ptr:
+            # print(f"PE{self.id} self.counter += 1")
+            logger.debug(f"PE{self.id} self.counter += 1")
+            self.block_counter += 1
+
         if self.program[task_id].inst_type == "WRITE":
             return
         
-        self.block_counter += 1
-        tri_task_id = self.index2taskid[self.trigger[task_id][0].index]
-        match self.program[task_id].data_type:
-            case "PARA":
-                self.tasks[tri_task_id].para.append(data)
-            case "FEAT":
-                self.tasks[tri_task_id].feat.append(data)
+        if self.program[task_id].inst_type == "RECV":
+            self.tasks[task_id].feat.append(data)
 
-        print(tri_task_id)
-        if tri_task_id // self.block_size == self.block_ptr:
-            print("inside")
-            para = 1 if self.program[tri_task_id].inst_type == "COMP" and self.tasks[tri_task_id].para else 0
-            feat = 1 if self.tasks[tri_task_id].feat else 0
-            print(f"para:{para} + feat:{feat}")
-            if para + feat == self.tasks[tri_task_id].num_operands:
-                self.waiting_queue.put(tri_task_id)
+        for idx in range(len(self.trigger[task_id])):
+            tri_task_id = self.index2taskid[self.trigger[task_id][idx].index]
+            match self.program[task_id].data_type:
+                case "PARA":
+                    self.tasks[tri_task_id].para.append(data)
+                case "FEAT":
+                    self.tasks[tri_task_id].feat.append(data)
+
+            # print(f"{data.index} has triggered {self.trigger[task_id][idx].index}")
+            # print(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
+            logger.debug(f"{data.index} has triggered {self.trigger[task_id][idx].index}")
+            logger.debug(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
+            if tri_task_id // self.block_size == self.block_ptr:
+                # print("inside")
+                logger.debug("inside")
+                para = 1 if self.program[tri_task_id].inst_type == "COMP" and self.tasks[tri_task_id].para else 0
+                feat = 1 if self.tasks[tri_task_id].feat else 0
+                # print(f"para:{para} + feat:{feat}")
+                logger.debug(f"para:{para} + feat:{feat}")
+                if para + feat == self.tasks[tri_task_id].num_operands:
+                    # print(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                    logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                    self.waiting_queue.put(tri_task_id)
+        
+        # print(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
+        logger.debug(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
+        if self.block_counter == self.block_size:
+            self.task_block_update()
 
     def schedule(self):
         if self.waiting_queue.empty():
+            # print(f"waiting queue is empty")
             return None
         else:
-            self.block_counter += 1
+            # print(f"waiting queue is not empty")
             task_id = self.waiting_queue.get()
-            print(f"local task id is:{task_id}")
+            # print(f"local task id is:{task_id}")
+            logger.debug(f"local task id is:{task_id}")
             self.update(Data(index=self.taskid2index[task_id],dst=-1,size=self.program[task_id].size))
-
-            if self.block_counter == self.block_size:
-                self.task_block_update()
             return self.tasks[task_id]
 
+def print_event_queue(env):
+    print("Remaining events are:")
+    print("="*40)
+    
+    for event in env._queue:
+        print(event)
 
 class Core:
     def __init__(self, env, config: CoreConfig, program: List[List[Instruction]], id: int):
@@ -301,7 +357,7 @@ class Core:
         self.spm_manager = SPMManager(config.spm)
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
-        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size)
+        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
 
         # print(f"Building PE{self.id}'s instruction dependency graph.")
         # self.scheduler.build_graph()
@@ -318,23 +374,39 @@ class Core:
 
         self.env.process(self.run())
 
+    def data_len(self):
+        return len(self.data_queue.items)
+
     def connect(self, link: Link, router: Router):
         self.link = link
         self.router = router
 
     def run(self):
+        nop = False
         while True:
-            if self.router.compute_queue_len > 0:
+            if self.data_len() > 0 or nop:
                 data = yield self.data_queue.get()
-                self.router.compute_queue_len -= 1
+                logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{data.index}")
                 self.scheduler.update(data)
-            
+
+            # data = self.data_queue.get()
+            # print(data)
+            # if data:
+            #     self.scheduler.update(data)
+
             task = self.scheduler.schedule()
 
             if task:
-                print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
+                # print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
+                logger.info(f"Time {self.env.now:.2f}: PE{self.id} is processing a {type(task)} task(id:{task.index})")
                 yield self.env.process(self.run_task(task))
-                print(f"Finished at time {self.env.now:.2f}")
+                # print(f"Finished at time {self.env.now:.2f}")
+                logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing a {type(task)} task(id:{task.index})")
+                print_event_queue(self.env)
+            else:
+                nop = True
+                # print(f"PE{self.id} is doing nothing at time {self.env.now:.2f}")
+                logger.debug(f"PE{self.id} is doing nothing at time {self.env.now:.2f}")
 
     def run_task(self, task):
         self.spm_manager.allocate(task)

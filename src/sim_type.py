@@ -60,8 +60,11 @@ class Workload(BaseModel):
 class Read(IOTask):
     def run(self, core):
         with core.lsu.request() as req:
+            print(f"waiting for lsu available at {core.env.now:.2f}")
             yield req
+            print(f"lsu is available, start reading data{self.index} at {core.env.now:.2f}")
             yield core.env.timeout(self.size / core.lsu_bandwidth)
+            print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
 
 class Write(IOTask):
     num_operands: int = 1
@@ -69,8 +72,11 @@ class Write(IOTask):
 
     def run(self, core):
         with core.lsu.request() as req:
+            print(f"waiting for lsu available at {core.env.now:.2f}")
             yield req
+            print(f"lsu is available, start writing data{self.index} at {core.env.now:.2f}")
             yield core.env.timeout(self.size / core.lsu_bandwidth)
+            print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
 
 class Conv(ComputeTask):
     def calc_flops(self):
@@ -119,13 +125,13 @@ class Send(CommunicationTask):
     src: int = -1
 
     def run(self, core):
+        print(f"data{self.index} was put into router{core.router.id}")
         core.env.process(core.link.transmit(self.size))
-        core.router.route_queue_len += 1
+        # core.router.route_queue_len += 1
         yield core.router.route_queue.put(Data(index=self.index, dst=self.dst, size=self.size))
 
 class Recv(CommunicationTask):
-    def run(self, core):
-        ...
+    feat: list[Data] = []
 
 class Message(BaseModel):
     task: Task
