@@ -31,6 +31,11 @@ def comp(type, size, id):
     global_message_id += 1
     return f"COMP {global_message_id} {type} {id} FEAT -1 {size}"
 
+def stay(type, size, id):
+    global global_message_id 
+    global_message_id += 1
+    return f"STAY {global_message_id} {type} {id} FEAT -1 {size}"
+
 def to1d(x, y):
     return x*4 + y
 
@@ -157,6 +162,8 @@ with open(filename, "r", encoding="utf-8") as file:
                                     pe_instruction[to1d(part[0], part[1])].append(recv(to1d(layer_partition[id-1][src_pos][0], layer_partition[id-1][src_pos][1]), resnet50type[id], "FEAT", cost, id))
                                     # 每条信息有唯一id
                                     # global_message_id += 1
+                                else:
+                                    pe_instruction[to1d(part[0], part[1])].append(stay(resnet50type[id], dst_size, id))
                             src_remain -= cost
                             dst_remain -= cost
                             if src_remain == 0:

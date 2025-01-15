@@ -60,11 +60,11 @@ class Workload(BaseModel):
 class Read(IOTask):
     def run(self, core):
         with core.lsu.request() as req:
-            print(f"waiting for lsu available at {core.env.now:.2f}")
+            # print(f"waiting for lsu available at {core.env.now:.2f}")
             yield req
-            print(f"lsu is available, start reading data{self.index} at {core.env.now:.2f}")
+            # print(f"lsu is available, start reading data{self.index} at {core.env.now:.2f}")
             yield core.env.timeout(self.size / core.lsu_bandwidth)
-            print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
+            # print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
 
 class Write(IOTask):
     num_operands: int = 1
@@ -72,11 +72,11 @@ class Write(IOTask):
 
     def run(self, core):
         with core.lsu.request() as req:
-            print(f"waiting for lsu available at {core.env.now:.2f}")
+            # print(f"waiting for lsu available at {core.env.now:.2f}")
             yield req
-            print(f"lsu is available, start writing data{self.index} at {core.env.now:.2f}")
+            # print(f"lsu is available, start writing data{self.index} at {core.env.now:.2f}")
             yield core.env.timeout(self.size / core.lsu_bandwidth)
-            print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
+            # print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
 
 class Conv(ComputeTask):
     def calc_flops(self):
@@ -118,6 +118,10 @@ class FC(ComputeTask):
         with core.tpu.request() as req:
             yield req
             yield core.env.timeout(self.flops / core.tpu_flops)
+
+class Stay(Task):
+    def run(self, core):
+        yield core.env.process(core.link.transmit(0))
 
 class Send(CommunicationTask):
     num_operands: int = 1

@@ -11,7 +11,7 @@ if project_root not in sys.path:
 from src.sim_type import Instruction, PEworkload, Workload
 
 pe_pattern = r'PE (\d+)'
-inst_pattern = r'(READ|WRITE|SEND|RECV|COMP) (\d+) (CONV|POOL|FC) (\d+) (PARA|FEAT|WGT) (-?\d+) (\d+)'
+inst_pattern = r'(READ|WRITE|SEND|RECV|COMP|STAY) (\d+) (CONV|POOL|FC) (\d+) (PARA|FEAT|WGT) (-?\d+) (\d+)'
 
 def inst_analyzer(filename: str) -> List[List[Instruction]]:
     all_pes = []

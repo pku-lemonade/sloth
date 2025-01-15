@@ -3,7 +3,7 @@ import logging
 from queue import Queue
 from src.config import CoreConfig, ScratchpadConfig
 from src.noc import Link, Router
-from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data
+from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -155,6 +155,7 @@ class TableScheduler:
         self.block_ptr = -1
         self.block_counter = 0
         self.id = id
+        self.tag = [True for _ in range(len(self.program))]
 
         self.tasks = []
         self.trigger = [[] for _ in range(len(self.program))]
@@ -168,6 +169,8 @@ class TableScheduler:
             self.index2taskid[inst.index] = id
             self.taskid2index[id] = inst.index
             match inst.inst_type:
+                case "STAY":
+                    self.tasks.append(Stay(index=inst.index, size=inst.size, flops=-1, num_operands=-1))
                 case "RECV":
                     self.tasks.append(Recv(index=-1, size=-1, flops=-1, dst=-1, src=-1))
                 case "READ":
@@ -219,6 +222,8 @@ class TableScheduler:
                             inputs.append(layer_inst)
                         case "RECV":
                             inputs.append(layer_inst)
+                        case "STAY":
+                            inputs.append(layer_inst)
                         case "WRITE":
                             # print("???")
                             outputs.append(layer_inst)
@@ -254,8 +259,10 @@ class TableScheduler:
             match inst.inst_type:
                 case "READ":
                     # print(f"insert {id} into waiting queue")
-                    logger.debug(f"insert {id} into waiting queue")
-                    self.waiting_queue.put(id)
+                    if self.tag[id]:
+                        self.tag[id] = False
+                        logger.debug(f"insert {id} into waiting queue")
+                        self.waiting_queue.put(id)
                 case "COMP":
                     para = 1 if self.tasks[id].para else 0
                     feat = 1 if self.tasks[id].feat else 0
@@ -263,21 +270,32 @@ class TableScheduler:
                     logger.debug(f"para is {para}, feat is {feat}")
                     if para + feat == self.tasks[id].num_operands:
                         # print(f"insert {id} into waiting queue")
-                        logger.debug(f"insert {id} into waiting queue")
-                        self.waiting_queue.put(id)
+                        if self.tag[id]:
+                            self.tag[id] = False
+                            logger.debug(f"insert {id} into waiting queue")
+                            self.waiting_queue.put(id)
                 case "SEND":
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
-                        logger.debug(f"insert {id} into waiting queue")
-                        self.waiting_queue.put(id)
+                        if self.tag[id]:
+                            self.tag[id] = False
+                            logger.debug(f"insert {id} into waiting queue")
+                            self.waiting_queue.put(id)
                 case "WRITE":
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
-                        logger.debug(f"insert {id} into waiting queue")
-                        self.waiting_queue.put(id)
+                        if self.tag[id]:
+                            self.tag[id] = False
+                            logger.debug(f"insert {id} into waiting queue")
+                            self.waiting_queue.put(id)
                 case "RECV":
                     if self.tasks[id].feat:
+                        logger.debug(f"self.counter += 1")
                         self.block_counter += 1
+                case "STAY":
+                    if self.tag[id]:
+                        self.tag[id] = False
+                        self.waiting_queue.put(id)
 
         if self.block_counter == self.block_size:
             self.task_block_update()
@@ -293,6 +311,10 @@ class TableScheduler:
             # print(f"PE{self.id} self.counter += 1")
             logger.debug(f"PE{self.id} self.counter += 1")
             self.block_counter += 1
+
+        logger.debug(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
+        if self.block_counter == self.block_size:
+            self.task_block_update()
 
         if self.program[task_id].inst_type == "WRITE":
             return
@@ -321,13 +343,10 @@ class TableScheduler:
                 logger.debug(f"para:{para} + feat:{feat}")
                 if para + feat == self.tasks[tri_task_id].num_operands:
                     # print(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                    logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                    self.waiting_queue.put(tri_task_id)
-        
-        # print(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
-        logger.debug(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
-        if self.block_counter == self.block_size:
-            self.task_block_update()
+                    if self.tag[tri_task_id]:
+                        logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                        self.tag[tri_task_id] = False
+                        self.waiting_queue.put(tri_task_id)
 
     def schedule(self):
         if self.waiting_queue.empty():
@@ -386,18 +405,21 @@ class Core:
         while True:
             if self.data_len() > 0 or nop:
                 data = yield self.data_queue.get()
+                nop = False
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{data.index}")
                 self.scheduler.update(data)
 
             # data = self.data_queue.get()
-            # print(data)
-            # if data:
+            # if data or nop:
+            #     yield data
             #     self.scheduler.update(data)
 
             task = self.scheduler.schedule()
+            if self.id == 13:
+                print(task)
 
             if task:
-                # print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
+                print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id} is processing a {type(task)} task(id:{task.index})")
                 yield self.env.process(self.run_task(task))
                 # print(f"Finished at time {self.env.now:.2f}")
