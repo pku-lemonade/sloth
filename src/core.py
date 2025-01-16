@@ -415,13 +415,12 @@ class Core:
             #     self.scheduler.update(data)
 
             task = self.scheduler.schedule()
-            if self.id == 13:
-                print(task)
 
             if task:
                 print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id} is processing a {type(task)} task(id:{task.index})")
-                yield self.env.process(self.run_task(task))
+                # yield self.env.process(self.run_task(task))
+                self.run_task(task)
                 # print(f"Finished at time {self.env.now:.2f}")
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing a {type(task)} task(id:{task.index})")
                 print_event_queue(self.env)
