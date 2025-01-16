@@ -67,7 +67,8 @@ class Router:
                 # self.compute_queue_len += 1
                 # print(f"put data{data.index} into core{self.core.id}")
                 logger.info(f"Time {self.env.now:.2f}: Finish routing data{data.index} to router{self.id}.")
-                yield self.core.data_queue.put(data)
+                self.core.data_queue.put(data)
+                logger.debug(f"router{self.id}'s data_queue_len is {self.core.data_len()}")
             else:
                 # print(f"Router{self.id} is sending data{data.index} to router{data.dst} at time {self.env.now:.2f}")
                 next_router = self.calculate_next_router(data.dst)

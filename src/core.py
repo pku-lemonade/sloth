@@ -353,15 +353,15 @@ class TableScheduler:
             # print(f"waiting queue is empty")
             return None
         else:
-            # print(f"waiting queue is not empty")
-            task_id = self.waiting_queue.get()
-            # print(f"local task id is:{task_id}")
-            logger.debug(f"local task id is:{task_id}")
-            self.update(Data(index=self.taskid2index[task_id],dst=-1,size=self.program[task_id].size))
-            return self.tasks[task_id]
+            task_ready = []
+            while not self.waiting_queue.empty():
+                task_id = self.waiting_queue.get()
+                task_ready.append(self.tasks[task_id])
+
+            return task_ready
 
 def print_event_queue(env):
-    print("Remaining events are:")
+    print("Remaining keys() are:")
     print("="*40)
     
     for event in env._queue:
@@ -401,33 +401,50 @@ class Core:
         self.router = router
 
     def run(self):
-        nop = False
+        # running 事件列表
+        self.running_event = []
+        self.event2task = {}
         while True:
-            if self.data_len() > 0 or nop:
-                data = yield self.data_queue.get()
-                nop = False
+            # data_arrive 是 StoreGet 事件
+            data_arrive = self.data_queue.get()
+            # task_finish 是 AnyOf 事件，包含 running 事件
+            task_finish = self.env.any_of(self.running_event)
+            # ret 是字典，事件->事件返回值(None)
+            # ret.keys() 是所有触发的事件
+            ret = yield data_arrive | task_finish
+            print(ret)
+
+            # print("data_arrive:")
+            # print(data_arrive)
+            # print("self_running_event:")
+            # print(self.running_event)
+            # print("ret_keys:")
+            # print(ret.keys())
+
+            if data_arrive in ret.keys():
+                data = ret[data_arrive]
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{data.index}")
+                logger.debug(f"received data is {data}")
+                logger.debug(f"data_queue_len is {self.data_len()}")
                 self.scheduler.update(data)
 
-            # data = self.data_queue.get()
-            # if data or nop:
-            #     yield data
-            #     self.scheduler.update(data)
+            for event in ret.keys():
+                if event in self.running_event:
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
+                    self.scheduler.update(Data(index=self.event2task[event].index,dst=-1,size=-1))
+                    self.running_event.remove(event)
 
-            task = self.scheduler.schedule()
-
-            if task:
-                print(f"PE{self.id} is processing a {type(task)}task(id:{task.index}, size:{task.size}) at time {self.env.now:.2f}")
-                logger.info(f"Time {self.env.now:.2f}: PE{self.id} is processing a {type(task)} task(id:{task.index})")
-                # yield self.env.process(self.run_task(task))
-                self.run_task(task)
-                # print(f"Finished at time {self.env.now:.2f}")
-                logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing a {type(task)} task(id:{task.index})")
-                print_event_queue(self.env)
-            else:
-                nop = True
-                # print(f"PE{self.id} is doing nothing at time {self.env.now:.2f}")
-                logger.debug(f"PE{self.id} is doing nothing at time {self.env.now:.2f}")
+            task_ready = self.scheduler.schedule()
+            
+            if task_ready:
+                for task in task_ready:
+                    task_event = self.env.process(task.run(self))
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
+                    self.running_event.append(task_event)
+                    self.event2task[task_event] = task
+            
+            if not self.running_event and self.data_len() == 0:
+                break
 
     def run_task(self, task):
         self.spm_manager.allocate(task)
