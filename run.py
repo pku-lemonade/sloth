@@ -1,11 +1,13 @@
 import json
+import time
 import logging
 import argparse
-from src.config import ArchConfig
+from src.arch_config import ArchConfig
 from src.sim_type import Workload
 from src.architecture import Arch
 from pydantic import ValidationError
 
+batch_size = 16
 def config_analyzer(filename: str) -> ArchConfig:
     with open(filename, 'r') as file:
         data = json.load(file)
@@ -37,8 +39,8 @@ def setup_logging(filename, level):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--workload", type=str, default="programs/resnet50/resnet50.json")
-    parser.add_argument("--arch", type=str, default="configs/arch.json")
+    parser.add_argument("--workload", type=str, default="tests/resnet50/workload.json")
+    parser.add_argument("--arch", type=str, default="arch/mesh4_4.json")
     parser.add_argument("--log", type=str, default="logging/simulation.log")
     parser.add_argument("--level", type=str, default="info")
 
@@ -64,7 +66,16 @@ def main():
 
     arch = Arch(arch_config, [pe.insts for pe in workload.pes])
 
-    arch.run()
+    start_time = time.time()
+    result = arch.run()
+    end_time = time.time()
+    simulation_time = end_time - start_time
+
+
+    print("="*40)
+    print(f"Simulation time is {simulation_time}.")
+    print(f"Total simulation cycles is {result.now * batch_size}.")
+
 
 if __name__ == '__main__':
     main()

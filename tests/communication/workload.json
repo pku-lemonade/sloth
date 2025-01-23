@@ -5,110 +5,139 @@
             "id": 0,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 37,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        39
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 38,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        39
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 39,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        61
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 61,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 89,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        90
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 90,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        109,
+                        125
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 109,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 125,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 164,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        166
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 165,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        166
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 166,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        184
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 184,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -118,110 +147,139 @@
             "id": 1,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 40,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        42
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 41,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        42
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 42,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        62
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 62,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 91,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        92
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 92,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        110,
+                        126
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 110,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 126,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 167,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        169
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 168,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        169
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 169,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        185
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 185,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -231,110 +289,139 @@
             "id": 2,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 43,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        45
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 44,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        45
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 45,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        63
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 63,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 93,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        94
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 94,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        111,
+                        127
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 111,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 127,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 170,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        172
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 171,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        172
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 172,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        186
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 186,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -344,110 +431,139 @@
             "id": 3,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 46,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        48
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 47,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        48
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 48,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        64
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 64,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 95,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        96
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 96,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        112,
+                        128
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 112,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 128,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 173,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        175
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 174,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        175
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 175,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        187
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 187,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -457,110 +573,139 @@
             "id": 4,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 25,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        27
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 26,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        27
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 27,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        57
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 57,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 81,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        82
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 82,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        105,
+                        121
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 105,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 121,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 155,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        157
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 156,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        157
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 157,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        181
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 181,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -570,110 +715,139 @@
             "id": 5,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 28,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        30
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 29,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        30
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 30,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        58
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 58,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 83,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        84
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 84,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        106,
+                        122
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 106,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 122,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 133,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        135
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 36864
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 134,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        135
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 100352
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 135,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        138
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 100352
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 138,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 401408
                 }
@@ -683,110 +857,139 @@
             "id": 6,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 31,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        33
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 32,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        33
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 33,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        59
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 59,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 85,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        86
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 86,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        107,
+                        123
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 107,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 123,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 158,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        160
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 159,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        160
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 160,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        182
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 182,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -796,110 +999,139 @@
             "id": 7,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 34,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        36
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 35,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        36
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 36,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        60
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 60,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 87,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        88
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 88,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        108,
+                        124
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 108,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 124,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 161,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        163
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 162,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        163
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 163,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        183
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 183,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -909,218 +1141,272 @@
             "id": 8,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 13,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        15
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 14,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        15
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 15,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        53
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 53,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 73,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        74
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 74,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        101,
+                        118
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 101,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 118,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 136,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        139
+                    ],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 137,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        139
+                    ],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 13,
                     "size": 401408
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 138,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        139
+                    ],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 5,
                     "size": 401408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 139,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        141,
+                        144,
+                        147,
+                        150,
+                        153,
+                        156,
+                        159,
+                        162,
+                        165,
+                        168,
+                        171,
+                        174
+                    ],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 141,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 12,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 144,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 14,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 147,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 15,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 150,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 10,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 153,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 11,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 156,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 4,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 159,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 6,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 162,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 7,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 165,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 0,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 168,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 171,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 2,
                     "size": 66901
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 174,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 4,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 3,
                     "size": 66901
                 }
@@ -1130,236 +1416,307 @@
             "id": 9,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 16,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        18
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 17,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        18
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 18,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        54
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 54,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 75,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        76
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 76,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        102
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 102,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 113,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 4096
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 114,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 12,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 115,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 13,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 116,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 14,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 117,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 15,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 118,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 119,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 10,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 120,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 11,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 121,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 4,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 122,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 5,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 123,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 6,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 124,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 7,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 125,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 0,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 126,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 1,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 127,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 2,
                     "size": 12544
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 128,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        129
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 3,
                     "size": 12544
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 129,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        131,
+                        134
+                    ],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 200704
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 131,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 13,
                     "size": 100352
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 134,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 2,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 5,
                     "size": 100352
                 }
@@ -1369,110 +1726,139 @@
             "id": 10,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 19,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        21
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 20,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        21
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 21,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        55
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 55,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 77,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        78
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 78,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        103,
+                        119
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 103,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 119,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 149,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        151
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 150,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        151
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 151,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        179
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 179,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -1482,110 +1868,139 @@
             "id": 11,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 22,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        24
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 23,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        24
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 24,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        56
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 56,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 79,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        80
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 80,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        104,
+                        120
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 104,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 120,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 152,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        154
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 153,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        154
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 154,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        180
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 180,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -1595,110 +2010,139 @@
             "id": 12,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 1,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        3
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 2,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        3
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 3,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        49
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 49,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 65,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        66
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 66,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        97,
+                        114
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 97,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 114,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 140,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        142
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 141,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        142
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 142,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        176
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 176,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -1708,110 +2152,139 @@
             "id": 13,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 4,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        6
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 5,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        6
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 6,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        50
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 50,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 67,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        68
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 68,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        98,
+                        115
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 98,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 115,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 130,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        132
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 36864
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 131,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        132
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 100352
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 132,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        137
+                    ],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 100352
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 137,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 3,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 401408
                 }
@@ -1821,110 +2294,139 @@
             "id": 14,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 7,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        9
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 8,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        9
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 9,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        51
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 51,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 69,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        70
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 70,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        99,
+                        116
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 99,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 116,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 143,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        145
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 144,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        145
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 145,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        177
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 177,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }
@@ -1934,110 +2436,139 @@
             "id": 15,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 10,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        12
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 11,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        12
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 12,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        52
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 52,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 71,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        72
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 0
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 72,
-                    "operation": "POOL",
+                    "trigger_index": [
+                        100,
+                        117
+                    ],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 50176
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 100,
-                    "operation": "POOL",
+                    "trigger_index": [],
+                    "operation": 1,
                     "layer_id": 1,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 },
                 {
-                    "inst_type": "SEND",
+                    "inst_type": 2,
                     "index": 117,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 1,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 9,
                     "size": 12544
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 146,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        148
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 16384
                 },
                 {
-                    "inst_type": "RECV",
+                    "inst_type": 3,
                     "index": 147,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        148
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": 8,
                     "size": 66901
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 148,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        178
+                    ],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 66901
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 178,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 5,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 802816
                 }

@@ -5,38 +5,48 @@
             "id": 0,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 1,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        3
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 2,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        3
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 3,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        13
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 13,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 }
@@ -46,38 +56,48 @@
             "id": 1,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 4,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        6
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 5,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        6
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 6,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        14
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 14,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 }
@@ -87,38 +107,48 @@
             "id": 2,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 7,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        9
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 8,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        9
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 9,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        15
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 15,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 }
@@ -128,38 +158,48 @@
             "id": 3,
             "insts": [
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 10,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        12
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "PARA",
+                    "data_type": 0,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "READ",
+                    "inst_type": 0,
                     "index": 11,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        12
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 9408
                 },
                 {
-                    "inst_type": "COMP",
+                    "inst_type": 5,
                     "index": 12,
-                    "operation": "CONV",
+                    "trigger_index": [
+                        16
+                    ],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "FEAT",
+                    "data_type": 1,
                     "position": -1,
                     "size": 588
                 },
                 {
-                    "inst_type": "WRITE",
+                    "inst_type": 1,
                     "index": 16,
-                    "operation": "CONV",
+                    "trigger_index": [],
+                    "operation": 0,
                     "layer_id": 0,
-                    "data_type": "WGT",
+                    "data_type": 2,
                     "position": -1,
                     "size": 150528
                 }

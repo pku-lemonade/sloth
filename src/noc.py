@@ -1,7 +1,7 @@
 import simpy
 import logging
-from src.config import LinkConfig, RouterConfig, NoCConfig
-from src.sim_type import Data
+from src.arch_config import LinkConfig, RouterConfig, NoCConfig
+from src.sim_type import Data, Message, ceil
 
 logger = logging.getLogger("NoC")
 
@@ -13,7 +13,7 @@ class Link:
         self.store = simpy.Store(env)
 
     def transmit(self, size):
-        transmission_time = size / self.width
+        transmission_time = ceil(size, self.width)
         latency = self.delay + transmission_time
 
         self.store.put(size)
@@ -47,34 +47,34 @@ class Router:
         self.core_link = link
         self.core = core
 
-    def route(self, data: Data, next_router_id: int):
+    def route(self, msg: Message, next_router_id: int):
         if next_router_id not in self.output_links:
             raise ValueError(f"There is no connection between Router{self.router_id} and Router{next_router_id}.")
 
         link, next_router = self.output_links[next_router_id]
 
-        yield self.env.process(link.transmit(data.size))
+        yield self.env.process(link.transmit(msg.data.size))
         # next_router.route_queue_len += 1
-        yield next_router.route_queue.put(data)
+        yield next_router.route_queue.put(msg)
 
     def run(self):
         while True:
-            data = yield self.route_queue.get()
+            msg = yield self.route_queue.get()
             # self.route_queue_len -= 1
 
-            if data.dst == self.id:
-                yield self.env.process(self.core_link.transmit(data.size))
+            if msg.dst == self.id:
+                yield self.env.process(self.core_link.transmit(msg.data.size))
                 # self.compute_queue_len += 1
                 # print(f"put data{data.index} into core{self.core.id}")
-                logger.info(f"Time {self.env.now:.2f}: Finish routing data{data.index} to router{self.id}.")
-                self.core.data_queue.put(data)
+                logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
+                self.core.data_queue.put(msg)
                 logger.debug(f"router{self.id}'s data_queue_len is {self.core.data_len()}")
             else:
                 # print(f"Router{self.id} is sending data{data.index} to router{data.dst} at time {self.env.now:.2f}")
-                next_router = self.calculate_next_router(data.dst)
-                logger.info(f"Time {self.env.now:.2f}: Router{self.id} send data{data.index} to router{next_router}.")
-                self.env.process(self.route(data, next_router))
-                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{data.index} to router{next_router}.")
+                next_router = self.calculate_next_router(msg.dst)
+                logger.info(f"Time {self.env.now:.2f}: Router{self.id} send data{msg.data.index} to router{next_router}.")
+                self.env.process(self.route(msg, next_router))
+                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}.")
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":

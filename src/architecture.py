@@ -1,7 +1,7 @@
 import simpy
 from src.core import Core
 from src.noc import NoC, Link
-from src.config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
+from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
 from src.sim_type import Instruction
 from typing import List
 
@@ -37,3 +37,4 @@ class Arch:
         print("Start simulation.")
         self.env.run()
         print("Simulation finished.")
+        return self.env

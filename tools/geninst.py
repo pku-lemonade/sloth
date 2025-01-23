@@ -1,6 +1,6 @@
 import re
 
-filename = "many-core-sim/tools/mapping.txt"
+filename = "tools/mapping.txt"
 
 border_pattern = r'\d+'
 pipeline_pattern = r'(\d+)'
@@ -183,7 +183,7 @@ with open(filename, "r", encoding="utf-8") as file:
             for part in layer_partition[pipeline_end]:
                 pe_instruction[to1d(part[0], part[1])].append(write(resnet50type[pipeline_end], resnet50[pipeline_end], pipeline_end))
 
-with open("many-core-sim/tools/instructions.txt", "w") as file:
+with open("tools/instructions.txt", "w") as file:
     for id in range(16):
         print(f"PE {id} {{", file=file)
         for inst in pe_instruction[id]:

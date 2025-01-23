@@ -1,9 +1,9 @@
 import simpy
 import logging
 from queue import Queue
-from src.config import CoreConfig, ScratchpadConfig
+from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc import Link, Router
-from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay
+from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay, TaskType, OperationType, DataType
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -156,9 +156,9 @@ class TableScheduler:
         self.block_counter = 0
         self.id = id
         self.tag = [True for _ in range(len(self.program))]
+        self.finish = False
 
         self.tasks = []
-        self.trigger = [[] for _ in range(len(self.program))]
 
         self.index2taskid = {}
         self.taskid2index = {}
@@ -169,80 +169,26 @@ class TableScheduler:
             self.index2taskid[inst.index] = id
             self.taskid2index[id] = inst.index
             match inst.inst_type:
-                case "STAY":
-                    self.tasks.append(Stay(index=inst.index, size=inst.size, flops=-1, num_operands=-1))
-                case "RECV":
-                    self.tasks.append(Recv(index=-1, size=-1, flops=-1, dst=-1, src=-1))
-                case "READ":
+                case TaskType.STAY:
+                    self.tasks.append(Stay(index=inst.index, size=inst.size))
+                case TaskType.RECV:
+                    self.tasks.append(Recv(index=inst.index, size=inst.size))
+                case TaskType.READ:
                     self.tasks.append(Read(index=inst.index, size=inst.size))
-                case "WRITE":
+                case TaskType.WRITE:
                     self.tasks.append(Write(index=inst.index, size=inst.size))
-                case "SEND":
+                case TaskType.SEND:
                     self.tasks.append(Send(index=inst.index, size=inst.size, dst=inst.position))
-                case "COMP":
+                case TaskType.COMP:
                     match inst.operation:
-                        case "CONV":
+                        case OperationType.CONV:
                             self.tasks.append(Conv(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
-                        case "POOL":
+                        case OperationType.POOL:
                             self.tasks.append(Pool(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
-                        case "FC":
+                        case OperationType.FC:
                             self.tasks.append(FC(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
-        
-        self.build_trigger()
+
         self.task_block_update()
-        
-                    
-    def build_trigger(self):
-        last_layer = -1
-        last_layer_ind = -1
-
-        inputs = []
-        outputs = []
-        comp_pos = -1
-        
-        for ind, inst in enumerate(self.program):
-            if inst.layer_id != last_layer or ind == len(self.program)-1:
-                if ind == len(self.program)-1:
-                    inst_start = last_layer_ind
-                    inst_end = len(self.program)
-                elif last_layer != -1:
-                    inst_start = last_layer_ind
-                    inst_end = ind
-                else:
-                    inst_start = 0
-                    inst_end = ind
-
-                inputs.clear()
-                outputs.clear()
-                comp_pos = -1
-
-                for idx, layer_inst in enumerate(self.program[inst_start:inst_end], start=inst_start):
-                    match layer_inst.inst_type:
-                        case "READ":
-                            inputs.append(layer_inst)
-                        case "RECV":
-                            inputs.append(layer_inst)
-                        case "STAY":
-                            inputs.append(layer_inst)
-                        case "WRITE":
-                            # print("???")
-                            outputs.append(layer_inst)
-                        case "SEND":
-                            outputs.append(layer_inst)
-                        case "COMP":
-                            # print("!!!")
-                            comp_pos = layer_inst
-                    
-                for input in inputs:
-                    self.trigger[self.index2taskid[input.index]].append(comp_pos)
-
-                for output in outputs:
-                    # print("insert")
-                    # print(f"{self.index2taskid[comp_pos.index]} -> {self.index2taskid[output.index]}")
-                    self.trigger[self.index2taskid[comp_pos.index]].append(output)
-                    
-                last_layer = inst.layer_id
-                last_layer_ind = ind
 
     def task_block_update(self):
         # print(f"PE{self.id} is task_blk_updating")
@@ -257,13 +203,13 @@ class TableScheduler:
             logger.debug("-"*30)
             logger.debug(f"inst_id is {id}, type is {inst.inst_type}")
             match inst.inst_type:
-                case "READ":
+                case TaskType.READ:
                     # print(f"insert {id} into waiting queue")
                     if self.tag[id]:
                         self.tag[id] = False
                         logger.debug(f"insert {id} into waiting queue")
                         self.waiting_queue.put(id)
-                case "COMP":
+                case TaskType.COMP:
                     para = 1 if self.tasks[id].para else 0
                     feat = 1 if self.tasks[id].feat else 0
                     # print(f"para is {para}, feat is {feat}")
@@ -274,25 +220,25 @@ class TableScheduler:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
-                case "SEND":
+                case TaskType.SEND:
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
-                case "WRITE":
+                case TaskType.WRITE:
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
-                case "RECV":
+                case TaskType.RECV:
                     if self.tasks[id].feat:
                         logger.debug(f"self.counter += 1")
                         self.block_counter += 1
-                case "STAY":
+                case TaskType.STAY:
                     if self.tag[id]:
                         self.tag[id] = False
                         self.waiting_queue.put(id)
@@ -311,33 +257,33 @@ class TableScheduler:
             # print(f"PE{self.id} self.counter += 1")
             logger.debug(f"PE{self.id} self.counter += 1")
             self.block_counter += 1
+            logger.debug(f"PE{self.id} self.counter is {self.block_counter}/10")
 
-        logger.debug(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
         if self.block_counter == self.block_size:
             self.task_block_update()
 
-        if self.program[task_id].inst_type == "WRITE":
+        if self.program[task_id].inst_type == TaskType.WRITE:
             return
         
-        if self.program[task_id].inst_type == "RECV":
+        if self.program[task_id].inst_type == TaskType.RECV:
             self.tasks[task_id].feat.append(data)
 
-        for idx in range(len(self.trigger[task_id])):
-            tri_task_id = self.index2taskid[self.trigger[task_id][idx].index]
+        for idx in range(len(self.program[task_id].trigger_index)):
+            tri_task_id = self.index2taskid[self.program[task_id].trigger_index[idx]]
             match self.program[task_id].data_type:
-                case "PARA":
+                case DataType.PARA:
                     self.tasks[tri_task_id].para.append(data)
-                case "FEAT":
+                case DataType.FEAT:
                     self.tasks[tri_task_id].feat.append(data)
 
             # print(f"{data.index} has triggered {self.trigger[task_id][idx].index}")
             # print(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
-            logger.debug(f"{data.index} has triggered {self.trigger[task_id][idx].index}")
+            logger.debug(f"{data.index} has triggered {self.program[task_id].trigger_index[idx]}")
             logger.debug(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
             if tri_task_id // self.block_size == self.block_ptr:
                 # print("inside")
                 logger.debug("inside")
-                para = 1 if self.program[tri_task_id].inst_type == "COMP" and self.tasks[tri_task_id].para else 0
+                para = 1 if self.program[tri_task_id].inst_type == TaskType.COMP and self.tasks[tri_task_id].para else 0
                 feat = 1 if self.tasks[tri_task_id].feat else 0
                 # print(f"para:{para} + feat:{feat}")
                 logger.debug(f"para:{para} + feat:{feat}")
@@ -353,9 +299,15 @@ class TableScheduler:
             # print(f"waiting queue is empty")
             return None
         else:
+            logger.debug(f"PE{self.id} block_counter: {self.block_counter}/{self.block_size}")
+            if self.block_counter == self.block_size:
+                self.task_block_update()
+
             task_ready = []
             while not self.waiting_queue.empty():
                 task_id = self.waiting_queue.get()
+                if task_id == len(self.program) - 1:
+                    self.finish = True
                 task_ready.append(self.tasks[task_id])
 
             return task_ready
@@ -404,34 +356,56 @@ class Core:
         # running 事件列表
         self.running_event = []
         self.event2task = {}
+
+        task_initial = self.scheduler.schedule()
+        for task in task_initial:
+            task_event = self.env.process(task.run(self))
+            logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
+            self.running_event.append(task_event)
+            self.event2task[task_event] = task
+        
         while True:
             # data_arrive 是 StoreGet 事件
-            data_arrive = self.data_queue.get()
+            # msg_arrive = None
+            # if self.data_len() > 0:
+            msg_arrive = []
+            if self.data_len() > 0:
+                msg_arrive.append(self.data_queue.get())
+            elif (not self.running_event) and (not self.scheduler.finish):
+                msg = yield self.data_queue.get()
+                self.scheduler.update(msg.data)
+            # msg_arrive.append(self.data_queue.get())
+            # self.running_event.append(msg_arrive)
+
             # task_finish 是 AnyOf 事件，包含 running 事件
-            task_finish = self.env.any_of(self.running_event)
+            # task_finish = self.env.any_of(self.running_event)
+
+            msg_or_task = self.env.any_of(self.running_event + msg_arrive)
+            
+            # if self.id == 9:
+            #     print(f"PE{self.id} msg_task: {msg_or_task}")
             # ret 是字典，事件->事件返回值(None)
             # ret.keys() 是所有触发的事件
-            ret = yield data_arrive | task_finish
-            print(ret)
+            # ret = yield msg_arrive | task_finish
+            ret = yield msg_or_task
+            # if self.id == 9:
+            #     print(f"PE{self.id} msg_task_trigger: {ret}")
 
-            # print("data_arrive:")
-            # print(data_arrive)
-            # print("self_running_event:")
-            # print(self.running_event)
-            # print("ret_keys:")
-            # print(ret.keys())
-
-            if data_arrive in ret.keys():
-                data = ret[data_arrive]
-                logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{data.index}")
-                logger.debug(f"received data is {data}")
-                logger.debug(f"data_queue_len is {self.data_len()}")
-                self.scheduler.update(data)
+            # if self.id == 9:
+            #     print(f"in PE{self.id}")
+            #     print(ret)
 
             for event in ret.keys():
+                if event in msg_arrive:
+                    msg = ret[event]
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
+                    logger.debug(f"received data is {msg.data}")
+                    logger.debug(f"data_queue_len is {self.data_len()}")
+                    self.scheduler.update(msg.data)
+                    
                 if event in self.running_event:
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
-                    self.scheduler.update(Data(index=self.event2task[event].index,dst=-1,size=-1))
+                    self.scheduler.update(Data(index=self.event2task[event].index))
                     self.running_event.remove(event)
 
             task_ready = self.scheduler.schedule()
@@ -443,7 +417,9 @@ class Core:
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
             
-            if not self.running_event and self.data_len() == 0:
+            # if (not self.running_event) and self.data_len() == 0:
+                # break
+            if (not self.running_event) and self.data_len() == 0 and self.scheduler.finish:
                 break
 
     def run_task(self, task):
