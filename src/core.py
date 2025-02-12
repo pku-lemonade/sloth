@@ -330,10 +330,6 @@ class Core:
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
 
-        # print(f"Building PE{self.id}'s instruction dependency graph.")
-        # self.scheduler.build_graph()
-        # print("Finished.")
-
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
         self.lsu = simpy.Resource(env, capacity=2)
@@ -365,35 +361,15 @@ class Core:
             self.event2task[task_event] = task
         
         while True:
-            # data_arrive 是 StoreGet 事件
-            # msg_arrive = None
-            # if self.data_len() > 0:
             msg_arrive = []
             if self.data_len() > 0:
                 msg_arrive.append(self.data_queue.get())
             elif (not self.running_event) and (not self.scheduler.finish):
                 msg = yield self.data_queue.get()
                 self.scheduler.update(msg.data)
-            # msg_arrive.append(self.data_queue.get())
-            # self.running_event.append(msg_arrive)
-
-            # task_finish 是 AnyOf 事件，包含 running 事件
-            # task_finish = self.env.any_of(self.running_event)
 
             msg_or_task = self.env.any_of(self.running_event + msg_arrive)
-            
-            # if self.id == 9:
-            #     print(f"PE{self.id} msg_task: {msg_or_task}")
-            # ret 是字典，事件->事件返回值(None)
-            # ret.keys() 是所有触发的事件
-            # ret = yield msg_arrive | task_finish
             ret = yield msg_or_task
-            # if self.id == 9:
-            #     print(f"PE{self.id} msg_task_trigger: {ret}")
-
-            # if self.id == 9:
-            #     print(f"in PE{self.id}")
-            #     print(ret)
 
             for event in ret.keys():
                 if event in msg_arrive:
@@ -417,8 +393,6 @@ class Core:
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
             
-            # if (not self.running_event) and self.data_len() == 0:
-                # break
             if (not self.running_event) and self.data_len() == 0 and self.scheduler.finish:
                 break
 
