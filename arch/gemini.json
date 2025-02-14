@@ -6,7 +6,7 @@
 		"width" : 8,
 		"blk_size" : 20,
 		"spm" : {
-			"size" : 10240,
+			"size" : 10240000,
 			"delay" : 0
 		},
 		"tpu" : {

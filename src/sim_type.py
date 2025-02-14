@@ -5,9 +5,25 @@ from pydantic import BaseModel
 def ceil(a: int, b: int):
     return (a + b - 1) // b
 
+class RouterFail(BaseModel):
+    start_time: int
+    end_time: int
+    times: int
+
+class LinkFail(BaseModel):
+    start_time: int
+    end_time: int
+    router_id: int
+    direction: int
+    times: int
+
+class FailSlow(BaseModel):
+    router: List[RouterFail]
+    link: List[LinkFail]
+
 class Data(BaseModel):
     index: int
-    size: int = -1
+    size: int
 
 class Message(BaseModel):
     data: Data
@@ -95,6 +111,12 @@ class Read(IOTask):
             yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
             # print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
 
+    def input_size(self):
+        return 0
+
+    def output_size(self):
+        return self.size
+
 class Write(IOTask):
     num_operands: int = 1
     feat: list[Data] = []
@@ -107,14 +129,20 @@ class Write(IOTask):
             yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
             # print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
 
+    def input_size(self):
+        return self.size
+
+    def output_size(self):
+        return 0
+
 class Conv(ComputeTask):
     def calc_flops(self):
         paras = 0
         feats = 0
         for para in self.para:
-            paras += para
+            paras += para.size
         for feat in self.feat:
-            feats += feat
+            feats += feat.size
         self.flops = paras * feats
 
     def run(self, core):
@@ -125,6 +153,17 @@ class Conv(ComputeTask):
             # if core.id == 9:
             #     print(f"conv{self.index}::run")
             yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
+
+    def input_size(self):
+        res = 0
+        for para in self.para:
+            res += para.size
+        for feat in self.feat:
+            res += feat.size
+        return res
+
+    def output_size(self):
+        return self.size
 
 class Pool(ComputeTask):
     num_operands: int = 1
@@ -137,14 +176,20 @@ class Pool(ComputeTask):
             yield req
             yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
 
+    def input_size(self):
+        return self.size
+
+    def output_size(self):
+        return self.size
+
 class FC(ComputeTask):
     def calc_flops(self):
         paras = 0
         feats = 0
         for para in self.para:
-            paras += para
+            paras += para.size
         for feat in self.feat:
-            feats += feat
+            feats += feat.size
         self.flops = paras * feats
 
     def run(self, core):
@@ -152,11 +197,28 @@ class FC(ComputeTask):
             yield req
             yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
 
+    def input_size(self):
+        res = 0
+        for para in self.para:
+            res += para.size
+        for feat in self.feat:
+            res += feat.size
+        return res
+
+    def output_size(self):
+        return self.size
+
 class Stay(Task):
     flops: int = -1
     num_operands: int = -1
     def run(self, core):
         yield core.env.process(core.link.transmit(0))
+
+    def input_size(self):
+        return 0
+
+    def output_size(self):
+        return 0
 
 class Send(CommunicationTask):
     num_operands: int = 1
@@ -167,12 +229,25 @@ class Send(CommunicationTask):
         # print(f"data{self.index} was put into router{core.router.id}")
         core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
-        yield core.router.north_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        # yield core.router.core_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+
+    def input_size(self):
+        return self.size
+
+    def output_size(self):
+        return 0
 
 class Recv(CommunicationTask):
     dst: int = -1
     src: int = -1
     feat: list[Data] = []
     def run(self, core):
-        # wait to be compeleted
-        core.spm_manager.allocate(self.size)
+        pass
+
+    def input_size(self):
+        return 0
+
+    def output_size(self):
+        return self.size
+    
