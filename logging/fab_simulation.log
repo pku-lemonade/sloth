@@ -1,0 +1,35 @@
+2025-02-14 11:58:27 - PE - INFO - Time 0.00: PE0 add a <class 'src.sim_type.Read'> task(id:1) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 0.00: PE1 add a <class 'src.sim_type.Read'> task(id:2) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 0.00: PE2 add a <class 'src.sim_type.Read'> task(id:3) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 0.00: PE3 add a <class 'src.sim_type.Read'> task(id:4) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE0 finish processing <class 'src.sim_type.Read'> task(id:1).
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE0 add a <class 'src.sim_type.Pool'> task(id:5) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE1 finish processing <class 'src.sim_type.Read'> task(id:2).
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE2 finish processing <class 'src.sim_type.Read'> task(id:3).
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE3 finish processing <class 'src.sim_type.Read'> task(id:4).
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE0 finish processing <class 'src.sim_type.Pool'> task(id:5).
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE0 add a <class 'src.sim_type.Send'> task(id:6) into running queue.
+2025-02-14 11:58:27 - NoC - INFO - Time 1.00: Router0 send data6 to router1.
+2025-02-14 11:58:27 - NoC - INFO - Time 1.00: Router0 finished sending data6 to router1.
+2025-02-14 11:58:27 - PE - INFO - Time 1.00: PE0 finish processing <class 'src.sim_type.Send'> task(id:6).
+2025-02-14 11:58:27 - NoC - INFO - Time 5.00: Finish routing data6 to router1.
+2025-02-14 11:58:27 - PE - INFO - Time 5.00: PE1 add a <class 'src.sim_type.Conv'> task(id:7) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 6.00: PE1 finish processing <class 'src.sim_type.Conv'> task(id:7).
+2025-02-14 11:58:27 - PE - INFO - Time 6.00: PE1 add a <class 'src.sim_type.Send'> task(id:8) into running queue.
+2025-02-14 11:58:27 - NoC - INFO - Time 6.00: Router1 send data8 to router3.
+2025-02-14 11:58:27 - NoC - INFO - Time 6.00: Router1 finished sending data8 to router3.
+2025-02-14 11:58:27 - PE - INFO - Time 6.00: PE1 finish processing <class 'src.sim_type.Send'> task(id:8).
+2025-02-14 11:58:27 - NoC - INFO - Time 8.00: Router3 send data8 to router2.
+2025-02-14 11:58:27 - NoC - INFO - Time 8.00: Router3 finished sending data8 to router2.
+2025-02-14 11:58:27 - NoC - INFO - Time 12.00: Finish routing data8 to router2.
+2025-02-14 11:58:27 - PE - INFO - Time 12.00: PE2 add a <class 'src.sim_type.Conv'> task(id:9) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 13.00: PE2 finish processing <class 'src.sim_type.Conv'> task(id:9).
+2025-02-14 11:58:27 - PE - INFO - Time 13.00: PE2 add a <class 'src.sim_type.Send'> task(id:10) into running queue.
+2025-02-14 11:58:27 - NoC - INFO - Time 13.00: Router2 send data10 to router3.
+2025-02-14 11:58:27 - NoC - INFO - Time 13.00: Router2 finished sending data10 to router3.
+2025-02-14 11:58:27 - PE - INFO - Time 13.00: PE2 finish processing <class 'src.sim_type.Send'> task(id:10).
+2025-02-14 11:58:27 - NoC - INFO - Time 17.00: Finish routing data10 to router3.
+2025-02-14 11:58:27 - PE - INFO - Time 17.00: PE3 add a <class 'src.sim_type.Conv'> task(id:11) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 18.00: PE3 finish processing <class 'src.sim_type.Conv'> task(id:11).
+2025-02-14 11:58:27 - PE - INFO - Time 18.00: PE3 add a <class 'src.sim_type.Write'> task(id:12) into running queue.
+2025-02-14 11:58:27 - PE - INFO - Time 19.00: PE3 finish processing <class 'src.sim_type.Write'> task(id:12).

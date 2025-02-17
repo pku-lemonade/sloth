@@ -15,13 +15,13 @@ class SPMManager:
 
         self.capacity = self.size
 
-    def allocate(self, task):
-        if task.size > self.capacity:
+    def allocate(self, size):
+        if size > self.capacity:
             raise ValueError("Not enough space in SPM")
-        self.capacity -= task.size
+        self.capacity -= size
 
-    def free(self, task):
-        self.capacity += task.size
+    def free(self, size):
+        self.capacity += size
 
 class Graph:
     def __init__(self, num):
@@ -257,7 +257,7 @@ class TableScheduler:
             # print(f"PE{self.id} self.counter += 1")
             logger.debug(f"PE{self.id} self.counter += 1")
             self.block_counter += 1
-            logger.debug(f"PE{self.id} self.counter is {self.block_counter}/10")
+            logger.debug(f"PE{self.id} self.counter is {self.block_counter}/{self.block_size}")
 
         if self.block_counter == self.block_size:
             self.task_block_update()
@@ -330,10 +330,6 @@ class Core:
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
 
-        # print(f"Building PE{self.id}'s instruction dependency graph.")
-        # self.scheduler.build_graph()
-        # print("Finished.")
-
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
         self.lsu = simpy.Resource(env, capacity=2)
@@ -357,70 +353,44 @@ class Core:
         self.running_event = []
         self.event2task = {}
 
-        task_initial = self.scheduler.schedule()
-        for task in task_initial:
-            task_event = self.env.process(task.run(self))
-            logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
-            self.running_event.append(task_event)
-            self.event2task[task_event] = task
-        
         while True:
-            # data_arrive 是 StoreGet 事件
-            # msg_arrive = None
-            # if self.data_len() > 0:
             msg_arrive = []
-            if self.data_len() > 0:
+            while self.data_len() > 0:
                 msg_arrive.append(self.data_queue.get())
-            elif (not self.running_event) and (not self.scheduler.finish):
-                msg = yield self.data_queue.get()
-                self.scheduler.update(msg.data)
-            # msg_arrive.append(self.data_queue.get())
-            # self.running_event.append(msg_arrive)
-
-            # task_finish 是 AnyOf 事件，包含 running 事件
-            # task_finish = self.env.any_of(self.running_event)
-
-            msg_or_task = self.env.any_of(self.running_event + msg_arrive)
             
-            # if self.id == 9:
-            #     print(f"PE{self.id} msg_task: {msg_or_task}")
-            # ret 是字典，事件->事件返回值(None)
-            # ret.keys() 是所有触发的事件
-            # ret = yield msg_arrive | task_finish
-            ret = yield msg_or_task
-            # if self.id == 9:
-            #     print(f"PE{self.id} msg_task_trigger: {ret}")
-
-            # if self.id == 9:
-            #     print(f"in PE{self.id}")
-            #     print(ret)
-
-            for event in ret.keys():
-                if event in msg_arrive:
-                    msg = ret[event]
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                    logger.debug(f"received data is {msg.data}")
-                    logger.debug(f"data_queue_len is {self.data_len()}")
-                    self.scheduler.update(msg.data)
-                    
-                if event in self.running_event:
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
-                    self.scheduler.update(Data(index=self.event2task[event].index))
-                    self.running_event.remove(event)
-
             task_ready = self.scheduler.schedule()
-            
             if task_ready:
                 for task in task_ready:
+                    self.spm_manager.allocate(task.output_size())
                     task_event = self.env.process(task.run(self))
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
-            
-            # if (not self.running_event) and self.data_len() == 0:
-                # break
-            if (not self.running_event) and self.data_len() == 0 and self.scheduler.finish:
-                break
+
+            msg_or_task = self.env.any_of(self.running_event + msg_arrive)
+            result = yield msg_or_task
+            updated = False
+
+            for event in msg_arrive:
+                if event.triggered:
+                    updated = True
+                    msg = event.value
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
+                    logger.debug(f"received data is {msg.data}")
+                    logger.debug(f"data_queue_len is {self.data_len()}")
+                    self.scheduler.update(msg.data)
+
+            for event in self.running_event:
+                if event in result.keys():
+                    updated = True
+                    self.spm_manager.free(task.input_size())
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
+                    self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
+                    self.running_event.remove(event)
+
+            if not updated:
+                msg = yield self.data_queue.get()
+                self.scheduler.update(msg.data)
 
     def run_task(self, task):
         self.spm_manager.allocate(task)

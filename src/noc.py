@@ -1,9 +1,16 @@
 import simpy
 import logging
+from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
 from src.sim_type import Data, Message, ceil
 
 logger = logging.getLogger("NoC")
+
+class Direction(IntEnum):
+    NORTH = 1
+    SOUTH = 2
+    EAST = 3
+    WEST = 4
 
 class Link:
     def __init__(self, env, config: LinkConfig):
