@@ -2,7 +2,7 @@ import simpy
 import logging
 from queue import Queue
 from src.arch_config import CoreConfig, ScratchpadConfig
-from src.noc import Link, Router
+from src.noc_new import Link, Router
 from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay, TaskType, OperationType, DataType
 from typing import List
 
@@ -354,10 +354,6 @@ class Core:
         self.event2task = {}
 
         while True:
-            msg_arrive = []
-            while self.data_len() > 0:
-                msg_arrive.append(self.data_queue.get())
-            
             task_ready = self.scheduler.schedule()
             if task_ready:
                 for task in task_ready:
@@ -367,30 +363,43 @@ class Core:
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
 
-            msg_or_task = self.env.any_of(self.running_event + msg_arrive)
-            result = yield msg_or_task
-            updated = False
+            logger.info(f"Before trigger::PE{self.id} data_len is: {self.data_len()}")
+            logger.info(self.data_queue)
+            msg_arrive = self.data_queue.get()
 
-            for event in msg_arrive:
-                if event.triggered:
-                    updated = True
+            result = yield self.env.any_of(self.running_event + [msg_arrive])
+            logger.info(f"Time {self.env.now:.2f}: PE{self.id}'s result is {result}")
+            # updated = False
+
+            if msg_arrive.triggered:
+                # updated = True
+                msg = msg_arrive.value
+                logger.info(f"Time {self.env.now:.2f}: triggered::PE{self.id} receive data{msg.data.index}")
+                logger.debug(f"received data is {msg.data}")
+                logger.debug(f"data_queue_len is {self.data_len()}")
+                self.scheduler.update(msg.data)
+
+                logger.info(f"After trigger::PE{self.id} data_len is: {self.data_len()}")
+
+                while self.data_len() > 0:
+                    event = self.data_queue.get()
                     msg = event.value
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                    logger.debug(f"received data is {msg.data}")
-                    logger.debug(f"data_queue_len is {self.data_len()}")
+                    logger.info(f"received data is {msg.data}")
+                    logger.info(f"data_queue_len is {self.data_len()}")
                     self.scheduler.update(msg.data)
 
             for event in self.running_event:
-                if event in result.keys():
-                    updated = True
+                if event.triggered:
+                    # updated = True
                     self.spm_manager.free(task.input_size())
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
                     self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
                     self.running_event.remove(event)
 
-            if not updated:
-                msg = yield self.data_queue.get()
-                self.scheduler.update(msg.data)
+            # if not updated:
+            #     msg = yield self.data_queue.get()
+            #     self.scheduler.update(msg.data)
 
     def run_task(self, task):
         self.spm_manager.allocate(task)

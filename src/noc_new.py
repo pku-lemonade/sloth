@@ -83,59 +83,69 @@ class Router:
         self.core_link = link
         self.core = core
 
-    def route(self, msg: Message, next_dir):
+    def route(self, msg: Message, next_dir, next_router):
+        link, out = None, None
         match next_dir:
             case Direction.NORTH:
-                yield self.env.process(self.north_link.transmit(msg.data.size))
-                self.north_out.put(msg)
+                link = self.north_link
+                out = self.north_out
             case Direction.SOUTH:
-                yield self.env.process(self.south_link.transmit(msg.data.size))
-                self.south_out.put(msg)
+                link = self.south_link
+                out = self.south_out
             case Direction.EAST:
-                yield self.env.process(self.east_link.transmit(msg.data.size))
-                self.east_out.put(msg)
+                link = self.east_link
+                out = self.east_out
             case Direction.WEST:
-                yield self.env.process(self.west_link.transmit(msg.data.size))
-                self.west_out.put(msg)
+                link = self.west_link
+                out = self.west_out
+
+        yield self.env.process(link.transmit(msg.data.size))
+        out.put(msg)
+        logger.info(f"Time {self.env.now:.2f}: Router{self.id} finish sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+
+    def route_core(self, msg):
+        logger.info(f"Time {self.env.now:.2f}: Transmitting data{msg.data.index} to core{self.id}.")
+        yield self.env.process(self.core_link.transmit(msg.data.size))
+        self.core_out.put(msg)
+        logger.info(self.core_out)
+        logger.info(f"Time {self.env.now:.2f}: Finish putting data{msg.data.index}, PE{self.id}'s data_len is {self.core.data_len()}")
  
     def run(self):
         while True:
-            all_in_channels = []
-            # all_in_channels = [self.north_in.get(), self.south_in.get(), self.east_in.get(), self.west_in.get(), self.core_in.get()]
-
-            while len(self.north_in.items) > 0:
-                all_in_channels.append(self.north_in.get())
-            while len(self.south_in.items) > 0:
-                all_in_channels.append(self.south_in.get())
-            while len(self.east_in.items) > 0:
-                all_in_channels.append(self.east_in.get())
-            while len(self.west_in.items) > 0:
-                all_in_channels.append(self.west_in.get())
-            while len(self.core_in.items) > 0:
-                all_in_channels.append(self.core_in.get())
-
-            all_in_channels.extend([self.north_in.get(), self.south_in.get(), self.east_in.get(), self.west_in.get(), self.core_in.get()])
-
+            all_in_channels = [self.north_in.get(), self.south_in.get(), self.east_in.get(), self.west_in.get(), self.core_in.get()]
 
             events = self.env.any_of(all_in_channels)
             result = yield events
 
-            for event in all_in_channels:
+            for id, event in enumerate(all_in_channels):
                 if event.triggered:
                     msg = event.value
-                    print(f"id:{self.id} is processing data{msg.data.index}(to {msg.dst})")
                     if msg.dst == self.id:
-                        yield self.env.process(self.core_link.transmit(msg.data.size))
                         logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
-                        self.core_out.put(msg)
-                        logger.debug(f"router{self.id}'s data_queue_len is {self.core.data_len()}")
+                        self.env.process(self.route_core(msg))
                     else:
                         next_dir, next_router = self.calculate_next_router(msg.dst)
-                        print(f"next_dir is {next_dir}, next_router is {next_router}")
-                        # print(f"self_id:{self.id} -> next_id:{next_router}, direction:{next_dir}")
-                        logger.info(f"Time {self.env.now:.2f}: Router{self.id} send data{msg.data.index} to router{next_router}.")
-                        self.env.process(self.route(msg, next_dir))
-                        logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}.")
+                        logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+                        self.env.process(self.route(msg, next_dir, next_router))
+                    
+                    channel = None
+                    match id:
+                        case 0: channel = self.north_in
+                        case 1: channel = self.south_in
+                        case 2: channel = self.east_in
+                        case 3: channel = self.west_in
+                        case 4: channel = self.core_in
+                    
+                    while len(channel.items) > 0:
+                        element = channel.get()
+                        msg = element.value
+                        if msg.dst == self.id:
+                            logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
+                            self.env.process(self.route_core(msg))
+                        else:
+                            next_dir, next_router = self.calculate_next_router(msg.dst)
+                            logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+                            self.env.process(self.route(msg, next_dir, next_router))
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":
@@ -196,8 +206,6 @@ class NoC:
                 if row > 0:
                     west_router_id = (row - 1) * self.y + col
                     west_out = self.routers[west_router_id].east_in
-                    if router_id == 12:
-                        print(west_router_id)
                 # connect with the east Router
                 if row < self.x - 1:
                     east_router_id = (row + 1) * self.y + col

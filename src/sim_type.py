@@ -229,8 +229,8 @@ class Send(CommunicationTask):
         # print(f"data{self.index} was put into router{core.router.id}")
         core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
-        yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
-        # yield core.router.core_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.router.core_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
 
     def input_size(self):
         return self.size

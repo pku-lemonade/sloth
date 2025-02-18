@@ -1,6 +1,6 @@
 import simpy
 from src.core import Core
-from src.noc import NoC, Link, Direction
+from src.noc_new import NoC, Link, Direction
 from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
 from src.sim_type import Instruction, FailSlow
 from typing import List
