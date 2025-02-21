@@ -1,5 +1,6 @@
 import simpy
 import logging
+import contextlib
 from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
 from src.sim_type import Data, Message, ceil
@@ -7,28 +8,52 @@ from src.sim_type import Data, Message, ceil
 logger = logging.getLogger("NoC")
 
 class Direction(IntEnum):
-    NORTH = 1
-    SOUTH = 2
-    EAST = 3
-    WEST = 4
+    NORTH = 0
+    SOUTH = 1
+    EAST = 2
+    WEST = 3
+
+# class Link:
+#     def __init__(self, env, config: LinkConfig):
+#         self.env = env
+#         self.width = config.width
+#         self.delay = config.delay
+#         # self.store = simpy.Store(env)
+
+#     def transmit(self, size):
+#         transmission_time = ceil(size, self.width)
+#         latency = self.delay + transmission_time
+
+#         # self.store.put(size)
+#         yield self.env.timeout(latency)
+#         # self.store.get()
+
+#     def change_width(self, times):
+#         self.width *= times
 
 class Link:
-    def __init__(self, env, config: LinkConfig):
+    def __init__(self, env, config):
         self.env = env
         self.width = config.width
         self.delay = config.delay
         self.store = simpy.Store(env)
 
-    def transmit(self, size):
-        transmission_time = ceil(size, self.width)
+    def calc_latency(self, msg):
+        transmission_time = ceil(msg.data.size, self.width)
         latency = self.delay + transmission_time
 
-        self.store.put(size)
         yield self.env.timeout(latency)
-        self.store.get()
+        # yield self.env.timeout(0)
+        self.store.put(msg)
 
-    def change_width(self, times):
-        self.width *= times
+    def put(self, msg):
+        return self.env.process(self.calc_latency(msg))
+
+    def get(self):
+        return self.store.get()
+    
+    def len(self):
+        return len(self.store.items)
 
 
 class Router:
@@ -41,111 +66,94 @@ class Router:
         self.type = config.type
         self.vc = config.vc
 
-        self.core_in = simpy.Store(self.env)
-        self.core_out = None
-        self.core_link = None
-
-        self.north_in = simpy.Store(self.env)
-        self.north_out = None
-        self.north_link = None
-
-        self.south_in = simpy.Store(self.env)
-        self.south_out = None
-        self.south_link = None
-
-        self.east_in = simpy.Store(self.env)
-        self.east_out = None
-        self.east_link = None
-
-        self.west_in = simpy.Store(self.env)
-        self.west_out = None
-        self.west_link = None
-
-        
-        self.core = None
+        self.core_in, self.core_out = None, None
+        self.north_in, self.north_out = None, None
+        self.south_in, self.south_out = None, None
+        self.east_in, self.east_out = None, None
+        self.west_in, self.west_out = None, None
 
         self.env.process(self.run())
 
-    def bound_with_store(self, north_out, south_out, east_out, west_out):
+    def bound_with_north(self, north_in, north_out):
+        self.north_in = north_in
         self.north_out = north_out
+
+    def bound_with_south(self, south_in, south_out):
+        self.south_in = south_in
         self.south_out = south_out
+
+    def bound_with_east(self, east_in, east_out):
+        self.east_in = east_in
         self.east_out = east_out
+
+    def bound_with_west(self, west_in, west_out):
+        self.west_in = west_in
         self.west_out = west_out
 
-    def bound_with_link(self, north_link, south_link, east_link, west_link):
-        self.north_link = north_link
-        self.south_link = south_link
-        self.east_link = east_link
-        self.west_link = west_link
-
-    def bound_with_core(self, link: Link, core):
-        self.core_out = core.data_queue
-        self.core_link = link
-        self.core = core
+    def bound_with_core(self, core_in, core_out):
+        self.core_in = core_in
+        self.core_out = core_out
 
     def route(self, msg: Message, next_dir, next_router):
-        link, out = None, None
         match next_dir:
             case Direction.NORTH:
-                link = self.north_link
-                out = self.north_out
+                yield self.north_out.put(msg)
             case Direction.SOUTH:
-                link = self.south_link
-                out = self.south_out
+                yield self.south_out.put(msg)
             case Direction.EAST:
-                link = self.east_link
-                out = self.east_out
+                yield self.east_out.put(msg)
             case Direction.WEST:
-                link = self.west_link
-                out = self.west_out
+                yield self.west_out.put(msg)
 
-        yield self.env.process(link.transmit(msg.data.size))
-        out.put(msg)
         logger.info(f"Time {self.env.now:.2f}: Router{self.id} finish sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
 
     def route_core(self, msg):
-        logger.info(f"Time {self.env.now:.2f}: Transmitting data{msg.data.index} to core{self.id}.")
-        yield self.env.process(self.core_link.transmit(msg.data.size))
-        self.core_out.put(msg)
-        logger.info(self.core_out)
-        logger.info(f"Time {self.env.now:.2f}: Finish putting data{msg.data.index}, PE{self.id}'s data_len is {self.core.data_len()}")
+        yield self.core_out.put(msg)
+        logger.info(f"Time {self.env.now:.2f}: Finish putting data{msg.data.index} to PE{self.id}")
  
     def run(self):
         while True:
-            all_in_channels = [self.north_in.get(), self.south_in.get(), self.east_in.get(), self.west_in.get(), self.core_in.get()]
+            all_possible_channels = [(self.north_in, 0), (self.south_in, 1), (self.east_in, 2), (self.west_in, 3), (self.core_in, 4)]
+            all_channels = [channel for channel in all_possible_channels if channel[0] is not None]
 
-            events = self.env.any_of(all_in_channels)
-            result = yield events
+            # with self.north_in.get() as n, self.south_in.get() as s, self.east_in.get() as e, self.west_in.get() as w, self.core_in.get() as c:
+            with contextlib.ExitStack() as stack:
+                # all_in_channels = [self.north_in.get(), self.south_in.get(), self.east_in.get(), self.west_in.get(), self.core_in.get()]
+                all_events = [stack.enter_context(channel[0].get()) for channel in all_channels]
 
-            for id, event in enumerate(all_in_channels):
-                if event.triggered:
-                    msg = event.value
-                    if msg.dst == self.id:
-                        logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
-                        self.env.process(self.route_core(msg))
-                    else:
-                        next_dir, next_router = self.calculate_next_router(msg.dst)
-                        logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
-                        self.env.process(self.route(msg, next_dir, next_router))
-                    
-                    channel = None
-                    match id:
-                        case 0: channel = self.north_in
-                        case 1: channel = self.south_in
-                        case 2: channel = self.east_in
-                        case 3: channel = self.west_in
-                        case 4: channel = self.core_in
-                    
-                    while len(channel.items) > 0:
-                        element = channel.get()
-                        msg = element.value
+                events = self.env.any_of(all_events)
+                result = yield events
+
+                for id, event in enumerate(all_events):
+                    if event.triggered:
+                        msg = event.value
+
                         if msg.dst == self.id:
                             logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
                             self.env.process(self.route_core(msg))
                         else:
                             next_dir, next_router = self.calculate_next_router(msg.dst)
-                            logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+                            logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
                             self.env.process(self.route(msg, next_dir, next_router))
+                        
+                        channel = None
+                        match all_channels[id][1]:
+                            case 0: channel = self.north_in
+                            case 1: channel = self.south_in
+                            case 2: channel = self.east_in
+                            case 3: channel = self.west_in
+                            case 4: channel = self.core_in
+                        
+                        while channel.len() > 0:
+                            msg = yield channel.get()
+
+                            if msg.dst == self.id:
+                                logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
+                                self.env.process(self.route_core(msg))
+                            else:
+                                next_dir, next_router = self.calculate_next_router(msg.dst)
+                                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+                                self.env.process(self.route(msg, next_dir, next_router))
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":
@@ -187,6 +195,7 @@ class NoC:
         self.y = config.y
         self.router_config = config.router
         self.link_config = config.link
+        self.r2r_links = []
         self.routers = []
 
     # connections between routers
@@ -194,30 +203,34 @@ class NoC:
         for id in range(self.x * self.y):
             self.id = id
             self.routers.append(Router(self.env, self.router_config, id, self.x, self.y))
-        
-        link = Link(self.env, self.link_config)
-        broken_link = Link(self.env, self.link_config)
 
         for row in range(self.x):
             for col in range(self.y):
                 router_id = row * self.y + col
-                north_out, south_out, east_out, west_out = None, None, None, None
-                # connect with the west Router
-                if row > 0:
-                    west_router_id = (row - 1) * self.y + col
-                    west_out = self.routers[west_router_id].east_in
                 # connect with the east Router
                 if row < self.x - 1:
                     east_router_id = (row + 1) * self.y + col
-                    east_out = self.routers[east_router_id].west_in
-                # connect with the north Router
-                if col < self.y - 1:
-                    north_router_id = row * self.y + (col + 1)
-                    north_out = self.routers[north_router_id].south_in
+                    
+                    link1 = Link(self.env, self.link_config)
+                    link2 = Link(self.env, self.link_config)
+
+                    self.routers[router_id].bound_with_east(link1, link2)
+                    self.routers[east_router_id].bound_with_west(link2, link1)
+
+                    self.r2r_links.append(link1)
+                    self.r2r_links.append(link2)
+
                 # connect with the south Router
                 if col > 0:
                     south_router_id = row * self.y + (col - 1)
-                    south_out = self.routers[south_router_id].north_in
-                
-                self.routers[router_id].bound_with_store(north_out, south_out, east_out, west_out)
-                self.routers[router_id].bound_with_link(link, link, link, link)
+
+                    link1 = Link(self.env, self.link_config)
+                    link2 = Link(self.env, self.link_config)
+
+                    self.routers[router_id].bound_with_south(link1, link2)
+                    self.routers[south_router_id].bound_with_north(link2, link1)
+                    
+                    self.r2r_links.append(link1)
+                    self.r2r_links.append(link2)
+                    
+        return self

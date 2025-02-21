@@ -146,6 +146,8 @@ class Conv(ComputeTask):
         self.flops = paras * feats
 
     def run(self, core):
+        # self.calc_flops()
+        # self.flops = 0
         with core.tpu.request() as req:
             # if core.id == 9:
             #     print(f"conv{self.index}::req")
@@ -172,6 +174,7 @@ class Pool(ComputeTask):
         self.flops = self.oprands[0].size
 
     def run(self, core):
+        # self.flops = 0
         with core.tpu.request() as req:
             yield req
             yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
@@ -193,6 +196,8 @@ class FC(ComputeTask):
         self.flops = paras * feats
 
     def run(self, core):
+        # self.calc_flops()
+        # self.flops = 0
         with core.tpu.request() as req:
             yield req
             yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
@@ -212,7 +217,7 @@ class Stay(Task):
     flops: int = -1
     num_operands: int = -1
     def run(self, core):
-        yield core.env.process(core.link.transmit(0))
+        yield core.env.timeout(0)
 
     def input_size(self):
         return 0
@@ -227,10 +232,10 @@ class Send(CommunicationTask):
 
     def run(self, core):
         # print(f"data{self.index} was put into router{core.router.id}")
-        core.env.process(core.link.transmit(self.size))
+        # yield core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
         # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
-        yield core.router.core_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.data_out.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
 
     def input_size(self):
         return self.size

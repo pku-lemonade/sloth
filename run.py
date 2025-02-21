@@ -7,7 +7,7 @@ from src.sim_type import Workload, FailSlow
 from src.architecture import Arch
 from pydantic import ValidationError
 
-batch_size = 16
+batch_size = 64
 def fail_analyzer(filename: str) -> FailSlow:
     with open(filename, 'r') as file:
         data = json.load(file)
@@ -85,6 +85,7 @@ def main():
     end_time = time.time()
     simulation_time = end_time - start_time
 
+    # arch.debug()
 
     print("="*40)
     print(f"Simulation time is {simulation_time}.")

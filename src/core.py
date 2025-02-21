@@ -334,21 +334,16 @@ class Core:
         self.tpu_flops = config.tpu.flops
         self.lsu = simpy.Resource(env, capacity=2)
         self.tpu = simpy.Resource(env, capacity=1)
-        self.data_queue = simpy.Store(self.env)
+        
+        self.data_in, self.data_out = None, None
 
-        self.link = None
-        self.router = None
+        self.env.process(self.core_run())
 
-        self.env.process(self.run())
+    def bound_with_router(self, data_in, data_out):
+        self.data_in = data_in
+        self.data_out = data_out
 
-    def data_len(self):
-        return len(self.data_queue.items)
-
-    def connect(self, link: Link, router: Router):
-        self.link = link
-        self.router = router
-
-    def run(self):
+    def core_run(self):
         # running 事件列表
         self.running_event = []
         self.event2task = {}
@@ -363,43 +358,38 @@ class Core:
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
 
-            logger.info(f"Before trigger::PE{self.id} data_len is: {self.data_len()}")
-            logger.info(self.data_queue)
-            msg_arrive = self.data_queue.get()
+            logger.info(f"Time {self.env.now:.2f}: Before trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
-            result = yield self.env.any_of(self.running_event + [msg_arrive])
-            logger.info(f"Time {self.env.now:.2f}: PE{self.id}'s result is {result}")
-            # updated = False
+            with self.data_in.get() as msg_arrive:
+                result = yield simpy.events.AnyOf(self.env, self.running_event + [msg_arrive])
+                logger.info(f"Time {self.env.now:.2f}: PE{self.id}'s result is {result}")
+                # updated = False
 
-            if msg_arrive.triggered:
-                # updated = True
-                msg = msg_arrive.value
-                logger.info(f"Time {self.env.now:.2f}: triggered::PE{self.id} receive data{msg.data.index}")
-                logger.debug(f"received data is {msg.data}")
-                logger.debug(f"data_queue_len is {self.data_len()}")
-                self.scheduler.update(msg.data)
-
-                logger.info(f"After trigger::PE{self.id} data_len is: {self.data_len()}")
-
-                while self.data_len() > 0:
-                    event = self.data_queue.get()
-                    msg = event.value
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                    logger.info(f"received data is {msg.data}")
-                    logger.info(f"data_queue_len is {self.data_len()}")
+                if msg_arrive.triggered:
+                    # updated = True
+                    msg = msg_arrive.value
+                    logger.info(f"Time {self.env.now:.2f}: triggered::PE{self.id} receive data{msg.data.index}")
+                    logger.debug(f"received data is {msg.data}")
+                    logger.debug(f"data_queue_len is {self.data_in.len()}")
                     self.scheduler.update(msg.data)
 
-            for event in self.running_event:
-                if event.triggered:
-                    # updated = True
-                    self.spm_manager.free(task.input_size())
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
-                    self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
-                    self.running_event.remove(event)
+                    logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
-            # if not updated:
-            #     msg = yield self.data_queue.get()
-            #     self.scheduler.update(msg.data)
+                    while self.data_in.len() > 0:
+                        msg = yield self.data_in.get()
+                        logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
+                        logger.info(f"received data is {msg.data}")
+                        logger.info(f"data_queue_len is {self.data_in.len()}")
+                        self.scheduler.update(msg.data)
+
+                for event in self.running_event:
+                    if event.triggered:
+                        # updated = True
+                        self.spm_manager.free(task.input_size())
+                        logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
+                        self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
+                        self.running_event.remove(event)
+
 
     def run_task(self, task):
         self.spm_manager.allocate(task)
