@@ -4,6 +4,7 @@ import contextlib
 from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
 from src.sim_type import Data, Message, ceil
+from src.common import MonitoredResource
 
 logger = logging.getLogger("NoC")
 
@@ -37,16 +38,17 @@ class Link:
         self.width = config.width
         self.delay = config.delay
         self.store = simpy.Store(env)
+        self.linkentry = MonitoredResource(env,capacity=1)
 
+        
     def calc_latency(self, msg):
+        #calc latency:
         transmission_time = ceil(msg.data.size, self.width)
         latency = self.delay + transmission_time
-
-        yield self.env.timeout(latency)
-        # yield self.env.timeout(0)
+        yield self.linkentry.execute(latency)
         self.store.put(msg)
-
-    def put(self, msg):
+    
+    def put(self,msg):
         return self.env.process(self.calc_latency(msg))
 
     def get(self):
@@ -54,6 +56,11 @@ class Link:
     
     def len(self):
         return len(self.store.items)
+
+
+    def change_delay(self,times):
+        self.delay *= times
+
 
 
 class Router:
@@ -114,6 +121,7 @@ class Router:
     def run(self):
         while True:
             all_possible_channels = [(self.north_in, 0), (self.south_in, 1), (self.east_in, 2), (self.west_in, 3), (self.core_in, 4)]
+            #有的没有四个方向
             all_channels = [channel for channel in all_possible_channels if channel[0] is not None]
 
             # with self.north_in.get() as n, self.south_in.get() as s, self.east_in.get() as e, self.west_in.get() as w, self.core_in.get() as c:
@@ -122,9 +130,11 @@ class Router:
                 all_events = [stack.enter_context(channel[0].get()) for channel in all_channels]
 
                 events = self.env.any_of(all_events)
+                #等到至少有一个触发
                 result = yield events
 
                 for id, event in enumerate(all_events):
+                    
                     if event.triggered:
                         msg = event.value
 
@@ -154,6 +164,24 @@ class Router:
                                 next_dir, next_router = self.calculate_next_router(msg.dst)
                                 logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
                                 self.env.process(self.route(msg, next_dir, next_router))
+
+    #模拟其它流量造成的网络拥堵
+    def trans(self,start_time,link,flow):
+        yield self.env.timeout(start_time)
+        yield self.env.process(link.transmit(flow))
+        
+        
+    def addtion_flow(self,env,linklist,timelist,flowlist):
+        #加入额外的流量，用list来记录，linklist是List[(link)],timelist是List[(time)]
+        lenth=len(linklist)
+        assert lenth==len(timelist)
+        for i in range(lenth):
+            start_time=timelist[i]
+            link=linklist[i]
+            flow=flowlist[i]    
+            env.process(self.trans(start_time,link,flow))
+        
+        
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":

@@ -135,9 +135,19 @@ class Arch:
         print("Building NoC architecture.")
         return NoC(self.env, config).build_connection()
 
+
+    #输出可视化文件    
+    def make_print():
+        print("begin print:")
+
     def run(self):
         print("Start simulation.")
         self.env.run()
-
+        #print(self.cores[0].lsu.data)
+        #print(self.cores[1].tpu.data)
+        #print(self.cores[2].lsu.data)
+        print(self.noc.routers[0].core_out.linkentry.data)
         print("Simulation finished.")
+        #将值传入json文件
+        #self.make_print()
         return self.env

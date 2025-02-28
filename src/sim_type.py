@@ -60,7 +60,7 @@ class Nop(Task):
     num_operands: int = -1
     feat: list[Data] = []
     def run(self, core):
-        yield core.env.timeout(0, value=self.index)
+        yield core.env.timeout(0, self.index)
 
 class IOTask(Task):
     flops: int = 0
@@ -104,12 +104,8 @@ class Workload(BaseModel):
 
 class Read(IOTask):
     def run(self, core):
-        with core.lsu.request() as req:
-            # print(f"waiting for lsu available at {core.env.now:.2f}")
-            yield req
-            # print(f"lsu is available, start reading data{self.index} at {core.env.now:.2f}")
-            yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
-            # print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
+        yield core.lsu.execute(ceil(self.size, core.lsu_bandwidth), self.index)
+        
 
     def input_size(self):
         return 0
@@ -122,12 +118,7 @@ class Write(IOTask):
     feat: list[Data] = []
 
     def run(self, core):
-        with core.lsu.request() as req:
-            # print(f"waiting for lsu available at {core.env.now:.2f}")
-            yield req
-            # print(f"lsu is available, start writing data{self.index} at {core.env.now:.2f}")
-            yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
-            # print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
+        yield core.lsu.execute(ceil(self.size, core.lsu_bandwidth), self.index)
 
     def input_size(self):
         return self.size
@@ -148,13 +139,11 @@ class Conv(ComputeTask):
     def run(self, core):
         # self.calc_flops()
         # self.flops = 0
-        with core.tpu.request() as req:
+        yield core.tpu.execute(ceil(self.flops, core.tpu_flops), self.index)
             # if core.id == 9:
             #     print(f"conv{self.index}::req")
-            yield req
             # if core.id == 9:
             #     print(f"conv{self.index}::run")
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
 
     def input_size(self):
         res = 0
@@ -175,9 +164,7 @@ class Pool(ComputeTask):
 
     def run(self, core):
         # self.flops = 0
-        with core.tpu.request() as req:
-            yield req
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
+        yield core.tpu.execute(ceil(self.flops, core.tpu_flops), self.index)
 
     def input_size(self):
         return self.size
@@ -198,9 +185,7 @@ class FC(ComputeTask):
     def run(self, core):
         # self.calc_flops()
         # self.flops = 0
-        with core.tpu.request() as req:
-            yield req
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
+        yield core.tpu.execute(ceil(self.flops, core.tpu_flops),self.index)
 
     def input_size(self):
         res = 0

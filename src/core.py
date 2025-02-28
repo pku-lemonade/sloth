@@ -1,6 +1,7 @@
 import simpy
 import logging
 from queue import Queue
+from src.common import MonitoredResource
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
 from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay, TaskType, OperationType, DataType
@@ -268,6 +269,7 @@ class TableScheduler:
         if self.program[task_id].inst_type == TaskType.RECV:
             self.tasks[task_id].feat.append(data)
 
+        #这里可以构建连线表示依赖关系
         for idx in range(len(self.program[task_id].trigger_index)):
             tri_task_id = self.index2taskid[self.program[task_id].trigger_index[idx]]
             match self.program[task_id].data_type:
@@ -319,6 +321,12 @@ def print_event_queue(env):
     for event in env._queue:
         print(event)
 
+
+
+
+
+
+
 class Core:
     def __init__(self, env, config: CoreConfig, program: List[List[Instruction]], id: int):
         self.env = env
@@ -332,8 +340,8 @@ class Core:
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
-        self.lsu = simpy.Resource(env, capacity=2)
-        self.tpu = simpy.Resource(env, capacity=1)
+        self.lsu = MonitoredResource(env=env, capacity=2)
+        self.tpu = MonitoredResource(env=env, capacity=1)
         
         self.data_in, self.data_out = None, None
 
