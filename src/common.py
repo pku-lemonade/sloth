@@ -12,6 +12,7 @@ class CFG:
     def __init__(self,args):
         self.simstart = args.simstart
         self.simend = args.simend
+        self.flow = args.flow
 
 parser = argparse.ArgumentParser()
 
@@ -20,6 +21,7 @@ parser.add_argument("--simstart", type=int, default=0,
                     help="Simulation start cycle, default is 0")
 parser.add_argument("--simend", type=int, default=int((1<<31)-1),
                     help="Simulation end cycle, default is None (natural end)")
+parser.add_argument("--flow", action="store_true", help="enable flow flag")
 parser.add_argument("--workload", type=str, default="tests/resnet50/workload.json")
 parser.add_argument("--arch", type=str, default="arch/mesh4_4.json")
 parser.add_argument("--fail", type=str, default="failslow/base.json")
@@ -29,6 +31,9 @@ parser.add_argument("--level", type=str, default="info")
 args = parser.parse_args()
 cfg=CFG(args)
 
+
+#record instruction dependency among cores
+cores_deps=[]
 
 
 class MonitoredResource(simpy.Resource):
@@ -42,18 +47,23 @@ class MonitoredResource(simpy.Resource):
         else:
             return False
 
-    def exe(self,delay,v=None):
+    def exe(self,task,delay,v=None,attributes=None):
         req=super().request()
         yield req
-        self.data.append((self._env.now, len(self.queue),"req"))
+        if self.checkneed():
+            self.data.append((task,self._env.now, len(self.queue),"req","B"))
         if v is None:
             yield self._env.timeout(delay)
         else:
             yield self._env.timeout(delay, value=v)
-        self.data.append((self._env.now, len(self.queue),"release"))
+        if self.checkneed():
+            if attributes is None:
+                self.data.append((task,self._env.now, len(self.queue),"req","E"))
+            else:
+                self.data.append((task,self._env.now, len(self.queue),"req","E",attributes))
         super().release(req)
 
-    def execute(self,delay,v=None):
-        return self._env.process(self.exe(delay,v))
+    def execute(self,task,delay,v=None,attributes=None):
+        return self._env.process(self.exe(task,delay,v,attributes))
         
 

@@ -1,0 +1,6 @@
+{"name": "Pool76","ph":"B","ts":0,"pid":15,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Pool76","ph":"E","ts":111,"pid":15,"tid":"tpu","args":{"lenthqueue":1}},
+{"name": "Conv12","ph":"B","ts":111,"pid":15,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Conv12","ph":"E","ts":7314,"pid":15,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Conv219","ph":"B","ts":7516,"pid":15,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Conv219","ph":"E","ts":7565,"pid":15,"tid":"tpu","args":{"lenthqueue":0}}

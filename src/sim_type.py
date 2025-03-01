@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import List
 from pydantic import BaseModel
 
+
 def ceil(a: int, b: int):
     return (a + b - 1) // b
 
@@ -21,6 +22,7 @@ class FailSlow(BaseModel):
     router: List[RouterFail]
     link: List[LinkFail]
 
+#this is defination os message
 class Data(BaseModel):
     index: int
     size: int
@@ -48,6 +50,7 @@ class DataType(IntEnum):
     WGT = 2
 
 class Task(BaseModel):
+    string:str
     index: int
     size: int
     flops: int
@@ -103,8 +106,11 @@ class Workload(BaseModel):
     pes: List[PEworkload]
 
 class Read(IOTask):
+    string: str = "Read"
     def run(self, core):
-        yield core.lsu.execute(ceil(self.size, core.lsu_bandwidth), self.index)
+        if(self.index==101):
+            print(f"Read101:{self.size}")
+        yield core.lsu.execute("Read"+str(self.index),ceil(self.size, core.lsu_bandwidth), self.index)
         
 
     def input_size(self):
@@ -114,11 +120,12 @@ class Read(IOTask):
         return self.size
 
 class Write(IOTask):
+    string: str = "Write"
     num_operands: int = 1
     feat: list[Data] = []
 
     def run(self, core):
-        yield core.lsu.execute(ceil(self.size, core.lsu_bandwidth), self.index)
+        yield core.lsu.execute("Write"+str(self.index),ceil(self.size, core.lsu_bandwidth), self.index)
 
     def input_size(self):
         return self.size
@@ -127,6 +134,7 @@ class Write(IOTask):
         return 0
 
 class Conv(ComputeTask):
+    string: str = "Conv"
     def calc_flops(self):
         paras = 0
         feats = 0
@@ -139,7 +147,7 @@ class Conv(ComputeTask):
     def run(self, core):
         # self.calc_flops()
         # self.flops = 0
-        yield core.tpu.execute(ceil(self.flops, core.tpu_flops), self.index)
+        yield core.tpu.execute("Conv"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
             # if core.id == 9:
             #     print(f"conv{self.index}::req")
             # if core.id == 9:
@@ -157,6 +165,7 @@ class Conv(ComputeTask):
         return self.size
 
 class Pool(ComputeTask):
+    string: str = "Pool"
     num_operands: int = 1
 
     def calc_flops(self):
@@ -164,7 +173,7 @@ class Pool(ComputeTask):
 
     def run(self, core):
         # self.flops = 0
-        yield core.tpu.execute(ceil(self.flops, core.tpu_flops), self.index)
+        yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
 
     def input_size(self):
         return self.size
@@ -173,6 +182,7 @@ class Pool(ComputeTask):
         return self.size
 
 class FC(ComputeTask):
+    string: str = "FC"
     def calc_flops(self):
         paras = 0
         feats = 0
@@ -185,7 +195,7 @@ class FC(ComputeTask):
     def run(self, core):
         # self.calc_flops()
         # self.flops = 0
-        yield core.tpu.execute(ceil(self.flops, core.tpu_flops),self.index)
+        yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
 
     def input_size(self):
         res = 0
@@ -199,6 +209,7 @@ class FC(ComputeTask):
         return self.size
 
 class Stay(Task):
+    string: str = "Stay"
     flops: int = -1
     num_operands: int = -1
     def run(self, core):
@@ -211,6 +222,7 @@ class Stay(Task):
         return 0
 
 class Send(CommunicationTask):
+    string: str = "Send"
     num_operands: int = 1
     feat: list[Data] = []
     src: int = -1
@@ -229,6 +241,7 @@ class Send(CommunicationTask):
         return 0
 
 class Recv(CommunicationTask):
+    string: str = "Recv"
     dst: int = -1
     src: int = -1
     feat: list[Data] = []

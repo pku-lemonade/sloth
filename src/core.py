@@ -1,7 +1,7 @@
 import simpy
 import logging
 from queue import Queue
-from src.common import MonitoredResource
+from src.common import MonitoredResource,cfg,cores_deps
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
 from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay, TaskType, OperationType, DataType
@@ -10,19 +10,24 @@ from typing import List
 logger = logging.getLogger("PE")
 
 class SPMManager:
-    def __init__(self, config: ScratchpadConfig):
+    def __init__(self, env,config: ScratchpadConfig):
         self.size = config.size
         self.delay = config.delay
-
+        self.env=env
         self.capacity = self.size
+        self.data=[]
 
-    def allocate(self, size):
+    def allocate(self, string,size):
         if size > self.capacity:
             raise ValueError("Not enough space in SPM")
         self.capacity -= size
+        #TODO:add instruction type and id and check if need record
+        self.data.append((string,self.capacity,"alloc",size,self.env.now,"B"))
 
-    def free(self, size):
+    def free(self, string,size):
         self.capacity += size
+        #TODO：add instruction type and id and check if need record
+        self.data.append((string,self.capacity,"free",size,self.env.now,"E"))
 
 class Graph:
     def __init__(self, num):
@@ -249,7 +254,8 @@ class TableScheduler:
         
     def update(self, data):
         task_id = self.index2taskid[data.index]
-
+        #print(data.index)
+        #print(self.program[task_id].inst_type)
         # print(f"updating {data.index}")
         # print(f"{task_id} // {self.block_size} == {self.block_ptr}")
         logger.debug(f"updating {data.index}")
@@ -333,7 +339,9 @@ class Core:
         self.type = config.type
         self.program = program
         self.id = id
-        self.spm_manager = SPMManager(config.spm)
+        self.spm_manager = SPMManager(env,config.spm)
+        self.flow_out=[]
+        self.flow_in=[]
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
@@ -344,7 +352,6 @@ class Core:
         self.tpu = MonitoredResource(env=env, capacity=1)
         
         self.data_in, self.data_out = None, None
-
         self.env.process(self.core_run())
 
     def bound_with_router(self, data_in, data_out):
@@ -360,12 +367,12 @@ class Core:
             task_ready = self.scheduler.schedule()
             if task_ready:
                 for task in task_ready:
-                    self.spm_manager.allocate(task.output_size())
+                    #print(type(task))
+                    self.spm_manager.allocate(task.string+str(task.index),task.output_size())
                     task_event = self.env.process(task.run(self))
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
-
             logger.info(f"Time {self.env.now:.2f}: Before trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
             with self.data_in.get() as msg_arrive:
@@ -376,30 +383,45 @@ class Core:
                 if msg_arrive.triggered:
                     # updated = True
                     msg = msg_arrive.value
+                    #一定是RECV
+                    assert self.program[self.scheduler.index2taskid[msg.data.index]].inst_type == TaskType.RECV
+                    #TODO:需要加入什么？
+                    if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
+                        self.flow_in.append((msg.data.index, self.program[self.scheduler.index2taskid[msg.data.index]].inst_type,"recv",self.env.now))
                     logger.info(f"Time {self.env.now:.2f}: triggered::PE{self.id} receive data{msg.data.index}")
                     logger.debug(f"received data is {msg.data}")
                     logger.debug(f"data_queue_len is {self.data_in.len()}")
+                    #这是在message到达的时候update
                     self.scheduler.update(msg.data)
 
                     logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
                     while self.data_in.len() > 0:
+                        assert 0
                         msg = yield self.data_in.get()
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                         logger.info(f"received data is {msg.data}")
                         logger.info(f"data_queue_len is {self.data_in.len()}")
                         self.scheduler.update(msg.data)
 
+                #注意，单纯put的msg一定是send，这里还有msg是其它的
                 for event in self.running_event:
                     if event.triggered:
                         # updated = True
-                        self.spm_manager.free(task.input_size())
+                        task=self.event2task[event]
+                        self.spm_manager.free(task.string+str(task.index),task.input_size())
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
+                        #这个也不可能是RECV，我需要找到其中的SEND
+                        #print(self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type)
+                        if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
+                            if self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type == TaskType.SEND:
+                                self.flow_out.append((self.event2task[event].index, self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type,"send",self.env.now))
                         self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
                         self.running_event.remove(event)
 
 
+#maybe concurrent 
     def run_task(self, task):
-        self.spm_manager.allocate(task)
+        self.spm_manager.allocate(task.string+str(task.index),task)
         yield self.env.process(task.run(self))
-        self.spm_manager.free(task)
+        self.spm_manager.free(task.string+str(task.index),task)

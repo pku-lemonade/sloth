@@ -1,0 +1,4 @@
+{"name": "Pool97","ph":"B","ts":0,"pid":6,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Pool97","ph":"E","ts":111,"pid":6,"tid":"tpu","args":{"lenthqueue":1}},
+{"name": "Conv33","ph":"B","ts":111,"pid":6,"tid":"tpu","args":{"lenthqueue":0}},
+{"name": "Conv33","ph":"E","ts":7314,"pid":6,"tid":"tpu","args":{"lenthqueue":0}}

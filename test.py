@@ -1,4 +1,5 @@
 import simpy
+import os
 
 class MySimulator:
     def __init__(self, env):
@@ -20,11 +21,7 @@ class MySimulator:
 
 # 使用示例
 if __name__ == "__main__":
-    env = simpy.Environment()
-    sim = MySimulator(env)
-    
-    # 启动两个 process
-    p1 = env.process(sim.run_process("A", 5))
-    
-    # 运行仿真，直到所有 process 执行完毕
-    env.run()
+    a=[1,2,3]
+    b=a+[4]
+    print(b)
+    os.mkdir("gen")

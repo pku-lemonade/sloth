@@ -45,7 +45,7 @@ class Link:
         #calc latency:
         transmission_time = ceil(msg.data.size, self.width)
         latency = self.delay + transmission_time
-        yield self.linkentry.execute(latency)
+        yield self.linkentry.execute("SEND"+str(msg.data.index),latency,attributes=msg.dst)
         self.store.put(msg)
     
     def put(self,msg):

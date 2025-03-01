@@ -1,10 +1,12 @@
 import simpy
+import os
 import logging
 from functools import partial, wraps
 from src.core import Core
 from src.noc_new import NoC, Link, Direction
 from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
 from src.sim_type import Instruction, FailSlow, Data, Message
+from src.common import cfg
 from typing import List
 logger = logging.getLogger("Arch")
 
@@ -136,18 +138,91 @@ class Arch:
         return NoC(self.env, config).build_connection()
 
 
-    #输出可视化文件    
-    def make_print():
-        print("begin print:")
+    #输出可视化文件
+    def make_print_lsu():
+        #对于每个lsu
+        count=0
+        #req->count+=1 release->count-=1
+    def processesmonitor(self,data,file,id,source):
+        if len(data)==0:
+            return
+        with open(file,"w") as f: 
+            for idx, line in enumerate(data):
+                task,ts, lenthqueue, ation, ph = line
+                # 如果不是第一行，则在行前添加逗号和换行符
+                if idx != 0:
+                    f.write(",\n")
+                f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue}}}}}")
+
+    #这个由学长来编号,对于每个编号(id)怎么处理的逻辑我已经写好了:
+    def processesmonitorlink(self,data,file,id,source):
+        if len(data)==0:
+            return
+        with open(file,"w") as f: 
+            for idx, line in enumerate(data):
+                task,ts, lenthqueue, ation, ph,dest = line
+                # 如果不是第一行，则在行前添加逗号和换行符
+                if idx != 0:
+                    f.write(",\n")
+                f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue},\"dest\":{dest}}}}}")
+
+    def processesspm(self,data,file,id,source):
+        if len(data)==0:
+            return
+        with open(file,"w") as f: 
+            for idx, line in enumerate(data):
+                task, capacity, action, size ,ts , ph= line
+                # 如果不是第一行，则在行前添加逗号和换行符
+                if idx != 0:
+                    f.write(",\n")
+                f.write(f"{{\"name\":\"{task}\" ,\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"act\":\"{action}\",\"capacity\":{capacity},\"size\":{size}}}}}")
+
+    def processesflow(self,data,file,id,source):
+         if len(data)==0:
+            return
+         with open(file,"w") as f: 
+            for idx, line in enumerate(data):
+                index, _, action, ts= line
+                task=action+str(index)
+                # 如果不是第一行，则在行前添加逗号和换行符
+                if idx != 0:
+                    f.write(",\n")
+                f.write(f"{{\"name\":\"{task}\" ,\"ph\":\"B\",\"ts\":{ts},\"id\":{index},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"act\":\"{action}\"}}}}")
+                f.write(",\n")
+                f.write(f"{{\"name\":\"{task}\" ,\"ph\":\"E\",\"ts\":{ts},\"id\":{index},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"act\":\"{action}\"}}}}")
+                if action!="recv":
+                    f.write(",\n")
+                    f.write(f"{{\"name\":\"connect\" ,\"ph\":\"s\",\"ts\":{ts},\"id\":{index},\"pid\":{id},\"tid\":\"{source}\"}}")
+                else:
+                    f.write(",\n")
+                    f.write(f"{{\"name\":\"connect\",\"ph\":\"f\",\"bp\":\"e\",\"id\":{index},\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\"}}")
+
+
+                
+                            
+    def make_print(self):
+        #print(self.cores[0].lsu.data)
+        #print(self.cores[1].tpu.data)
+        #print(self.cores[2].lsu.data)
+        #print(self.noc.routers[0].core_out.linkentry.data)
+        #print(self.cores[1].spm_manager.data)
+        os.makedirs("gen", exist_ok=True)
+        for i in range(len(self.cores)):
+            self.processesmonitor(self.cores[i].lsu.data,"gen/lsu"+str(i)+".json",i,"lsu")
+            self.processesmonitor(self.cores[i].tpu.data,"gen/tpu"+str(i)+".json",i,"tpu")
+            self.processesspm(self.cores[i].spm_manager.data,"gen/spm"+str(i)+".json",i,"spm")
+        
+        if cfg.flow:
+            for i in range(len(self.cores)):
+                self.processesflow(self.cores[i].flow_in,"gen/flow_in"+str(i)+".json",i,"flow_in")
+            for i in range(len(self.cores)):
+                self.processesflow(self.cores[i].flow_out,"gen/flow_out"+str(i)+".json",i,"flow_out")
+
 
     def run(self):
         print("Start simulation.")
         self.env.run()
-        #print(self.cores[0].lsu.data)
-        #print(self.cores[1].tpu.data)
-        #print(self.cores[2].lsu.data)
-        print(self.noc.routers[0].core_out.linkentry.data)
         print("Simulation finished.")
         #将值传入json文件
-        #self.make_print()
+        self.make_print()
         return self.env
