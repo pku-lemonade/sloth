@@ -1,6 +1,3 @@
 {"name":"send130" ,"ph":"B","ts":210,"id":130,"pid":12,"tid":"flow_out","args":{"act":"send"}},
 {"name":"send130" ,"ph":"E","ts":210,"id":130,"pid":12,"tid":"flow_out","args":{"act":"send"}},
-{"name":"connect" ,"ph":"s","ts":210,"id":130,"pid":12,"tid":"flow_out"},
-{"name":"send281" ,"ph":"B","ts":7664,"id":281,"pid":12,"tid":"flow_out","args":{"act":"send"}},
-{"name":"send281" ,"ph":"E","ts":7664,"id":281,"pid":12,"tid":"flow_out","args":{"act":"send"}},
-{"name":"connect" ,"ph":"s","ts":7664,"id":281,"pid":12,"tid":"flow_out"}
+{"name":"connect" ,"ph":"s","ts":210,"id":130,"pid":12,"tid":"flow_out"}

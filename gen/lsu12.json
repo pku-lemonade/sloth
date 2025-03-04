@@ -7,12 +7,4 @@
 {"name": "Read2","ph":"E","ts":74,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Write113","ph":"B","ts":111,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Read157","ph":"E","ts":133,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write113","ph":"E","ts":503,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write49","ph":"B","ts":7314,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write49","ph":"E","ts":7388,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read205","ph":"B","ts":7388,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read304","ph":"B","ts":7388,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read205","ph":"E","ts":7516,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write264","ph":"B","ts":7565,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read304","ph":"E","ts":7676,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write264","ph":"E","ts":7957,"pid":12,"tid":"lsu","args":{"lenthqueue":0}}
+{"name": "Write113","ph":"E","ts":503,"pid":12,"tid":"lsu","args":{"lenthqueue":0}}

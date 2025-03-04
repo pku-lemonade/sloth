@@ -7,8 +7,4 @@
 {"name": "Read20","ph":"E","ts":74,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Write119","ph":"B","ts":111,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Read166","ph":"E","ts":133,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write119","ph":"E","ts":503,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write55","ph":"B","ts":7314,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write55","ph":"E","ts":7388,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read227","ph":"B","ts":7388,"pid":10,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read227","ph":"E","ts":7516,"pid":10,"tid":"lsu","args":{"lenthqueue":0}}
+{"name": "Write119","ph":"E","ts":503,"pid":10,"tid":"lsu","args":{"lenthqueue":0}}

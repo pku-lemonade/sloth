@@ -7,10 +7,4 @@
 {"name": "Read8","ph":"E","ts":74,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Write115","ph":"B","ts":111,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
 {"name": "Read160","ph":"E","ts":133,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write115","ph":"E","ts":503,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write51","ph":"B","ts":7314,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write51","ph":"E","ts":7388,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read212","ph":"B","ts":7388,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Read212","ph":"E","ts":7516,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write266","ph":"B","ts":7565,"pid":14,"tid":"lsu","args":{"lenthqueue":0}},
-{"name": "Write266","ph":"E","ts":7957,"pid":14,"tid":"lsu","args":{"lenthqueue":0}}
+{"name": "Write115","ph":"E","ts":503,"pid":14,"tid":"lsu","args":{"lenthqueue":0}}

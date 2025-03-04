@@ -51,7 +51,10 @@ class MonitoredResource(simpy.Resource):
         req=super().request()
         yield req
         if self.checkneed():
-            self.data.append((task,self._env.now, len(self.queue),"req","B"))
+            if attributes is None:
+                self.data.append((task,self._env.now, len(self.queue),"req","B"))
+            else:
+                self.data.append((task,self._env.now, len(self.queue),"req","B",attributes))
         if v is None:
             yield self._env.timeout(delay)
         else:

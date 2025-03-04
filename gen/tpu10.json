@@ -1,4 +1,3 @@
 {"name": "Pool85","ph":"B","ts":0,"pid":10,"tid":"tpu","args":{"lenthqueue":0}},
 {"name": "Pool85","ph":"E","ts":111,"pid":10,"tid":"tpu","args":{"lenthqueue":1}},
-{"name": "Conv21","ph":"B","ts":111,"pid":10,"tid":"tpu","args":{"lenthqueue":0}},
-{"name": "Conv21","ph":"E","ts":7314,"pid":10,"tid":"tpu","args":{"lenthqueue":0}}
+{"name": "Conv21","ph":"B","ts":111,"pid":10,"tid":"tpu","args":{"lenthqueue":0}}

@@ -1,3 +1,0 @@
-{"name":"recv301" ,"ph":"B","ts":7960,"id":301,"pid":3,"tid":"flow_in","args":{"act":"recv"}},
-{"name":"recv301" ,"ph":"E","ts":7960,"id":301,"pid":3,"tid":"flow_in","args":{"act":"recv"}},
-{"name":"connect","ph":"f","bp":"e","id":301,"ts":7960,"pid":3,"tid":"flow_in"}

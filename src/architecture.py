@@ -108,6 +108,7 @@ class Arch:
         
         
         self.noc = self.build_noc(arch.noc)
+        #print(len(self.noc.r2r_links))
         self.cores = self.build_cores(arch.core, program)
         
         trace(self.env, monitor)
@@ -211,6 +212,10 @@ class Arch:
             self.processesmonitor(self.cores[i].lsu.data,"gen/lsu"+str(i)+".json",i,"lsu")
             self.processesmonitor(self.cores[i].tpu.data,"gen/tpu"+str(i)+".json",i,"tpu")
             self.processesspm(self.cores[i].spm_manager.data,"gen/spm"+str(i)+".json",i,"spm")
+
+        for i in range(len(self.noc.r2r_links)):
+            self.processesmonitorlink(self.noc.r2r_links[i].linkentry.data,"gen/link"+str(i)+".json",i,"link")
+
         
         if cfg.flow:
             for i in range(len(self.cores)):
