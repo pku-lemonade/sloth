@@ -1,0 +1,10 @@
+{"name": "Read1","ph":"B","ts":0,"pid":12,"tid":"lsu","args":{"lenthqueue":2}},
+{"name": "Read2","ph":"B","ts":0,"pid":12,"tid":"lsu","args":{"lenthqueue":2}},
+{"name": "Read1","ph":"E","ts":5,"pid":12,"tid":"lsu","args":{"lenthqueue":2}},
+{"name": "Read65","ph":"B","ts":5,"pid":12,"tid":"lsu","args":{"lenthqueue":1}},
+{"name": "Read65","ph":"E","ts":5,"pid":12,"tid":"lsu","args":{"lenthqueue":1}},
+{"name": "Read157","ph":"B","ts":5,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
+{"name": "Read2","ph":"E","ts":74,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
+{"name": "Write113","ph":"B","ts":111,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
+{"name": "Read157","ph":"E","ts":133,"pid":12,"tid":"lsu","args":{"lenthqueue":0}},
+{"name": "Write113","ph":"E","ts":503,"pid":12,"tid":"lsu","args":{"lenthqueue":0}}
