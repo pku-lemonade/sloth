@@ -4,7 +4,7 @@ from queue import Queue
 from src.common import MonitoredResource,cfg,cores_deps
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
-from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Data, Stay, TaskType, OperationType, DataType
+from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -163,6 +163,7 @@ class TableScheduler:
         self.id = id
         self.tag = [True for _ in range(len(self.program))]
         self.finish = False
+        self.inst_counter = 0
 
         self.tasks = []
 
@@ -171,28 +172,30 @@ class TableScheduler:
 
         self.waiting_queue = Queue()
 
+        self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
+
         for id, inst in enumerate(self.program):
             self.index2taskid[inst.index] = id
             self.taskid2index[id] = inst.index
             match inst.inst_type:
                 case TaskType.STAY:
-                    self.tasks.append(Stay(index=inst.index, size=inst.size))
+                    self.tasks.append(Stay(index=inst.index, tensor_slice=inst.tensor_slice))
                 case TaskType.RECV:
-                    self.tasks.append(Recv(index=inst.index, size=inst.size))
+                    self.tasks.append(Recv(index=inst.index, tensor_slice=inst.tensor_slice))
                 case TaskType.READ:
-                    self.tasks.append(Read(index=inst.index, size=inst.size))
+                    self.tasks.append(Read(index=inst.index, tensor_slice=inst.tensor_slice))
                 case TaskType.WRITE:
-                    self.tasks.append(Write(index=inst.index, size=inst.size))
+                    self.tasks.append(Write(index=inst.index, tensor_slice=inst.tensor_slice))
                 case TaskType.SEND:
-                    self.tasks.append(Send(index=inst.index, size=inst.size, dst=inst.position))
-                case TaskType.COMP:
-                    match inst.operation:
-                        case OperationType.CONV:
-                            self.tasks.append(Conv(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
-                        case OperationType.POOL:
-                            self.tasks.append(Pool(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
-                        case OperationType.FC:
-                            self.tasks.append(FC(index=inst.index, flops=inst.size, layer_id=inst.layer_id))
+                    self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position))
+                case TaskType.CONV:
+                    self.tasks.append(Conv(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.POOL:
+                    self.tasks.append(Pool(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.ELEM:
+                    self.tasks.append(Elem(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.FC:
+                    self.tasks.append(FC(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
 
         self.task_block_update()
 
@@ -215,17 +218,6 @@ class TableScheduler:
                         self.tag[id] = False
                         logger.debug(f"insert {id} into waiting queue")
                         self.waiting_queue.put(id)
-                case TaskType.COMP:
-                    para = 1 if self.tasks[id].para else 0
-                    feat = 1 if self.tasks[id].feat else 0
-                    # print(f"para is {para}, feat is {feat}")
-                    logger.debug(f"para is {para}, feat is {feat}")
-                    if para + feat == self.tasks[id].num_operands:
-                        # print(f"insert {id} into waiting queue")
-                        if self.tag[id]:
-                            self.tag[id] = False
-                            logger.debug(f"insert {id} into waiting queue")
-                            self.waiting_queue.put(id)
                 case TaskType.SEND:
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
@@ -248,11 +240,23 @@ class TableScheduler:
                     if self.tag[id]:
                         self.tag[id] = False
                         self.waiting_queue.put(id)
+                case _:
+                    para = 1 if self.tasks[id].para else 0
+                    feat = 1 if self.tasks[id].feat else 0
+                    # print(f"para is {para}, feat is {feat}")
+                    logger.debug(f"para is {para}, feat is {feat}")
+                    if para + feat == self.tasks[id].num_operands:
+                        # print(f"insert {id} into waiting queue")
+                        if self.tag[id]:
+                            self.tag[id] = False
+                            logger.debug(f"insert {id} into waiting queue")
+                            self.waiting_queue.put(id)
 
         if self.block_counter == self.block_size:
             self.task_block_update()
         
     def update(self, data):
+        self.inst_counter += 1
         task_id = self.index2taskid[data.index]
         #print(data.index)
         #print(self.program[task_id].inst_type)
@@ -291,7 +295,7 @@ class TableScheduler:
             if tri_task_id // self.block_size == self.block_ptr:
                 # print("inside")
                 logger.debug("inside")
-                para = 1 if self.program[tri_task_id].inst_type == TaskType.COMP and self.tasks[tri_task_id].para else 0
+                para = 1 if self.program[tri_task_id].inst_type in self.comp_inst and self.tasks[tri_task_id].para else 0
                 feat = 1 if self.tasks[tri_task_id].feat else 0
                 # print(f"para:{para} + feat:{feat}")
                 logger.debug(f"para:{para} + feat:{feat}")
@@ -317,7 +321,9 @@ class TableScheduler:
                 if task_id == len(self.program) - 1:
                     self.finish = True
                 task_ready.append(self.tasks[task_id])
-
+                self.inst_counter += 1
+            if self.inst_counter == len(self.program):
+                print(f"PE{self.id} finished processing all of the instructions.")
             return task_ready
 
 def print_event_queue(env):
@@ -334,7 +340,7 @@ def print_event_queue(env):
 
 
 class Core:
-    def __init__(self, env, config: CoreConfig, program: List[List[Instruction]], id: int):
+    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int):
         self.env = env
         self.type = config.type
         self.program = program
@@ -397,7 +403,7 @@ class Core:
                     logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
                     while self.data_in.len() > 0:
-                        assert 0
+                        # assert 0
                         msg = yield self.data_in.get()
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                         logger.info(f"received data is {msg.data}")
@@ -416,7 +422,7 @@ class Core:
                         if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
                             if self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type == TaskType.SEND:
                                 self.flow_out.append((self.event2task[event].index, self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type,"send",self.env.now))
-                        self.scheduler.update(Data(index=self.event2task[event].index, size=self.event2task[event].size))
+                        self.scheduler.update(Data(index=self.event2task[event].index, tensor_slice=self.event2task[event].tensor_slice))
                         self.running_event.remove(event)
 
 

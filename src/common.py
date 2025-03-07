@@ -6,8 +6,6 @@ import logging
 import argparse
 from pydantic import ValidationError
 
-batch_size = 64
-
 class CFG:
     def __init__(self,args):
         self.simstart = args.simstart
@@ -23,7 +21,7 @@ parser.add_argument("--simend", type=int, default=int((1<<31)-1),
                     help="Simulation end cycle, default is None (natural end)")
 parser.add_argument("--flow", action="store_true", help="enable flow flag")
 parser.add_argument("--workload", type=str, default="tests/resnet50/workload.json")
-parser.add_argument("--arch", type=str, default="arch/mesh4_4.json")
+parser.add_argument("--arch", type=str, default="arch/gemini.json")
 parser.add_argument("--fail", type=str, default="failslow/base.json")
 parser.add_argument("--log", type=str, default="logging/simulation.log")
 parser.add_argument("--level", type=str, default="info")

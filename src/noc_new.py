@@ -3,7 +3,7 @@ import logging
 import contextlib
 from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
-from src.sim_type import Data, Message, ceil
+from src.sim_type import Data, Message, ceil, Slice
 from src.common import MonitoredResource
 
 logger = logging.getLogger("NoC")
@@ -43,7 +43,8 @@ class Link:
         
     def calc_latency(self, msg):
         #calc latency:
-        transmission_time = ceil(msg.data.size, self.width)
+        slice = Slice(tensor_slice=msg.data.tensor_slice)
+        transmission_time = ceil(slice.size(), self.width)
         latency = self.delay + transmission_time
         yield self.linkentry.execute("SEND"+str(msg.data.index),latency,attributes=msg.dst)
         self.store.put(msg)

@@ -227,7 +227,9 @@ class Arch:
     def run(self):
         print("Start simulation.")
         self.env.run()
+        for id in range(16):
+            print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
         print("Simulation finished.")
         #将值传入json文件
-        self.make_print()
+        # self.make_print()
         return self.env

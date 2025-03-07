@@ -23,13 +23,7 @@ class FailSlow(BaseModel):
     link: List[LinkFail]
 
 #this is defination os message
-class Data(BaseModel):
-    index: int
-    size: int
 
-class Message(BaseModel):
-    data: Data
-    dst: int
 
 class TaskType(IntEnum):
     READ = 0
@@ -37,24 +31,55 @@ class TaskType(IntEnum):
     SEND = 2
     RECV = 3
     STAY = 4
-    COMP = 5
+
+    CONV = 5
+    POOL = 6
+    FC = 7
+    ELEM = 8
 
 class OperationType(IntEnum):
     CONV = 0
     POOL = 1
     FC = 2
+    ELEM = 3
 
 class DataType(IntEnum):
     PARA = 0
     FEAT = 1
-    WGT = 2
+
+class DimSlice(BaseModel):
+    start: int
+    end: int
+
+class Slice(BaseModel):
+    tensor_slice: List[DimSlice]
+    def size(self) -> int:
+        res = None
+        for dim_slice in self.tensor_slice:
+            dim_len = max(0, dim_slice.end - dim_slice.start)
+            if res == None:
+                res = dim_len
+            else:
+                res = res * dim_len
+        return res
+    
+class Data(BaseModel):
+    index: int
+    tensor_slice: List[DimSlice]
+
+class Message(BaseModel):
+    data: Data
+    dst: int
 
 class Task(BaseModel):
-    string:str
+    string: str
     index: int
-    size: int
-    flops: int
+    tensor_slice: List[DimSlice]
+    flops: int = 0
     num_operands: int
+    def size(self) -> int:
+        cur_slice = Slice(tensor_slice=self.tensor_slice)
+        return cur_slice.size()
 
 class Nop(Task):
     index: int = -1
@@ -66,32 +91,27 @@ class Nop(Task):
         yield core.env.timeout(0, self.index)
 
 class IOTask(Task):
-    flops: int = 0
     num_operands: int = 0
 
 class ComputeTask(Task):
     layer_id: int
-    size: int = 0
-    index: int = -1
     num_operands: int = 2
     para: list[Data] = []
     feat: list[Data] = []
-        
+
 class CommunicationTask(Task):
     dst: int
     src: int
-    flops: int = 0
     num_operands: int = 0
 
 class Instruction(BaseModel):
     inst_type: TaskType
     index: int
     trigger_index: List[int] = []
-    operation: OperationType
     layer_id: int
     data_type: DataType
-    position: int
-    size: int
+    position: int = 0
+    tensor_slice: List[DimSlice]
 
 class Operation(BaseModel):
     operation: str
@@ -99,25 +119,24 @@ class Operation(BaseModel):
 
 class PEworkload(BaseModel):
     id: int
-    insts: List[Instruction]
+    insts: List[Instruction] = []
 
 class Workload(BaseModel):
     name: str
-    pes: List[PEworkload]
+    pes: List[PEworkload] = []
 
 class Read(IOTask):
     string: str = "Read"
     def run(self, core):
         if(self.index==101):
             print(f"Read101:{self.size}")
-        yield core.lsu.execute("Read"+str(self.index),ceil(self.size, core.lsu_bandwidth), self.index)
-        
+        yield core.lsu.execute("Read"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
         return 0
 
     def output_size(self):
-        return self.size
+        return self.size()
 
 class Write(IOTask):
     string: str = "Write"
@@ -125,10 +144,10 @@ class Write(IOTask):
     feat: list[Data] = []
 
     def run(self, core):
-        yield core.lsu.execute("Write"+str(self.index),ceil(self.size, core.lsu_bandwidth), self.index)
+        yield core.lsu.execute("Write"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
-        return self.size
+        return self.size()
 
     def output_size(self):
         return 0
@@ -136,77 +155,81 @@ class Write(IOTask):
 class Conv(ComputeTask):
     string: str = "Conv"
     def calc_flops(self):
-        paras = 0
-        feats = 0
-        for para in self.para:
-            paras += para.size
-        for feat in self.feat:
-            feats += feat.size
-        self.flops = paras * feats
+        # for CNN
+        wgt_slice = Slice(tensor_slice=self.para[0].tensor_slice)
+        wgt_H = wgt_slice.tensor_slice[2].end - wgt_slice.tensor_slice[2].start
+        wgt_W = wgt_slice.tensor_slice[3].end - wgt_slice.tensor_slice[3].start
+
+        self.flops = self.size() * wgt_H * wgt_W
 
     def run(self, core):
-        # self.calc_flops()
+        self.calc_flops()
         # self.flops = 0
-        yield core.tpu.execute("Conv"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
-            # if core.id == 9:
-            #     print(f"conv{self.index}::req")
-            # if core.id == 9:
-            #     print(f"conv{self.index}::run")
+        yield core.tpu.execute("Conv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
     def input_size(self):
         res = 0
-        for para in self.para:
-            res += para.size
-        for feat in self.feat:
-            res += feat.size
+        for input in self.feat:
+            input_slice = Slice(tensor_slice=input.tensor_slice)
+            res += input_slice.size()
         return res
 
     def output_size(self):
-        return self.size
+        return self.size()
 
 class Pool(ComputeTask):
     string: str = "Pool"
     num_operands: int = 1
 
     def calc_flops(self):
-        self.flops = self.oprands[0].size
+        self.flops = self.size() * 4
 
     def run(self, core):
+        self.calc_flops()
         # self.flops = 0
         yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
 
     def input_size(self):
-        return self.size
+        input_slice = Slice(tensor_slice=self.feat[0].tensor_slice)
+        return input_slice.size()
 
     def output_size(self):
-        return self.size
+        return self.size()
+    
+class Elem(ComputeTask):
+    string: str = "Elem"
+    num_operands: int = 1
+
+    def calc_flops(self):
+        self.flops = self.size()
+
+    def run(self, core):
+        self.calc_flops()
+        # self.flops = 0
+        yield core.tpu.execute("Elem"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
+
+    def input_size(self):
+        return self.size() * 2
+
+    def output_size(self):
+        return self.size()
 
 class FC(ComputeTask):
     string: str = "FC"
     def calc_flops(self):
-        paras = 0
-        feats = 0
-        for para in self.para:
-            paras += para.size
-        for feat in self.feat:
-            feats += feat.size
-        self.flops = paras * feats
+        self.flops = self.input_size() * self.size()
 
     def run(self, core):
-        # self.calc_flops()
+        self.calc_flops()
         # self.flops = 0
         yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
 
     def input_size(self):
-        res = 0
-        for para in self.para:
-            res += para.size
-        for feat in self.feat:
-            res += feat.size
-        return res
+        input_slice = Slice(tensor_slice=self.feat[0].tensor_slice)
+        return input_slice.size()
 
     def output_size(self):
-        return self.size
+        return self.size()
 
 class Stay(Task):
     string: str = "Stay"
@@ -224,18 +247,17 @@ class Stay(Task):
 class Send(CommunicationTask):
     string: str = "Send"
     num_operands: int = 1
-    feat: list[Data] = []
     src: int = -1
-
+    feat: List[Data] = []
     def run(self, core):
         # print(f"data{self.index} was put into router{core.router.id}")
         # yield core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
         # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
-        yield core.data_out.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst))
 
     def input_size(self):
-        return self.size
+        return self.size()
 
     def output_size(self):
         return 0
@@ -244,7 +266,7 @@ class Recv(CommunicationTask):
     string: str = "Recv"
     dst: int = -1
     src: int = -1
-    feat: list[Data] = []
+    feat: List[Data] = []
     def run(self, core):
         pass
 
@@ -252,5 +274,5 @@ class Recv(CommunicationTask):
         return 0
 
     def output_size(self):
-        return self.size
+        return self.size()
     
