@@ -77,6 +77,10 @@ class Task(BaseModel):
     tensor_slice: List[DimSlice]
     flops: int = 0
     num_operands: int
+    feat_num: int = 0
+    para_num: int = 0
+    feat: List[Data] = []
+    para: List[Data] = []
     def size(self) -> int:
         cur_slice = Slice(tensor_slice=self.tensor_slice)
         return cur_slice.size()
@@ -96,8 +100,20 @@ class IOTask(Task):
 class ComputeTask(Task):
     layer_id: int
     num_operands: int = 2
-    para: list[Data] = []
-    feat: list[Data] = []
+
+    def input_size(self):
+        res = 0
+        for input in self.feat:
+            input_slice = Slice(tensor_slice=input.tensor_slice)
+            res += input_slice.size()
+            
+        for wgt in self.para:
+            wgt_slice = Slice(tensor_slice=wgt.tensor_slice)
+            res += wgt_slice.size()
+        return res
+
+    def output_size(self):
+        return self.size()
 
 class CommunicationTask(Task):
     dst: int
@@ -112,6 +128,8 @@ class Instruction(BaseModel):
     data_type: DataType
     position: int = 0
     tensor_slice: List[DimSlice]
+    feat_num: int = 0
+    para_num: int = 0
 
 class Operation(BaseModel):
     operation: str
@@ -140,8 +158,7 @@ class Read(IOTask):
 
 class Write(IOTask):
     string: str = "Write"
-    num_operands: int = 1
-    feat: list[Data] = []
+    feat_num: int = 1
 
     def run(self, core):
         yield core.lsu.execute("Write"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
@@ -167,19 +184,8 @@ class Conv(ComputeTask):
         # self.flops = 0
         yield core.tpu.execute("Conv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
-    def input_size(self):
-        res = 0
-        for input in self.feat:
-            input_slice = Slice(tensor_slice=input.tensor_slice)
-            res += input_slice.size()
-        return res
-
-    def output_size(self):
-        return self.size()
-
 class Pool(ComputeTask):
     string: str = "Pool"
-    num_operands: int = 1
 
     def calc_flops(self):
         self.flops = self.size() * 4
@@ -188,17 +194,9 @@ class Pool(ComputeTask):
         self.calc_flops()
         # self.flops = 0
         yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
-
-    def input_size(self):
-        input_slice = Slice(tensor_slice=self.feat[0].tensor_slice)
-        return input_slice.size()
-
-    def output_size(self):
-        return self.size()
     
 class Elem(ComputeTask):
     string: str = "Elem"
-    num_operands: int = 1
 
     def calc_flops(self):
         self.flops = self.size()
@@ -207,12 +205,6 @@ class Elem(ComputeTask):
         self.calc_flops()
         # self.flops = 0
         yield core.tpu.execute("Elem"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
-
-    def input_size(self):
-        return self.size() * 2
-
-    def output_size(self):
-        return self.size()
 
 class FC(ComputeTask):
     string: str = "FC"
@@ -224,17 +216,9 @@ class FC(ComputeTask):
         # self.flops = 0
         yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
 
-    def input_size(self):
-        input_slice = Slice(tensor_slice=self.feat[0].tensor_slice)
-        return input_slice.size()
-
-    def output_size(self):
-        return self.size()
-
 class Stay(Task):
     string: str = "Stay"
     flops: int = -1
-    num_operands: int = -1
     def run(self, core):
         yield core.env.timeout(0)
 
@@ -246,9 +230,8 @@ class Stay(Task):
 
 class Send(CommunicationTask):
     string: str = "Send"
-    num_operands: int = 1
     src: int = -1
-    feat: List[Data] = []
+    feat_num: int = 1
     def run(self, core):
         # print(f"data{self.index} was put into router{core.router.id}")
         # yield core.env.process(core.link.transmit(self.size))
@@ -266,7 +249,6 @@ class Recv(CommunicationTask):
     string: str = "Recv"
     dst: int = -1
     src: int = -1
-    feat: List[Data] = []
     def run(self, core):
         pass
 

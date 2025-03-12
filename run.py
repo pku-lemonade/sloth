@@ -80,7 +80,7 @@ def main():
 
     print("="*40)
     print(f"Simulation time is {simulation_time}.")
-    print(f"Total simulation cycles is {result.now * batch_size}.")
+    print(f"Total simulation cycles is {result.now}.")
 
 
 if __name__ == '__main__':

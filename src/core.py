@@ -4,7 +4,7 @@ from queue import Queue
 from src.common import MonitoredResource,cfg,cores_deps
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
-from src.sim_type import Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
+from src.sim_type import Slice, Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -189,13 +189,13 @@ class TableScheduler:
                 case TaskType.SEND:
                     self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position))
                 case TaskType.CONV:
-                    self.tasks.append(Conv(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Conv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
                 case TaskType.POOL:
-                    self.tasks.append(Pool(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Pool(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
                 case TaskType.ELEM:
-                    self.tasks.append(Elem(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
                 case TaskType.FC:
-                    self.tasks.append(FC(index=inst.index, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
 
         self.task_block_update()
 
@@ -210,7 +210,7 @@ class TableScheduler:
             # print("-"*30)
             # print(f"inst_id is {id}, type is {inst.inst_type}")
             logger.debug("-"*30)
-            logger.debug(f"inst_id is {id}, type is {inst.inst_type}")
+            logger.debug(f"inst_id is {id}, index is {inst.index}, type is {inst.inst_type}")
             match inst.inst_type:
                 case TaskType.READ:
                     # print(f"insert {id} into waiting queue")
@@ -241,12 +241,21 @@ class TableScheduler:
                         self.tag[id] = False
                         self.waiting_queue.put(id)
                 case _:
-                    para = 1 if self.tasks[id].para else 0
-                    feat = 1 if self.tasks[id].feat else 0
-                    # print(f"para is {para}, feat is {feat}")
-                    logger.debug(f"para is {para}, feat is {feat}")
-                    if para + feat == self.tasks[id].num_operands:
-                        # print(f"insert {id} into waiting queue")
+                    # para = 1 if self.tasks[id].para else 0
+                    # feat = 1 if self.tasks[id].feat else 0
+                    # # print(f"para is {para}, feat is {feat}")
+                    # logger.debug(f"para is {para}, feat is {feat}")
+                    # if para + feat == self.tasks[id].num_operands:
+                    #     # print(f"insert {id} into waiting queue")
+                    #     if self.tag[id]:
+                    #         self.tag[id] = False
+                    #         logger.debug(f"insert {id} into waiting queue")
+                    #         self.waiting_queue.put(id)
+                    para = len(self.tasks[id].para)
+                    feat = len(self.tasks[id].feat)
+                    logger.debug(f"para is {para}/{self.tasks[id].para_num}, feat is {feat}/{self.tasks[id].feat_num}")
+                    # 输入特征可能分多次，需要全部读进才能计算
+                    if para == self.tasks[id].para_num and feat == self.tasks[id].feat_num:
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
@@ -293,18 +302,33 @@ class TableScheduler:
             logger.debug(f"{data.index} has triggered {self.program[task_id].trigger_index[idx]}")
             logger.debug(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
             if tri_task_id // self.block_size == self.block_ptr:
-                # print("inside")
+                # logger.debug("inside")
+                # para = 1 if self.program[tri_task_id].inst_type in self.comp_inst and self.tasks[tri_task_id].para else 0
+                # feat = 1 if self.tasks[tri_task_id].feat else 0
+                # logger.debug(f"para:{para} + feat:{feat}")
+                # if para + feat == self.tasks[tri_task_id].num_operands:
+                #     if self.tag[tri_task_id]:
+                #         logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                #         self.tag[tri_task_id] = False
+                #         self.waiting_queue.put(tri_task_id)
+
+                para_len = len(self.tasks[tri_task_id].para)
+                feat_len = len(self.tasks[tri_task_id].feat)
                 logger.debug("inside")
-                para = 1 if self.program[tri_task_id].inst_type in self.comp_inst and self.tasks[tri_task_id].para else 0
-                feat = 1 if self.tasks[tri_task_id].feat else 0
-                # print(f"para:{para} + feat:{feat}")
-                logger.debug(f"para:{para} + feat:{feat}")
-                if para + feat == self.tasks[tri_task_id].num_operands:
-                    # print(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                    if self.tag[tri_task_id]:
-                        logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                        self.tag[tri_task_id] = False
-                        self.waiting_queue.put(tri_task_id)
+                logger.debug(f"para:{para_len}/{self.tasks[tri_task_id].para_num} + feat:{feat_len}/{self.tasks[tri_task_id].feat_num}")
+                if self.program[tri_task_id].inst_type in self.comp_inst:
+                    if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
+                        if self.tag[tri_task_id]:
+                            logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                            self.tag[tri_task_id] = False
+                            self.waiting_queue.put(tri_task_id)
+                else:
+                    # 非计算指令最多需要1个操作数，并且无需同步
+                    if feat_len == self.tasks[tri_task_id].feat_num:
+                        if self.tag[tri_task_id]:
+                            logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                            self.tag[tri_task_id] = False
+                            self.waiting_queue.put(tri_task_id)
 
     def schedule(self):
         if self.waiting_queue.empty():
@@ -321,9 +345,7 @@ class TableScheduler:
                 if task_id == len(self.program) - 1:
                     self.finish = True
                 task_ready.append(self.tasks[task_id])
-                self.inst_counter += 1
-            if self.inst_counter == len(self.program):
-                print(f"PE{self.id} finished processing all of the instructions.")
+
             return task_ready
 
 def print_event_queue(env):
@@ -374,7 +396,8 @@ class Core:
             if task_ready:
                 for task in task_ready:
                     #print(type(task))
-                    self.spm_manager.allocate(task.string+str(task.index),task.output_size())
+                    # 分配计算结果存储空间
+                    self.spm_manager.allocate(task.string+str(task.index), task.output_size())
                     task_event = self.env.process(task.run(self))
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
                     self.running_event.append(task_event)
@@ -399,6 +422,9 @@ class Core:
                     logger.debug(f"data_queue_len is {self.data_in.len()}")
                     #这是在message到达的时候update
                     self.scheduler.update(msg.data)
+                    # 分配接收数据空间
+                    slice = Slice(tensor_slice=msg.data.tensor_slice)
+                    self.spm_manager.allocate(task.string+str(task.index), slice.size())
 
                     logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
@@ -409,12 +435,16 @@ class Core:
                         logger.info(f"received data is {msg.data}")
                         logger.info(f"data_queue_len is {self.data_in.len()}")
                         self.scheduler.update(msg.data)
+                        # 分配接收数据空间
+                        slice = Slice(tensor_slice=msg.data.tensor_slice)
+                        self.spm_manager.allocate(task.string+str(task.index), slice.size())
 
                 #注意，单纯put的msg一定是send，这里还有msg是其它的
                 for event in self.running_event:
                     if event.triggered:
                         # updated = True
                         task=self.event2task[event]
+                        # 执行完成，释放输入数据空间
                         self.spm_manager.free(task.string+str(task.index),task.input_size())
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
                         #这个也不可能是RECV，我需要找到其中的SEND
@@ -424,6 +454,9 @@ class Core:
                                 self.flow_out.append((self.event2task[event].index, self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type,"send",self.env.now))
                         self.scheduler.update(Data(index=self.event2task[event].index, tensor_slice=self.event2task[event].tensor_slice))
                         self.running_event.remove(event)
+
+            if self.scheduler.inst_counter == len(self.program):
+                print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
 
 
 #maybe concurrent 

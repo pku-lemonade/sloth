@@ -31,6 +31,7 @@ class WFeature(BaseModel):
 
 class OFeature(BaseModel):
     dest: str
+    next: List[int]
     blocks: List[Block]
 
 class Partition(BaseModel):
@@ -83,10 +84,9 @@ def intersect(a: Slice, b: Slice) -> Slice:
     res = Slice(tensor_slice=new_slice)
     return res
 
-def time_range(a: Slice, time: int) -> Slice:
-    batch_size = a.tensor_slice[0].end - a.tensor_slice[0].start
-    batch_start = batch_size * time
-    batch_end = batch_start + batch_size
+def time_range(a: Slice, lb_size: int, time: int) -> Slice:
+    batch_start = lb_size * time + a.tensor_slice[0].start
+    batch_end = lb_size * time + a.tensor_slice[0].end
     a.tensor_slice[0] = DimSlice(start=batch_start, end=batch_end)
     return a
 
@@ -138,14 +138,19 @@ def wgt_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     return a
  
 if __name__ == "__main__":
-    net = json_analyzer("tools/mapping2.json")
+    net = json_analyzer("tools/mapping.json")
 
+    max_inst = 10000
     global_inst_id = 0
     pewls = [PEworkload(id=id) for id in range(16)]
     
+    send_map = {}
     
     # 枚举层
     for (lid, layer) in enumerate(net.layers):
+        # if lid > 37:
+        #     continue
+        print(f"Generating inst of layer{lid}.")
         # 当前层是否分多次计算
         for time in range(net.batch_size//layer.layer_batch_size):
             # 当前层是否进行fetch
@@ -153,7 +158,7 @@ if __name__ == "__main__":
             for step in range(fetch):
                 # 输入指令
                 for input in layer.input_feature:
-                    print(f"lid{lid} time{time} step{step}")
+                    # print(f"lid{lid} time{time} step{step}")
                     # 从DRAM读取数据
                     if input.source == "dram":
                         for block in input.blocks:
@@ -161,7 +166,7 @@ if __name__ == "__main__":
                                 global_inst_id += 1
 
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
-                                cur_range = time_range(cur_range, time)
+                                cur_range = time_range(cur_range, layer.layer_batch_size, time)
                                 cur_range = fetch_range(cur_range, layer.input_fetch, step)
 
                                 list_core_id = get_list_id(core.x, core.y)
@@ -181,8 +186,13 @@ if __name__ == "__main__":
                             for core in block.cores:
                                 # 当前块需要的输入块range
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
-                                cur_range = time_range(cur_range, time)
+                                cur_range = time_range(cur_range, layer.layer_batch_size, time)
                                 cur_range = fetch_range(cur_range, layer.input_fetch, step)
+
+                                # if lid == 17 and time == 7 and step == 0:
+                                #     print("cur_range")
+                                #     print(cur_range)
+
                                 # 来源层是否进行多次计算
                                 for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
                                     # 来源层是否进行fetch
@@ -193,35 +203,37 @@ if __name__ == "__main__":
                                             for pre_core in pre_block.cores:
                                                 # 来源层的输出块range
                                                 pre_range = Slice(tensor_slice=pre_block.tensor_slice)
-                                                pre_range = time_range(pre_range, pre_time)
+                                                pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
                                                 pre_range = fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
                                                 # 计算交集
                                                 intersection = intersect(cur_range, pre_range)
+
+                                                # if lid == 17 and time == 7 and step == 0:
+                                                #     print(f"pre_range: pre_time->{pre_time} pre_fetch->{pre_fetch}")
+                                                #     print(pre_range)
+
                                                 if intersection.size() != 0:
                                                     # 一对send/recv共用id
-                                                    global_inst_id += 1
                                                     list_core_id = get_list_id(core.x, core.y)
                                                     pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
+                                                    
+                                                    if list_core_id != pre_list_core_id:
+                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, lid, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                                        recv_id = send_map[info]
 
-                                                    pewls[pre_list_core_id].insts.append(
-                                                        Instruction(
-                                                            inst_type = TaskType.SEND,
-                                                            index = global_inst_id,
-                                                            layer_id = lid,
-                                                            data_type = DataType.FEAT,
-                                                            position = list_core_id,
-                                                            tensor_slice = intersection.tensor_slice
+                                                        # if recv_id == 51877:
+                                                        #     print(f"RECV: PE{pre_list_core_id} -> PE{list_core_id}")
+
+                                                        pewls[list_core_id].insts.append(
+                                                            Instruction(
+                                                                inst_type = TaskType.RECV,
+                                                                index = recv_id,
+                                                                layer_id = lid,
+                                                                data_type = DataType.FEAT,
+                                                                tensor_slice = intersection.tensor_slice
+                                                            )
                                                         )
-                                                    )
-                                                    pewls[list_core_id].insts.append(
-                                                        Instruction(
-                                                            inst_type = TaskType.RECV,
-                                                            index = global_inst_id,
-                                                            layer_id = lid,
-                                                            data_type = DataType.FEAT,
-                                                            tensor_slice = intersection.tensor_slice
-                                                        )
-                                                    )
+                wgt_inst_num = [0 for id in range(16)]
                 # 权重指令
                 for wgt in layer.wgt_feature:
                     # 只会从DRAM读取数据
@@ -245,15 +257,21 @@ if __name__ == "__main__":
                             )
                 # 计算指令
                 for output in layer.output_feature:
-                    for block in wgt.blocks:
+                    for block in output.blocks:
                         for core in block.cores:
                             global_inst_id += 1
 
                             cur_range = Slice(tensor_slice=block.tensor_slice)
-                            cur_range = time_range(cur_range, time)
+                            cur_range = time_range(cur_range, layer.layer_batch_size, time)
                             cur_range = fetch_range(cur_range, layer.input_fetch, step)
+
+                            # if global_inst_id == 25083:
+                            #     print("cur_range")
+                            #     print(cur_range)
                             
                             list_core_id = get_list_id(core.x, core.y)
+                            # print(layer.type)
+                            # print(list_core_id)
                             match layer.type:
                                 case "conv":
                                     pewls[list_core_id].insts.append(
@@ -262,17 +280,22 @@ if __name__ == "__main__":
                                             index = global_inst_id,
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
-                                            tensor_slice = cur_range.tensor_slice
+                                            tensor_slice = cur_range.tensor_slice,
+                                            # feat_num = input_inst_num[list_core_id],
+                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "pool":
+                                    # print(f"add pool inst into {list_core_id}")
                                     pewls[list_core_id].insts.append(
                                         Instruction(
                                             inst_type = TaskType.POOL,
                                             index = global_inst_id,
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
-                                            tensor_slice = cur_range.tensor_slice
+                                            tensor_slice = cur_range.tensor_slice,
+                                            # feat_num = input_inst_num[list_core_id],
+                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "elewise":
@@ -282,7 +305,9 @@ if __name__ == "__main__":
                                             index = global_inst_id,
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
-                                            tensor_slice = cur_range.tensor_slice
+                                            tensor_slice = cur_range.tensor_slice,
+                                            # feat_num = input_inst_num[list_core_id],
+                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "fc":
@@ -292,20 +317,22 @@ if __name__ == "__main__":
                                             index = global_inst_id,
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
-                                            tensor_slice = cur_range.tensor_slice
+                                            tensor_slice = cur_range.tensor_slice,
+                                            # feat_num = input_inst_num[list_core_id],
+                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                 
                 # 输出指令
                 for output in layer.output_feature:
-                    # 如果不是dram则等待后续层添加指令
+                    # 需要放回dram
                     if output.dest == "dram":
                         for block in output.blocks:
                             for core in block.cores:
                                 global_inst_id += 1
 
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
-                                cur_range = time_range(cur_range, time)
+                                cur_range = time_range(cur_range, layer.layer_batch_size, time)
                                 cur_range = fetch_range(cur_range, layer.input_fetch, step)
 
                                 list_core_id = get_list_id(core.x, core.y)
@@ -314,10 +341,85 @@ if __name__ == "__main__":
                                         inst_type = TaskType.WRITE,
                                         index = global_inst_id,
                                         layer_id = lid,
-                                        data_type = DataType.PARA,
+                                        data_type = DataType.FEAT,
                                         tensor_slice = cur_range.tensor_slice
                                     )
                                 )
+                    # 需要发送
+                    for block in output.blocks:
+                        for core in block.cores:
+
+                            cur_range = Slice(tensor_slice=block.tensor_slice)
+                            cur_range = time_range(cur_range, layer.layer_batch_size, time)
+                            cur_range = fetch_range(cur_range, layer.input_fetch, step)
+                            
+                            # if lid == 14:
+                            #     print(f"cur_range: time->{time} step->{step}")
+                            #     print(cur_range)
+
+                            for next_layer_id in output.next:
+                                for next_time in range(net.batch_size//net.layers[next_layer_id].layer_batch_size):
+                                    # 触发层是否进行fetch
+                                    next_fetch = net.layers[next_layer_id].input_fetch.num()
+                                    for next_step in range(next_fetch):
+                                        
+                                        for next_input in net.layers[next_layer_id].input_feature:
+                                            # if lid == 36:
+                                            #     print(next_input.source)
+
+                                            if next_input.source == "dram" or next_input.source_layer_id != lid:
+                                                continue
+                                            # loop_time = 0
+                                            for next_block in next_input.blocks:
+                                                for next_core in next_block.cores:
+                                                    # loop_time += 1
+                                                    # 触发层的输出块range
+                                                    next_range = Slice(tensor_slice=next_block.tensor_slice)
+                                                    next_range = time_range(next_range, net.layers[next_layer_id].layer_batch_size, next_time)
+                                                    next_range = fetch_range(next_range, net.layers[next_layer_id].input_fetch, next_step)
+                                                    # 计算交集
+                                                    intersection = intersect(cur_range, next_range)
+
+                                                    # if lid == 14:
+                                                    #     print(f"next_range: time->{next_time} step->{next_step}")
+                                                    #     print(next_range)
+
+                                                    if intersection.size() != 0:
+                                                        # 一对send/recv共用id
+                                                        global_inst_id += 1
+                                                        list_core_id = get_list_id(core.x, core.y)
+                                                        next_list_core_id = get_list_id(next_core.x, next_core.y)
+                                                        
+                                                        # if global_inst_id == 51877:
+                                                        #     print(f"cur_range: time->{time} step->{step}")
+                                                        #     print(cur_range)
+                                                        #     print(list_core_id)
+                                                        #     print(f"next_range: time->{next_time} step->{next_step} next_lid->{next_layer_id}")
+                                                        #     print(next_range)
+                                                        #     print(next_list_core_id)
+                                                        
+                                                        if list_core_id != next_list_core_id:
+                                                            pewls[list_core_id].insts.append(
+                                                                Instruction(
+                                                                    inst_type = TaskType.SEND,
+                                                                    index = global_inst_id,
+                                                                    layer_id = lid+1,
+                                                                    data_type = DataType.FEAT,
+                                                                    position = next_list_core_id,
+                                                                    tensor_slice = intersection.tensor_slice
+                                                                )
+                                                            )
+
+                                                            # if global_inst_id == 51877:
+                                                            #     print(f"SEND: PE{list_core_id} -> PE{next_list_core_id}")
+
+                                                            info = (time, step, next_time, next_step, list_core_id, next_list_core_id, next_layer_id, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
+                                                            if info in send_map:
+                                                                print("Error!")
+                                                            # print(info)
+                                                            send_map[info] = global_inst_id
+
+                                            # print(f"loop_time is {loop_time}")
 
     # 构建指令trigger关系
     input_inst = [TaskType.READ, TaskType.RECV]
@@ -328,16 +430,25 @@ if __name__ == "__main__":
         last_seg_id = 0
 
         for (id, inst) in enumerate(pewls[pe_id].insts):
-            # 输入/权重trigger计算
+            # if pe_id == 0:
+            #     print(f"layer:{inst.layer_id} inst_index:{inst.index}")
+            #     print(inst.inst_type)
+            #     print(inst.tensor_slice)
+            # input指令指向comp指令，结束后last_seg_id指向comp指令
             if inst.inst_type in comp_inst:
                 while last_seg_id != id:
-                    pewls[pe_id].insts[last_seg_id].trigger_index.append(pewls[pe_id].insts[id].index)
+                    if pewls[pe_id].insts[last_seg_id].data_type == DataType.FEAT:
+                        inst.feat_num += 1
+                    if pewls[pe_id].insts[last_seg_id].data_type == DataType.PARA:
+                        inst.para_num += 1
+
+                    pewls[pe_id].insts[last_seg_id].trigger_index.append(inst.index)
                     last_seg_id += 1
-            # 计算trigger输出
+            # comp指令指向output指令
             if inst.inst_type in output_inst:
-                pewls[pe_id].insts[last_seg_id].trigger_index.append(pewls[pe_id].insts[id].index)
-            # 处理新的一段计算
-            if inst.inst_type in input_inst and pewls[pe_id].insts[last_seg_id].inst_type not in input_inst:
+                pewls[pe_id].insts[last_seg_id].trigger_index.append(inst.index)
+            # 当前指令是input，并且last_seg_id指令是comp，说明进入新的一段
+            if inst.inst_type in input_inst and pewls[pe_id].insts[last_seg_id].inst_type in comp_inst:
                 last_seg_id = id
 
     wl = Workload(name=net.name, pes=pewls)

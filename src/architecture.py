@@ -33,10 +33,10 @@ def trace(env, callback):
 data = []
 
 def monitor(data, t, prio, eid, event):
-    if isinstance(event, simpy.resources.store.StoreGet) or isinstance(event, simpy.resources.store.StorePut):
+    if (isinstance(event, simpy.resources.store.StoreGet) or isinstance(event, simpy.resources.store.StorePut)) and False:
         logger.info((t, eid, event.proc._generator, type(event), event.resource, event.value))
-    else:
-        logger.info((t, eid, type(event), event.value))
+    # else:
+        # logger.info((t, eid, type(event), event.value))
     # data.append((t, eid, type(event)))
 
 monitor = partial(monitor, data)
@@ -82,7 +82,7 @@ def monitor1(data, resource, func):
         # resource,
         func,
     )
-    logger.info(item)
+    # logger.info(item)
     data.append(item)
 
 def monitor2(data, resource, ret):
@@ -95,7 +95,7 @@ def monitor2(data, resource, ret):
         # resource,
         ret,
     )
-    logger.info(item)
+    # logger.info(item)
     data.append(item)
 
 monitor1 = partial(monitor1, data)

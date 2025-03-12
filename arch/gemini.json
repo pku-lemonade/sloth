@@ -4,9 +4,9 @@
 		"x" : 4,
 		"y" : 4,
 		"width" : 8,
-		"blk_size" : 20,
+		"blk_size" : 1000,
 		"spm" : {
-			"size" : 10240000,
+			"size" : 2147483647,
 			"delay" : 0
 		},
 		"tpu" : {
