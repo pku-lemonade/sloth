@@ -60,9 +60,15 @@ class Router:
 
         link, next_router = self.output_links[next_router_id]
 
-        yield self.env.process(link.transmit(msg.data.size))
-        # next_router.route_queue_len += 1
+        link.transmit(msg.data.size)
+        logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router_id}.")
         yield next_router.route_queue.put(msg)
+
+    def route_core(self, msg):
+        self.core_link.transmit(msg.data.size)
+        logger.info(f"Time {self.env.now:.2f}: Putting data{msg.data.index} to core{self.id}.")
+        yield self.core.data_queue.put(msg)
+        logger.info(f"Time {self.env.now:.2f}: After putting data{msg.data.index}, PE{self.id}'s data_len is {self.core.data_len()}")
 
     def run(self):
         while True:
@@ -70,18 +76,15 @@ class Router:
             # self.route_queue_len -= 1
 
             if msg.dst == self.id:
-                yield self.env.process(self.core_link.transmit(msg.data.size))
                 # self.compute_queue_len += 1
                 # print(f"put data{data.index} into core{self.core.id}")
                 logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
-                self.core.data_queue.put(msg)
-                logger.debug(f"router{self.id}'s data_queue_len is {self.core.data_len()}")
+                self.env.process(self.route_core(msg))
             else:
                 # print(f"Router{self.id} is sending data{data.index} to router{data.dst} at time {self.env.now:.2f}")
                 next_router = self.calculate_next_router(msg.dst)
                 logger.info(f"Time {self.env.now:.2f}: Router{self.id} send data{msg.data.index} to router{next_router}.")
                 self.env.process(self.route(msg, next_router))
-                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}.")
 
     def calculate_next_router(self, target_id):
         if self.type == "XY":

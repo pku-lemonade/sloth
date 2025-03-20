@@ -71,6 +71,21 @@ resnet50para = [
     0, 2048000
 ]
 
+resnet50compute = [
+    # layer0
+    118013952, 1806336,
+    # layer1
+    12845056, 115605504, 462422016, 51380224, 802816, 51380224, 115605504, 462422016, 802816, 51380224, 115605504, 462422016, 802816,
+    # layer2
+    25690112, 115605504, 51380224, 102760448, 401408, 51380224, 115605504, 51380224, 401408, 51380224, 115605504, 51380224, 401408, 51380224, 115605504, 51380224, 401408,
+    # layer3
+    25690112, 115605504, 51380224, 102760448, 200704, 51380224, 115605504, 51380224, 200704, 51380224, 115605504, 51380224, 200704, 51380224, 115605504, 51380224, 200704, 51380224, 115605504, 51380224, 200704, 51380224, 115605504, 51380224, 200704,
+    # layer4
+    25690112, 115605504, 51380224, 102760448, 100352, 51380224, 115605504, 51380224, 100352, 51380224, 115605504, 51380224, 100352,
+    # pool&fc
+    100352, 2048000
+]
+
 resnet50type = [
     # layer0
     "CONV", "POOL",
@@ -137,7 +152,7 @@ with open(filename, "r", encoding="utf-8") as file:
                 if pipeline_begin == 0:
                     pe_instruction[to1d(part[0], part[1])].append(read(resnet50type[pipeline_begin], "PARA", resnet50para[pipeline_begin] // len(layer_partition[pipeline_begin]), pipeline_begin))
                     pe_instruction[to1d(part[0], part[1])].append(read(resnet50type[pipeline_begin], "FEAT", resnet50[pipeline_begin] // len(layer_partition[pipeline_begin]), pipeline_begin))
-                    pe_instruction[to1d(part[0], part[1])].append(comp(resnet50type[pipeline_begin], resnet50para[pipeline_begin] // len(layer_partition[pipeline_begin]), pipeline_begin))
+                    pe_instruction[to1d(part[0], part[1])].append(comp(resnet50type[pipeline_begin], resnet50compute[pipeline_begin] // len(layer_partition[pipeline_begin]), pipeline_begin))
                     
             
             # pipeline数据发送
@@ -173,15 +188,13 @@ with open(filename, "r", encoding="utf-8") as file:
                             if src_pos >= len(layer_partition[id-1]):
                                 break
 
-                        pe_instruction[to1d(part[0], part[1])].append(comp(resnet50type[id], dst_size, id))
+                        pe_instruction[to1d(part[0], part[1])].append(comp(resnet50type[id], resnet50compute[id] // len(layer_partition[id]), id))
                         if src_pos >= len(layer_partition[id-1]):
                             break
 
-                    
-
             # pipeline结束写入
             for part in layer_partition[pipeline_end]:
-                pe_instruction[to1d(part[0], part[1])].append(write(resnet50type[pipeline_end], resnet50[pipeline_end], pipeline_end))
+                pe_instruction[to1d(part[0], part[1])].append(write(resnet50type[pipeline_end], resnet50[pipeline_end] // len(layer_partition[pipeline_end]), pipeline_end))
 
 with open("tools/instructions.txt", "w") as file:
     for id in range(16):

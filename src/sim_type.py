@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import List
 from pydantic import BaseModel
 
+
 def ceil(a: int, b: int):
     return (a + b - 1) // b
 
@@ -21,13 +22,8 @@ class FailSlow(BaseModel):
     router: List[RouterFail]
     link: List[LinkFail]
 
-class Data(BaseModel):
-    index: int
-    size: int
+#this is defination os message
 
-class Message(BaseModel):
-    data: Data
-    dst: int
 
 class TaskType(IntEnum):
     READ = 0
@@ -35,60 +31,103 @@ class TaskType(IntEnum):
     SEND = 2
     RECV = 3
     STAY = 4
-    COMP = 5
+
+    CONV = 5
+    POOL = 6
+    FC = 7
+    ELEM = 8
 
 class OperationType(IntEnum):
     CONV = 0
     POOL = 1
     FC = 2
+    ELEM = 3
 
 class DataType(IntEnum):
     PARA = 0
     FEAT = 1
-    WGT = 2
+
+class DimSlice(BaseModel):
+    start: int
+    end: int
+
+class Slice(BaseModel):
+    tensor_slice: List[DimSlice]
+    def size(self) -> int:
+        res = None
+        for dim_slice in self.tensor_slice:
+            dim_len = max(0, dim_slice.end - dim_slice.start)
+            if res == None:
+                res = dim_len
+            else:
+                res = res * dim_len
+        return res
+    
+class Data(BaseModel):
+    index: int
+    tensor_slice: List[DimSlice]
+
+    def __lt__(self, other: "Data") -> bool:
+        return self.index < other.index
+
+class Message(BaseModel):
+    data: Data
+    dst: int
 
 class Task(BaseModel):
+    string: str
     index: int
-    size: int
-    flops: int
+    tensor_slice: List[DimSlice]
+    flops: int = 0
     num_operands: int
+    feat_num: int = 0
+    para_num: int = 0
+    feat: List[Data] = []
+    para: List[Data] = []
+    def size(self) -> int:
+        cur_slice = Slice(tensor_slice=self.tensor_slice)
+        return cur_slice.size()
 
 class Nop(Task):
-    index: int = -1
-    size: int = -1
-    flops: int = -1
-    num_operands: int = -1
-    feat: list[Data] = []
     def run(self, core):
-        yield core.env.timeout(0, value=self.index)
+        yield core.env.timeout(0, self.index)
 
 class IOTask(Task):
-    flops: int = 0
     num_operands: int = 0
 
 class ComputeTask(Task):
     layer_id: int
-    size: int = 0
-    index: int = -1
     num_operands: int = 2
-    para: list[Data] = []
-    feat: list[Data] = []
-        
+
+    def input_size(self):
+        res = 0
+        for input in self.feat:
+            input_slice = Slice(tensor_slice=input.tensor_slice)
+            res += input_slice.size()
+            
+        for wgt in self.para:
+            wgt_slice = Slice(tensor_slice=wgt.tensor_slice)
+            res += wgt_slice.size()
+        return res + self.size()
+
+    def output_size(self):
+        return self.size()
+
 class CommunicationTask(Task):
     dst: int
     src: int
-    flops: int = 0
     num_operands: int = 0
 
 class Instruction(BaseModel):
     inst_type: TaskType
     index: int
     trigger_index: List[int] = []
-    operation: OperationType
     layer_id: int
     data_type: DataType
-    position: int
-    size: int
+    position: int = 0
+    tensor_slice: List[DimSlice]
+    feat_num: int = 0
+    para_num: int = 0
 
 class Operation(BaseModel):
     operation: str
@@ -96,123 +135,103 @@ class Operation(BaseModel):
 
 class PEworkload(BaseModel):
     id: int
-    insts: List[Instruction]
+    insts: List[Instruction] = []
 
 class Workload(BaseModel):
     name: str
-    pes: List[PEworkload]
+    pes: List[PEworkload] = []
 
 class Read(IOTask):
+    string: str = "Read"
     def run(self, core):
-        with core.lsu.request() as req:
-            # print(f"waiting for lsu available at {core.env.now:.2f}")
-            yield req
-            # print(f"lsu is available, start reading data{self.index} at {core.env.now:.2f}")
-            yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
-            # print(f"lsu finish reading data{self.index} at {core.env.now:.2f}")
+        # if(self.index==101):
+        #     print(f"Read101:{self.size}")
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.lsu.execute("Read"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
         return 0
 
     def output_size(self):
-        return self.size
+        return self.size()
 
 class Write(IOTask):
-    num_operands: int = 1
-    feat: list[Data] = []
+    string: str = "Write"
+    feat_num: int = 1
 
     def run(self, core):
-        with core.lsu.request() as req:
-            # print(f"waiting for lsu available at {core.env.now:.2f}")
-            yield req
-            # print(f"lsu is available, start writing data{self.index} at {core.env.now:.2f}")
-            yield core.env.timeout(ceil(self.size, core.lsu_bandwidth), value=self.index)
-            # print(f"lsu finish writing data{self.index} at {core.env.now:.2f}")
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.lsu.execute("Write"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
-        return self.size
+        # return self.size()
+        return 0
 
     def output_size(self):
         return 0
 
 class Conv(ComputeTask):
+    string: str = "Conv"
     def calc_flops(self):
-        paras = 0
-        feats = 0
-        for para in self.para:
-            paras += para.size
-        for feat in self.feat:
-            feats += feat.size
-        self.flops = paras * feats
+        # for CNN
+        wgt_slice = Slice(tensor_slice=self.para[0].tensor_slice)
+        wgt_H = wgt_slice.tensor_slice[2].end - wgt_slice.tensor_slice[2].start
+        wgt_W = wgt_slice.tensor_slice[3].end - wgt_slice.tensor_slice[3].start
+
+        self.flops = self.size() * wgt_H * wgt_W
 
     def run(self, core):
-        with core.tpu.request() as req:
-            # if core.id == 9:
-            #     print(f"conv{self.index}::req")
-            yield req
-            # if core.id == 9:
-            #     print(f"conv{self.index}::run")
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
-
-    def input_size(self):
-        res = 0
-        for para in self.para:
-            res += para.size
-        for feat in self.feat:
-            res += feat.size
-        return res
-
-    def output_size(self):
-        return self.size
+        self.calc_flops()
+        # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.tpu.execute("Conv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
 class Pool(ComputeTask):
-    num_operands: int = 1
+    string: str = "Pool"
 
     def calc_flops(self):
-        self.flops = self.oprands[0].size
+        self.flops = self.size() * 4
 
     def run(self, core):
-        with core.tpu.request() as req:
-            yield req
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
+        self.calc_flops()
+        # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
+    
+class Elem(ComputeTask):
+    string: str = "Elem"
 
-    def input_size(self):
-        return self.size
+    def calc_flops(self):
+        self.flops = self.size()
 
-    def output_size(self):
-        return self.size
+    def run(self, core):
+        self.calc_flops()
+        # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.tpu.execute("Elem"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
 
 class FC(ComputeTask):
+    string: str = "FC"
     def calc_flops(self):
-        paras = 0
-        feats = 0
-        for para in self.para:
-            paras += para.size
-        for feat in self.feat:
-            feats += feat.size
-        self.flops = paras * feats
+        self.flops = self.input_size() * self.size()
 
     def run(self, core):
-        with core.tpu.request() as req:
-            yield req
-            yield core.env.timeout(ceil(self.flops, core.tpu_flops), value=self.index)
-
-    def input_size(self):
-        res = 0
-        for para in self.para:
-            res += para.size
-        for feat in self.feat:
-            res += feat.size
-        return res
-
-    def output_size(self):
-        return self.size
+        self.calc_flops()
+        # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
 
 class Stay(Task):
+    string: str = "Stay"
     flops: int = -1
-    num_operands: int = -1
     def run(self, core):
-        yield core.env.process(core.link.transmit(0))
+        yield core.env.timeout(0)
 
     def input_size(self):
         return 0
@@ -221,27 +240,29 @@ class Stay(Task):
         return 0
 
 class Send(CommunicationTask):
-    num_operands: int = 1
-    feat: list[Data] = []
+    string: str = "Send"
     src: int = -1
-
+    feat_num: int = 1
     def run(self, core):
         # print(f"data{self.index} was put into router{core.router.id}")
-        core.env.process(core.link.transmit(self.size))
+        # yield core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
-        yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
-        # yield core.router.core_in.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
+        yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst))
 
     def input_size(self):
-        return self.size
+        # return self.size()
+        return 0
 
     def output_size(self):
         return 0
 
 class Recv(CommunicationTask):
+    string: str = "Recv"
     dst: int = -1
     src: int = -1
-    feat: list[Data] = []
     def run(self, core):
         pass
 
@@ -249,5 +270,5 @@ class Recv(CommunicationTask):
         return 0
 
     def output_size(self):
-        return self.size
+        return self.size()
     
