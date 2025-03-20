@@ -67,6 +67,9 @@ class Data(BaseModel):
     index: int
     tensor_slice: List[DimSlice]
 
+    def __lt__(self, other: "Data") -> bool:
+        return self.index < other.index
+
 class Message(BaseModel):
     data: Data
     dst: int
@@ -86,11 +89,6 @@ class Task(BaseModel):
         return cur_slice.size()
 
 class Nop(Task):
-    index: int = -1
-    size: int = -1
-    flops: int = -1
-    num_operands: int = -1
-    feat: list[Data] = []
     def run(self, core):
         yield core.env.timeout(0, self.index)
 
@@ -110,7 +108,7 @@ class ComputeTask(Task):
         for wgt in self.para:
             wgt_slice = Slice(tensor_slice=wgt.tensor_slice)
             res += wgt_slice.size()
-        return res
+        return res + self.size()
 
     def output_size(self):
         return self.size()
@@ -146,8 +144,10 @@ class Workload(BaseModel):
 class Read(IOTask):
     string: str = "Read"
     def run(self, core):
-        if(self.index==101):
-            print(f"Read101:{self.size}")
+        # if(self.index==101):
+        #     print(f"Read101:{self.size}")
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.lsu.execute("Read"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
@@ -161,10 +161,13 @@ class Write(IOTask):
     feat_num: int = 1
 
     def run(self, core):
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.lsu.execute("Write"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
 
     def input_size(self):
-        return self.size()
+        # return self.size()
+        return 0
 
     def output_size(self):
         return 0
@@ -182,6 +185,8 @@ class Conv(ComputeTask):
     def run(self, core):
         self.calc_flops()
         # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.tpu.execute("Conv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
 class Pool(ComputeTask):
@@ -193,6 +198,8 @@ class Pool(ComputeTask):
     def run(self, core):
         self.calc_flops()
         # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
     
 class Elem(ComputeTask):
@@ -204,6 +211,8 @@ class Elem(ComputeTask):
     def run(self, core):
         self.calc_flops()
         # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.tpu.execute("Elem"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
 
 class FC(ComputeTask):
@@ -214,6 +223,8 @@ class FC(ComputeTask):
     def run(self, core):
         self.calc_flops()
         # self.flops = 0
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
 
 class Stay(Task):
@@ -237,10 +248,13 @@ class Send(CommunicationTask):
         # yield core.env.process(core.link.transmit(self.size))
         # core.router.route_queue_len += 1
         # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst))
 
     def input_size(self):
-        return self.size()
+        # return self.size()
+        return 0
 
     def output_size(self):
         return 0

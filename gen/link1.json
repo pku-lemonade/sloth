@@ -1,2 +1,0 @@
-{"name": "SEND142","ph":"B","ts":210,"pid":1,"tid":"link","args":{"lenthqueue":0,"dest":9}},
-{"name": "SEND142","ph":"E","ts":407,"pid":1,"tid":"link","args":{"lenthqueue":0,"dest":9}}

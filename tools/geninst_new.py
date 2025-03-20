@@ -70,7 +70,7 @@ def json_analyzer(filename: str) -> Network:
             print(e.json())
 
 def get_list_id(x: int, y: int) -> int:
-    return x * 4 + y
+    return x * 8 + y
 
 def intersect(a: Slice, b: Slice) -> Slice:
     new_slice = []
@@ -101,7 +101,7 @@ def fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
         for j in range(i+1, len(fetch_sch.dims)):
             dim_size = dim_size * fetch_sch.dims[j]
         dim_sizes.append(dim_size)
-        dim_lens.append(dim_slice.end-dim_slice.start)
+        dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
 
         if i == 0:
             dim_poses.append((step%a.size())//dim_sizes[i])
@@ -142,14 +142,14 @@ if __name__ == "__main__":
 
     max_inst = 10000
     global_inst_id = 0
-    pewls = [PEworkload(id=id) for id in range(16)]
+    pewls = [PEworkload(id=id) for id in range(64)]
     
     send_map = {}
     
     # 枚举层
     for (lid, layer) in enumerate(net.layers):
-        # if lid > 37:
-        #     continue
+        # if lid == 20:
+        #     break
         print(f"Generating inst of layer{lid}.")
         # 当前层是否分多次计算
         for time in range(net.batch_size//layer.layer_batch_size):
@@ -218,7 +218,7 @@ if __name__ == "__main__":
                                                     pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
                                                     
                                                     if list_core_id != pre_list_core_id:
-                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, lid, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, input.source_layer_id, lid, pre_range.tensor_slice[0].end, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
                                                         recv_id = send_map[info]
 
                                                         # if recv_id == 51877:
@@ -233,7 +233,6 @@ if __name__ == "__main__":
                                                                 tensor_slice = intersection.tensor_slice
                                                             )
                                                         )
-                wgt_inst_num = [0 for id in range(16)]
                 # 权重指令
                 for wgt in layer.wgt_feature:
                     # 只会从DRAM读取数据
@@ -413,10 +412,10 @@ if __name__ == "__main__":
                                                             # if global_inst_id == 51877:
                                                             #     print(f"SEND: PE{list_core_id} -> PE{next_list_core_id}")
 
-                                                            info = (time, step, next_time, next_step, list_core_id, next_list_core_id, next_layer_id, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
+                                                            info = (time, step, next_time, next_step, list_core_id, next_list_core_id, lid, next_layer_id, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[0].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
                                                             if info in send_map:
                                                                 print("Error!")
-                                                            # print(info)
+                                                                print(info)
                                                             send_map[info] = global_inst_id
 
                                             # print(f"loop_time is {loop_time}")
@@ -426,10 +425,15 @@ if __name__ == "__main__":
     comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
     output_inst = [TaskType.WRITE, TaskType.SEND]
 
-    for pe_id in range(16):
+    for pe_id in range(64):
         last_seg_id = 0
 
         for (id, inst) in enumerate(pewls[pe_id].insts):
+            # if inst.index == 19729:
+            #     for i in range(id-5, id+5):
+            #         print(pewls[pe_id].insts[i])
+                # print(pe_id)   15
+                # print(inst.layer_id)   9
             # if pe_id == 0:
             #     print(f"layer:{inst.layer_id} inst_index:{inst.index}")
             #     print(inst.inst_type)

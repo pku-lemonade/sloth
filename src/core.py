@@ -1,3 +1,4 @@
+import heapq
 import simpy
 import logging
 from queue import Queue
@@ -9,25 +10,51 @@ from typing import List
 
 logger = logging.getLogger("PE")
 
+# class SPMManager:
+#     def __init__(self, env,config: ScratchpadConfig):
+#         self.size = config.size
+#         self.delay = config.delay
+#         self.env=env
+#         self.capacity = self.size
+#         self.data=[]
+
+#     def allocate(self, string, size):
+#         if size > self.capacity:
+#             raise ValueError("Not enough space in SPM")
+#         self.capacity -= size
+#         #TODO:add instruction type and id and check if need record
+#         self.data.append((string,self.capacity,"alloc",size,self.env.now,"B"))
+
+#     def free(self, string,size):
+#         self.capacity += size
+#         #TODO：add instruction type and id and check if need record
+#         self.data.append((string,self.capacity,"free",size,self.env.now,"E"))
+
 class SPMManager:
-    def __init__(self, env,config: ScratchpadConfig):
-        self.size = config.size
+    def __init__(self, env, id, config: ScratchpadConfig):
         self.delay = config.delay
-        self.env=env
-        self.capacity = self.size
+        self.env = env
+        self.id = id
+        self.container = simpy.Container(self.env, init=config.size, capacity=config.size)
+        self.max_buf = 0
         self.data=[]
 
-    def allocate(self, string,size):
-        if size > self.capacity:
-            raise ValueError("Not enough space in SPM")
-        self.capacity -= size
+    def allocate(self, string, size):
+        if size > 0:
+            logger.debug(f"Time {self.env.now:.2f}: PE{self.id} before-allocate: {size}, [{self.container.level}/{self.container.capacity}]")
+            yield self.container.get(size)
+            logger.debug(f"Time {self.env.now:.2f}: PE{self.id} after-allocate: {size}, [{self.container.level}/{self.container.capacity}]")
         #TODO:add instruction type and id and check if need record
-        self.data.append((string,self.capacity,"alloc",size,self.env.now,"B"))
+        self.max_buf = max(self.max_buf, self.container.capacity-self.container.level)
+        self.data.append((string, self.container.level, "alloc", size, self.env.now, "B"))
 
-    def free(self, string,size):
-        self.capacity += size
+    def free(self, string, size):
+        if size > 0:
+            logger.debug(f"Time {self.env.now:.2f}: PE{self.id} before-free: {size}, [{self.container.level}/{self.container.capacity}]")
+            yield self.container.put(size)
+            logger.debug(f"Time {self.env.now:.2f}: PE{self.id} after-free: {size}, [{self.container.level}/{self.container.capacity}]")
         #TODO：add instruction type and id and check if need record
-        self.data.append((string,self.capacity,"free",size,self.env.now,"E"))
+        self.data.append((string, self.container.level, "free", size, self.env.now, "E"))
 
 class Graph:
     def __init__(self, num):
@@ -157,9 +184,15 @@ class TableScheduler:
     def __init__(self, program, spm, block_size, id):
         self.program = program
         self.spm = spm
+
         self.block_size = block_size
         self.block_ptr = -1
         self.block_counter = 0
+        
+        # 当前block的id区间 [start, end)
+        self.start = 0
+        self.end = 0
+
         self.id = id
         self.tag = [True for _ in range(len(self.program))]
         self.finish = False
@@ -204,9 +237,9 @@ class TableScheduler:
         logger.debug(f"PE{self.id} is task_block_updating")
         self.block_counter = 0
         self.block_ptr += 1
-        start = self.block_ptr * self.block_size
-        end = min((self.block_ptr + 1) * self.block_size, len(self.program))
-        for id, inst in enumerate(self.program[start:end], start=start):
+        self.start = self.block_ptr * self.block_size
+        self.end = min((self.block_ptr + 1) * self.block_size, len(self.program))
+        for id, inst in enumerate(self.program[self.start:self.end], start=self.start):
             # print("-"*30)
             # print(f"inst_id is {id}, type is {inst.inst_type}")
             logger.debug("-"*30)
@@ -367,9 +400,11 @@ class Core:
         self.type = config.type
         self.program = program
         self.id = id
-        self.spm_manager = SPMManager(env,config.spm)
+        self.spm_manager = SPMManager(env, self.id, config.spm)
         self.flow_out=[]
         self.flow_in=[]
+
+        self.recv_queue = []
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
@@ -378,6 +413,8 @@ class Core:
         self.tpu_flops = config.tpu.flops
         self.lsu = MonitoredResource(env=env, capacity=2)
         self.tpu = MonitoredResource(env=env, capacity=1)
+
+        self.data_ready = {}
         
         self.data_in, self.data_out = None, None
         self.env.process(self.core_run())
@@ -392,14 +429,31 @@ class Core:
         self.event2task = {}
 
         while True:
+            while self.recv_queue:
+                top = self.recv_queue[0]
+                if top.index in range(self.scheduler.start, self.scheduler.end):      
+                    data = heapq.heappop(self.recv_queue)
+                    # task_id转换回index
+                    data.index = self.scheduler.taskid2index[data.index]
+                    logger.debug(f"PE{self.id} pop data{data.index} from recv_queue")
+                    
+                    slice = Slice(tensor_slice=data.tensor_slice)
+                    yield self.env.process(self.spm_manager.allocate("recv"+str(data.index), slice.size()))
+                    self.scheduler.update(data)
+                else:
+                    break
+
             task_ready = self.scheduler.schedule()
             if task_ready:
                 for task in task_ready:
-                    #print(type(task))
+
                     # 分配计算结果存储空间
-                    self.spm_manager.allocate(task.string+str(task.index), task.output_size())
+                    # self.spm_manager.allocate(task.string+str(task.index), task.output_size())
+                    # print(f"PE{self.id} allocate: {task.output_size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
+
                     task_event = self.env.process(task.run(self))
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
+                    
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}, layer:{self.scheduler.program[self.scheduler.index2taskid[task.index]].layer_id}) into running queue.")
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
             logger.info(f"Time {self.env.now:.2f}: Before trigger::PE{self.id} data_len is: {self.data_in.len()}")
@@ -420,11 +474,20 @@ class Core:
                     logger.info(f"Time {self.env.now:.2f}: triggered::PE{self.id} receive data{msg.data.index}")
                     logger.debug(f"received data is {msg.data}")
                     logger.debug(f"data_queue_len is {self.data_in.len()}")
-                    #这是在message到达的时候update
-                    self.scheduler.update(msg.data)
+
                     # 分配接收数据空间
-                    slice = Slice(tensor_slice=msg.data.tensor_slice)
-                    self.spm_manager.allocate(task.string+str(task.index), slice.size())
+                    if self.scheduler.index2taskid[msg.data.index] in range(self.scheduler.start, self.scheduler.end):
+                        slice = Slice(tensor_slice=msg.data.tensor_slice)
+                        yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
+                        # 接收到的数据在block内才进行更新，否则放入recv_queue
+                        self.scheduler.update(msg.data)
+                    else:
+                        logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
+                        # index转换成PE内id
+                        msg.data.index = self.scheduler.index2taskid[msg.data.index]
+                        heapq.heappush(self.recv_queue, msg.data)
+                    
+                    # print(f"PE{self.id} allocate: {slice.size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
 
                     logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
@@ -434,18 +497,31 @@ class Core:
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                         logger.info(f"received data is {msg.data}")
                         logger.info(f"data_queue_len is {self.data_in.len()}")
-                        self.scheduler.update(msg.data)
+                        
                         # 分配接收数据空间
-                        slice = Slice(tensor_slice=msg.data.tensor_slice)
-                        self.spm_manager.allocate(task.string+str(task.index), slice.size())
+                        if self.scheduler.index2taskid[msg.data.index] in range(self.scheduler.start, self.scheduler.end):
+                            slice = Slice(tensor_slice=msg.data.tensor_slice)
+                            yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
+                            # 接收到的数据在block内才进行更新，否则放入recv_queue
+                            self.scheduler.update(msg.data)
+                        else:
+                            logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
+                            # index转换成PE内id
+                            msg.data.index = self.scheduler.index2taskid[msg.data.index]
+                            heapq.heappush(self.recv_queue, msg.data)
+                        
+                        # print(f"PE{self.id} allocate: {slice.size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
 
                 #注意，单纯put的msg一定是send，这里还有msg是其它的
                 for event in self.running_event:
                     if event.triggered:
                         # updated = True
                         task=self.event2task[event]
+
                         # 执行完成，释放输入数据空间
-                        self.spm_manager.free(task.string+str(task.index),task.input_size())
+                        self.env.process(self.spm_manager.free(task.string+str(task.index),task.input_size()))
+                        # print(f"PE{self.id} free: {task.input_size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
+
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} finish processing {type(self.event2task[event])} task(id:{self.event2task[event].index}).")
                         #这个也不可能是RECV，我需要找到其中的SEND
                         #print(self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type)

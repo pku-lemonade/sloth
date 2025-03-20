@@ -1,3 +1,0 @@
-{"name":"send138" ,"ph":"B","ts":210,"id":138,"pid":4,"tid":"flow_out","args":{"act":"send"}},
-{"name":"send138" ,"ph":"E","ts":210,"id":138,"pid":4,"tid":"flow_out","args":{"act":"send"}},
-{"name":"connect" ,"ph":"s","ts":210,"id":138,"pid":4,"tid":"flow_out"}

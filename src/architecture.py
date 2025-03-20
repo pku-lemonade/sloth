@@ -37,7 +37,7 @@ def monitor(data, t, prio, eid, event):
         logger.info((t, eid, event.proc._generator, type(event), event.resource, event.value))
     # else:
         # logger.info((t, eid, type(event), event.value))
-    # data.append((t, eid, type(event)))
+    data.append((t, eid, type(event)))
 
 monitor = partial(monitor, data)
 
@@ -227,8 +227,11 @@ class Arch:
     def run(self):
         print("Start simulation.")
         self.env.run()
-        for id in range(16):
+
+        for id in range(64):
             print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
+            print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
+
         print("Simulation finished.")
         #将值传入json文件
         # self.make_print()

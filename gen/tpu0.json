@@ -1,3 +1,0 @@
-{"name": "Pool103","ph":"B","ts":0,"pid":0,"tid":"tpu","args":{"lenthqueue":0}},
-{"name": "Pool103","ph":"E","ts":111,"pid":0,"tid":"tpu","args":{"lenthqueue":1}},
-{"name": "Conv39","ph":"B","ts":111,"pid":0,"tid":"tpu","args":{"lenthqueue":0}}
