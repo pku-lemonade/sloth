@@ -60,6 +60,7 @@ class Partition(BaseModel):
 class Layer(BaseModel):
     type: str
     layer_id: int
+    group_num: int
     layer_batch_size: int
     output_partition: Partition
     # input_fetch实际上以输出为视角fetch，C维度的fetch不影响输入
@@ -420,6 +421,39 @@ if __name__ == "__main__":
                                             tensor_slice = cur_range.tensor_slice,
                                         )
                                     )
+                                case "gconv":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.GCONV,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
+                                        )
+                                    )
+                                case "ptp":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.PTP,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
+                                        )
+                                    )
+                                case "trans":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.TRANS,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
+                                        )
+                                    )
                 
                 # 输出指令
                 for output in layer.output_feature:
@@ -498,7 +532,7 @@ if __name__ == "__main__":
 
     # 构建指令trigger关系
     input_inst = [TaskType.READ, TaskType.RECV]
-    comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
+    comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
     output_inst = [TaskType.WRITE, TaskType.SEND]
 
     for pe_id in range(core_num):

@@ -5,7 +5,7 @@ from queue import Queue
 from src.common import MonitoredResource,cfg,cores_deps
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
-from src.sim_type import Slice, Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
+from src.sim_type import *
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -205,7 +205,7 @@ class TableScheduler:
 
         self.waiting_queue = Queue()
 
-        self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
+        self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
 
         for id, inst in enumerate(self.program):
             self.index2taskid[inst.index] = id
@@ -229,6 +229,12 @@ class TableScheduler:
                     self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
                 case TaskType.FC:
                     self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.GCONV:
+                    self.tasks.append(GConv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id, group_num=inst.group_num))
+                case TaskType.PTP:
+                    self.tasks.append(PTP(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.TRANS:
+                    self.tasks.append(Trans(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
 
         self.task_block_update()
 

@@ -36,6 +36,9 @@ class TaskType(IntEnum):
     POOL = 6
     FC = 7
     ELEM = 8
+    GCONV = 9
+    PTP = 10
+    TRANS = 11
 
 class OperationType(IntEnum):
     CONV = 0
@@ -123,6 +126,7 @@ class Instruction(BaseModel):
     index: int
     trigger_index: List[int] = []
     layer_id: int
+    group_num: int = 1
     data_type: DataType
     position: int = 0
     tensor_slice: List[DimSlice]
@@ -226,6 +230,42 @@ class FC(ComputeTask):
         yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
         # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
         yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
+
+class GConv(ComputeTask):
+    string: str = "GConv"
+    group_num: int
+    def calc_flops(self):
+        wgt_slice = Slice(tensor_slice=self.para[0].tensor_slice)
+        wgt_H = wgt_slice.tensor_slice[2].end - wgt_slice.tensor_slice[2].start
+        wgt_W = wgt_slice.tensor_slice[3].end - wgt_slice.tensor_slice[3].start
+
+        self.flops = self.size() * wgt_H * wgt_W
+        self.flops //= self.group_num
+        
+    def run(self, core):
+        self.calc_flops()
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        yield core.tpu.execute("GConv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
+
+class PTP(ComputeTask):
+    string: str = "PTP"
+    def calc_flops(self):
+        self.flops = self.size() * 7
+
+    def run(self, core):
+        self.calc_flops()
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        yield core.tpu.execute("PTP"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
+
+class Trans(ComputeTask):
+    string: str = "Trans"
+    def calc_flops(self):
+        self.flops = 0
+
+    def run(self, core):
+        self.calc_flops()
+        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
+        yield core.tpu.execute("Trans"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
 class Stay(Task):
     string: str = "Stay"
