@@ -21,7 +21,7 @@ def config_analyzer(filename: str) -> ArchConfig:
         except ValidationError as e:
             print(e.json())
 
-arch_configs = config_analyzer("arch/gemini8_8.json")
+arch_configs = config_analyzer("arch/gemini4_4.json")
 arch_configs.core.spm.size /= 4
 
 class Core(BaseModel):
@@ -118,19 +118,21 @@ def output_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
         dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
 
         if i == 0:
-            dim_poses.append((step%a.size())//dim_sizes[i])
+            dim_poses.append((step%fetch_sch.num())//dim_sizes[i])
         else:
             dim_poses.append((step%dim_sizes[i-1])//dim_sizes[i])
 
     new_slice = []
     for id in range(len(a.tensor_slice)):
-        new_slice.append(
-            DimSlice(
-                start = dim_lens[id]*dim_poses[id], 
-                # 最后一段可能不满
-                end = min(dim_lens[id]*dim_poses[id]+dim_lens[id], a.tensor_slice[id].end)
-            )
-        )
+        remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
+        if remain == 0:
+            start = dim_poses[id] * dim_lens[id]
+            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+            new_slice.append(DimSlice(start=start, end=end))
+        else:
+            start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+            new_slice.append(DimSlice(start=start, end=end))
 
     return Slice(tensor_slice=new_slice)
 
@@ -144,29 +146,27 @@ def input_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     for (i, dim_slice) in enumerate(a.tensor_slice):
         dim_size = 1
         for j in range(i+1, len(fetch_sch.dims)):
-            if j != 1:
-                dim_size = dim_size * fetch_sch.dims[j]
-
+            dim_size = dim_size * fetch_sch.dims[j]
         dim_sizes.append(dim_size)
-        if i != 1:
-            dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
-        else:
-            dim_lens.append(dim_slice.end-dim_slice.start)
+        dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
 
         if i == 0:
-            dim_poses.append((step%a.size())//dim_sizes[i])
+            dim_poses.append((step%fetch_sch.num())//dim_sizes[i])
         else:
             dim_poses.append((step%dim_sizes[i-1])//dim_sizes[i])
     
     new_slice = []
     for id in range(len(a.tensor_slice)):
         if id != 1:
-            new_slice.append(
-                DimSlice(
-                    start = dim_lens[id]*dim_poses[id], 
-                    end = min(dim_lens[id]*dim_poses[id]+dim_lens[id], a.tensor_slice[id].end)
-                )
-            )
+            remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
+            if remain == 0:
+                start = dim_poses[id] * dim_lens[id]
+                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+                new_slice.append(DimSlice(start=start, end=end))
+            else:
+                start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+                new_slice.append(DimSlice(start=start, end=end))
         else:
             # C维度不变
             new_slice.append(a.tensor_slice[id])
@@ -178,17 +178,23 @@ def wgt_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     if fetch_sch.dims[1] == 1:
         return a
     
-    size_0, size_1 = 1, 1
-    for dim_part in fetch_sch.dims:
-        size_0 = size_0 * dim_part
-        size_1 = size_1 * dim_part
+    # fetch后C维度的大小
+    len_c = (a.tensor_slice[1].end - a.tensor_slice[1].start) // fetch_sch.dims[1]
+    # 当前step对应的是C维度的第几块
+    size_c = fetch_sch.num() // fetch_sch.dims[0]
+    pos_c = (step % size_c) // (fetch_sch.dims[2] * fetch_sch.dims[3])
+    # print(f"step:{step}, size_c:{size_c}, pos_c:{pos_c}")
+    # 计算该块的C维度范围（最后一块需要均分给前面的块）
+    remain = (a.tensor_slice[1].end - a.tensor_slice[1].start) % len_c
+    if remain == 0:
+        start = pos_c * len_c
+        end = min(pos_c*len_c+len_c, a.tensor_slice[1].end)
+        a.tensor_slice[1] = DimSlice(start=start, end=end)
+    else:
+        start = pos_c * len_c + (pos_c if pos_c < remain else remain)
+        end = min(pos_c*len_c+len_c+(pos_c+1 if pos_c+1<remain else remain), a.tensor_slice[1].end)
+        a.tensor_slice[1] = DimSlice(start=start, end=end)
 
-    size_0 = size_0 // fetch_sch.dims[0]
-    size_1 = size_1 // fetch_sch.dims[0] // fetch_sch.dims[1]
-
-    len_2 = a.tensor_slice[1].end - a.tensor_slice[1].start
-    pos_2 = (step % size_0) // size_1
-    a.tensor_slice[1] = DimSlice(start=len_2*pos_2, end=min(len_2*pos_2+len_2,a.tensor_slice[1].end))
     return a
 
 def get_input_size(layer: Layer):

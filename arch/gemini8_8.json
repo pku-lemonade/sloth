@@ -4,7 +4,7 @@
 		"x" : 8,
 		"y" : 8,
 		"width" : 8,
-		"blk_size" : 30,
+		"blk_size" : 10,
 		"spm" : {
 			"size" : 2097152,
 			"delay" : 0
@@ -13,7 +13,7 @@
 			"flops" : 1024
 		},
 		"lsu" : {
-			"width" : 4
+			"width" : 16
 		}
 	},
 	"noc" : {

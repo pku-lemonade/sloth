@@ -411,7 +411,7 @@ class Core:
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
-        self.lsu = MonitoredResource(env=env, capacity=2)
+        self.lsu = MonitoredResource(env=env, capacity=4)
         self.tpu = MonitoredResource(env=env, capacity=1)
 
         self.data_ready = {}
