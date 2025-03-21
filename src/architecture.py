@@ -228,7 +228,7 @@ class Arch:
         print("Start simulation.")
         self.env.run()
 
-        for id in range(64):
+        for id in range(len(self.cores)):
             print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
             print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
 
