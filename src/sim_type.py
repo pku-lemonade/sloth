@@ -6,24 +6,42 @@ from pydantic import BaseModel
 def ceil(a: int, b: int):
     return (a + b - 1) // b
 
+class Direction(IntEnum):
+    NORTH = 0
+    SOUTH = 1
+    EAST = 2
+    WEST = 3
+
 class RouterFail(BaseModel):
     start_time: int
     end_time: int
+    router_id: int
     times: int
 
 class LinkFail(BaseModel):
     start_time: int
     end_time: int
     router_id: int
-    direction: int
+    direction: Direction
+    times: int
+
+class LsuFail(BaseModel):
+    start_time: int
+    end_time: int
+    pe_id: int
+    times: int
+
+class TpuFail(BaseModel):
+    start_time: int
+    end_time: int
+    pe_id: int
     times: int
 
 class FailSlow(BaseModel):
     router: List[RouterFail]
     link: List[LinkFail]
-
-#this is defination os message
-
+    lsu: List[LsuFail]
+    tpu: List[TpuFail]
 
 class TaskType(IntEnum):
     READ = 0

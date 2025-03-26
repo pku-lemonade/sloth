@@ -412,6 +412,8 @@ class Core:
 
         self.recv_queue = []
 
+        self.end_time = 0
+
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
 
@@ -428,6 +430,18 @@ class Core:
     def bound_with_router(self, data_in, data_out):
         self.data_in = data_in
         self.data_out = data_out
+
+    def lsu_fail(self, times):
+        self.lsu_bandwidth /= times
+    
+    def lsu_recover(self, times):
+        self.lsu_bandwidth *= times
+    
+    def tpu_fail(self, times):
+        self.tpu_flops /= times
+
+    def tpu_recover(self, times):
+        self.tpu_flops *= times
 
     def core_run(self):
         # running 事件列表
@@ -538,6 +552,7 @@ class Core:
                         self.running_event.remove(event)
 
             if self.scheduler.inst_counter == len(self.program):
+                self.end_time = self.env.now
                 print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
 
 

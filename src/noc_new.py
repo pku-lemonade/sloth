@@ -3,16 +3,10 @@ import logging
 import contextlib
 from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
-from src.sim_type import Data, Message, ceil, Slice
+from src.sim_type import Data, Message, ceil, Slice, Direction
 from src.common import MonitoredResource
 
 logger = logging.getLogger("NoC")
-
-class Direction(IntEnum):
-    NORTH = 0
-    SOUTH = 1
-    EAST = 2
-    WEST = 3
 
 # class Link:
 #     def __init__(self, env, config: LinkConfig):
@@ -38,14 +32,16 @@ class Link:
         self.width = config.width
         self.delay = config.delay
         self.store = simpy.Store(env)
+        self.delay_factor = 1
         self.linkentry = MonitoredResource(env,capacity=1)
-
         
     def calc_latency(self, msg):
         #calc latency:
         slice = Slice(tensor_slice=msg.data.tensor_slice)
         transmission_time = ceil(slice.size(), self.width)
         latency = self.delay + transmission_time
+        latency = latency * self.delay_factor
+
         yield self.linkentry.execute("SEND"+str(msg.data.index),latency,attributes=msg.dst)
         self.store.put(msg)
     
@@ -58,11 +54,11 @@ class Link:
     def len(self):
         return len(self.store.items)
 
+    def change_delay(self, times):
+        self.delay_factor *= times
 
-    def change_delay(self,times):
-        self.delay *= times
-
-
+    def recover_delay(self, times):
+        self.delay_factor /= times
 
 class Router:
     def __init__(self, env, config: RouterConfig, id: int, x: int, y:int):
@@ -101,6 +97,32 @@ class Router:
     def bound_with_core(self, core_in, core_out):
         self.core_in = core_in
         self.core_out = core_out
+
+    def router_fail(self, times):
+        self.north_in.change_delay(times)
+        self.north_out.change_delay(times)
+
+        self.south_in.change_delay(times)
+        self.south_out.change_delay(times)
+
+        self.east_in.change_delay(times)
+        self.east_out.change_delay(times)
+
+        self.west_in.change_delay(times)
+        self.west_out.change_delay(times)
+
+    def router_recover(self, times):
+        self.north_in.recover_delay(times)
+        self.north_out.recover_delay(times)
+        
+        self.south_in.recover_delay(times)
+        self.south_out.recover_delay(times)
+
+        self.east_in.recover_delay(times)
+        self.east_out.recover_delay(times)
+        
+        self.west_in.recover_delay(times)
+        self.west_out.recover_delay(times)
 
     def route(self, msg: Message, next_dir, next_router):
         match next_dir:
