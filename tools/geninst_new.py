@@ -60,6 +60,7 @@ class Partition(BaseModel):
 class Layer(BaseModel):
     type: str
     layer_id: int
+    layer_group_id: int
     group_num: int
     layer_batch_size: int
     output_partition: Partition
@@ -236,6 +237,7 @@ if __name__ == "__main__":
     net = json_analyzer("tools/mapping.json")
     core_num = arch_configs.core.x * arch_configs.core.y
 
+    inf = 100000
     global_inst_id = 0
     pewls = [PEworkload(id=id) for id in range(core_num)]
     
@@ -247,20 +249,22 @@ if __name__ == "__main__":
 
         # 判断spm是否足够
         spm_size = get_spm_size(layer)
-        # 若不够，则继续在batch维度切分，需要修改每块slice的batch维度（输入、输出、权重）
+        # 若不够，则继续在batch维度切分，需要修改fetch的batch维度（fetch改动不影响每块partition）
         if spm_size > arch_configs.core.spm.size:
-            print(f"Change layer_batch_size to {layer.input_fetch.dims[0]}.")
+            # print(f"Change layer_batch_size to {layer.input_fetch.dims[0]}.")
+            print(f"Change fetch's Dim-B to {layer.layer_batch_size//layer.output_partition.dims[0]}.")
+            layer.input_fetch.dims[0] = layer.layer_batch_size//layer.output_partition.dims[0]
             # layer_batch_size需要是fetch_batch的整数倍 
-            layer.layer_batch_size = layer.input_fetch.dims[0]
-            # 调整输入batch，四维是[B,C1,H_in,W_in]
-            for input in layer.input_feature:
-                for block in input.blocks:
-                    block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
-            # 调整输出batch，四维是[B,C2,H_out,W_out]
-            for output in layer.output_feature:
-                for block in output.blocks:
-                    block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
-            # 权重batch，四维是[B=1,C2,C1,R*S]，无需调整
+            # layer.layer_batch_size = layer.input_fetch.dims[0]
+            # # 调整输入batch，四维是[B,C1,H_in,W_in]
+            # for input in layer.input_feature:
+            #     for block in input.blocks:
+            #         block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
+            # # 调整输出batch，四维是[B,C2,H_out,W_out]
+            # for output in layer.output_feature:
+            #     for block in output.blocks:
+            #         block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
+            # # 权重batch，四维是[B=1,C2,C1,R*S]，无需调整
 
         spm_size = get_spm_size(layer)
         # print(layer.input_fetch)
@@ -284,7 +288,7 @@ if __name__ == "__main__":
             for step in range(fetch):
                 # 输入指令
                 for input in layer.input_feature:
-                    # 从DRAM读取数据
+                    # 从DRAM读取数据 
                     if input.source == "dram":
                         for block in input.blocks:
                             for core in block.cores:
@@ -295,15 +299,79 @@ if __name__ == "__main__":
                                 cur_range = input_fetch_range(cur_range, layer.input_fetch, step)
 
                                 list_core_id = get_list_id(core.x, core.y)
-                                pewls[list_core_id].insts.append(
-                                    Instruction(
-                                        inst_type = TaskType.READ,
-                                        index = global_inst_id,
-                                        layer_id = lid,
-                                        data_type = DataType.FEAT,
-                                        tensor_slice = cur_range.tensor_slice
+
+                                # 输入直接从dram读
+                                if input.source_layer_id == -1:
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.READ,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice
+                                        )
                                     )
-                                )
+                                # 两层位于不同group，也从dram读
+                                elif input.source_layer_id != -1 and layer.layer_group_id != net.layers[input.source_layer_id].layer_group_id:
+                                    # 由于mapping格式问题，从dram读入的size也需要计算（输入除外）
+                                    dram_range = [DimSlice(start=inf, end=0) for _ in range(len(cur_range.tensor_slice))]
+                                    dram_range = Slice(tensor_slice=dram_range)
+                                    
+                                    # 计算依赖层放入dram的shape
+                                    for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
+                                        pre_fetch = net.layers[input.source_layer_id].input_fetch.num()
+                                        for pre_step in range(pre_fetch):
+
+                                            for pre_block in net.layers[input.source_layer_id].output_feature[0].blocks:
+                                                for pre_core in pre_block.cores:
+                                                    pre_range = Slice(tensor_slice=pre_block.tensor_slice)
+                                                    pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
+                                                    pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
+                                                    
+                                                    dram_range = dram_range.max(pre_range)
+
+                                    # 计算当前层需要读入的数据
+                                    cur_range = intersect(cur_range, dram_range)
+
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.READ,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice
+                                        )
+                                    )
+                                # 两层位于相同group，使用recv
+                                elif input.source_layer_id != -1:
+                                    for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
+                                        pre_fetch = net.layers[input.source_layer_id].input_fetch.num()
+                                        for pre_step in range(pre_fetch):
+
+                                            for pre_block in net.layers[input.source_layer_id].output_feature[0].blocks:
+                                                for pre_core in pre_block.cores:
+                                                    pre_range = Slice(tensor_slice=pre_block.tensor_slice)
+                                                    pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
+                                                    pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
+
+                                                    intersection = intersect(cur_range, pre_range)
+                                                    pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
+
+                                                    if intersection.size() != 0:
+                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, input.source_layer_id, lid, pre_range.tensor_slice[0].end, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                                        recv_id = send_map[info]
+
+                                                        pewls[list_core_id].insts.append(
+                                                            Instruction(
+                                                                inst_type = TaskType.RECV,
+                                                                index = recv_id,
+                                                                layer_id = lid,
+                                                                data_type = DataType.FEAT,
+                                                                tensor_slice = intersection.tensor_slice
+                                                            )
+                                                        )
+                                
+
                     # 从前一层的core读取数据
                     else:
                         # 枚举当前层输入块
@@ -486,21 +554,31 @@ if __name__ == "__main__":
                             cur_range = output_fetch_range(cur_range, layer.input_fetch, step)
                             
                             for next_layer_id in output.next:
+                                # group ID相同才需要发送
+                                if net.layers[next_layer_id].layer_group_id != layer.layer_group_id:
+                                    continue
+
+                                # if next_layer_id == 6:
+                                #     print(lid)
+
                                 for next_time in range(net.batch_size//net.layers[next_layer_id].layer_batch_size):
                                     # 触发层是否进行fetch
                                     next_fetch = net.layers[next_layer_id].input_fetch.num()
                                     for next_step in range(next_fetch):
                                         
                                         for next_input in net.layers[next_layer_id].input_feature:
-
-                                            if next_input.source == "dram" or next_input.source_layer_id != lid:
+                                            if next_input.source_layer_id != lid:
                                                 continue
+
                                             for next_block in next_input.blocks:
                                                 for next_core in next_block.cores:
                                                     # 触发层的输出块range
                                                     next_range = Slice(tensor_slice=next_block.tensor_slice)
                                                     next_range = time_range(next_range, net.layers[next_layer_id].layer_batch_size, next_time)
                                                     next_range = input_fetch_range(next_range, net.layers[next_layer_id].input_fetch, next_step)
+                                                    
+                                                    # if lid == 3:
+                                                    #     print(next_range)
                                                     # 计算交集
                                                     intersection = intersect(cur_range, next_range)
 
@@ -570,3 +648,6 @@ if __name__ == "__main__":
 
     with open("tools/workload.json", "w") as file:
         print(workload_json, file=file)
+
+    with open("tools/mapping_adjust.json", "w") as file:
+        print(net.model_dump_json(indent=4), file=file)

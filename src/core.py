@@ -58,7 +58,7 @@ class SPMManager:
 
 class Graph:
     def __init__(self, num):
-        self.node_num = num
+        self.node_num = num 
         self.edges = [[] for _ in range(num)]
         self.degree = [0 for _ in range(num)]
         self.tag = [True for _ in range(num)]

@@ -66,6 +66,17 @@ class Slice(BaseModel):
                 res = res * dim_len
         return res
     
+    def max(self, other: "Slice") -> "Slice":
+        res = []
+        for i in range(len(self.tensor_slice)):
+            res.append(
+                DimSlice(
+                    start = min(self.tensor_slice[i].start, other.tensor_slice[i].start),
+                    end = max(self.tensor_slice[i].end, other.tensor_slice[i].end)
+                )
+            )
+        return Slice(tensor_slice=res)
+    
 class Data(BaseModel):
     index: int
     tensor_slice: List[DimSlice]
