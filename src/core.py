@@ -5,7 +5,7 @@ from queue import Queue
 from src.common import MonitoredResource,cfg,cores_deps
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
-from src.sim_type import Slice, Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
+from src.sim_type import *
 from typing import List
 
 logger = logging.getLogger("PE")
@@ -58,7 +58,7 @@ class SPMManager:
 
 class Graph:
     def __init__(self, num):
-        self.node_num = num
+        self.node_num = num 
         self.edges = [[] for _ in range(num)]
         self.degree = [0 for _ in range(num)]
         self.tag = [True for _ in range(num)]
@@ -205,7 +205,7 @@ class TableScheduler:
 
         self.waiting_queue = Queue()
 
-        self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
+        self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
 
         for id, inst in enumerate(self.program):
             self.index2taskid[inst.index] = id
@@ -229,6 +229,12 @@ class TableScheduler:
                     self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
                 case TaskType.FC:
                     self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.GCONV:
+                    self.tasks.append(GConv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id, group_num=inst.group_num))
+                case TaskType.PTP:
+                    self.tasks.append(PTP(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                case TaskType.TRANS:
+                    self.tasks.append(Trans(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
 
         self.task_block_update()
 
@@ -406,12 +412,14 @@ class Core:
 
         self.recv_queue = []
 
+        self.end_time = 0
+
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
         self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
-        self.lsu = MonitoredResource(env=env, capacity=2)
+        self.lsu = MonitoredResource(env=env, capacity=4)
         self.tpu = MonitoredResource(env=env, capacity=1)
 
         self.data_ready = {}
@@ -422,6 +430,18 @@ class Core:
     def bound_with_router(self, data_in, data_out):
         self.data_in = data_in
         self.data_out = data_out
+
+    def lsu_fail(self, times):
+        self.lsu_bandwidth /= times
+    
+    def lsu_recover(self, times):
+        self.lsu_bandwidth *= times
+    
+    def tpu_fail(self, times):
+        self.tpu_flops /= times
+
+    def tpu_recover(self, times):
+        self.tpu_flops *= times
 
     def core_run(self):
         # running 事件列表
@@ -532,6 +552,7 @@ class Core:
                         self.running_event.remove(event)
 
             if self.scheduler.inst_counter == len(self.program):
+                self.end_time = self.env.now
                 print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
 
 
