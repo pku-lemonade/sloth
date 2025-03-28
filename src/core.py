@@ -1,13 +1,14 @@
 import simpy
 import logging
 from queue import Queue
-from src.common import MonitoredResource,cfg,cores_deps
+from src.common import MonitoredResource,cfg,ind2ins
 from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
 from src.sim_type import Slice, Instruction, Read, Write, Conv, Pool, FC, Send, Recv, Elem, Data, Stay, TaskType, OperationType, DataType
 from typing import List
 
 logger = logging.getLogger("PE")
+waitready=[]
 
 class SPMManager:
     def __init__(self, env,config: ScratchpadConfig):
@@ -154,19 +155,27 @@ class GraphScheduler:
                             return FC(flops=inst.size, layer_id=inst.layer_id)
 
 class TableScheduler:
-    def __init__(self, program, spm, block_size, id):
+    def __init__(self, program, spm, block_size, id,env,arch,stage):
         self.program = program
         self.spm = spm
         self.block_size = block_size
+        #print(self.block_size)
         self.block_ptr = -1
         self.block_counter = 0
+        self.block_start=0
+        self.start=0
+        self.env=env
+        self.block_time=[]#记录block的时间list，便于在inst_ready之后将等待的时间返回到block
+        self.block_hot=[]
         self.id = id
         self.tag = [True for _ in range(len(self.program))]
         self.finish = False
         self.inst_counter = 0
-
+        self.stage=stage
+        self.arch=arch
         self.tasks = []
 
+        
         self.index2taskid = {}
         self.taskid2index = {}
 
@@ -175,31 +184,59 @@ class TableScheduler:
         self.comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
 
         for id, inst in enumerate(self.program):
+            #因为每次只考虑一个block,这样的话可以保证每次观察一条指令的时候，它们的前驱一定有running，从而可以终止
+            #只考虑running_event
+            #if self.stage=="post_analysis":
+                #if inst.prev==None:
+                    #inst.running=True
+                #if inst.inst_type == TaskType.RECV:
+                #    print("="*40)
+                #    print(inst.prev)
+                #    print(inst)        
             self.index2taskid[inst.index] = id
             self.taskid2index[id] = inst.index
             match inst.inst_type:
                 case TaskType.STAY:
-                    self.tasks.append(Stay(index=inst.index, tensor_slice=inst.tensor_slice))
+                    self.tasks.append(Stay(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
                 case TaskType.RECV:
-                    self.tasks.append(Recv(index=inst.index, tensor_slice=inst.tensor_slice))
+                    self.tasks.append(Recv(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
                 case TaskType.READ:
-                    self.tasks.append(Read(index=inst.index, tensor_slice=inst.tensor_slice))
+                    self.tasks.append(Read(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
                 case TaskType.WRITE:
-                    self.tasks.append(Write(index=inst.index, tensor_slice=inst.tensor_slice))
-                case TaskType.SEND:
-                    self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position))
+                    self.tasks.append(Write(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
+                case TaskType.SEND:#改成send slice
+                    self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position,inst=inst))
                 case TaskType.CONV:
-                    self.tasks.append(Conv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Conv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
                 case TaskType.POOL:
-                    self.tasks.append(Pool(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Pool(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
                 case TaskType.ELEM:
-                    self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
                 case TaskType.FC:
-                    self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+                    self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
 
         self.task_block_update()
 
+    def back_add(self,delta_time):
+        i=1
+        while delta_time>0:
+            val=min(self.block_time[-i],delta_time)
+            delta_time-=val
+            self.block_hot[-i]+=val
+            i+=1
+
+
     def task_block_update(self):
+        #block
+        if(self.start==0):
+            self.start=1
+        else:
+            #print("task_block_update")
+            self.block_time.append(self.env.now-self.block_start)
+            #print(len(self.block_hot))
+            self.block_hot.append(0)
+            self.block_start=self.env.now
+
         # print(f"PE{self.id} is task_blk_updating")
         logger.debug(f"PE{self.id} is task_block_updating")
         self.block_counter = 0
@@ -207,6 +244,10 @@ class TableScheduler:
         start = self.block_ptr * self.block_size
         end = min((self.block_ptr + 1) * self.block_size, len(self.program))
         for id, inst in enumerate(self.program[start:end], start=start):
+            #print(id)
+            if inst.start_time != -1:#ready
+                delta_time=self.env.now-inst.start_time
+                self.back_add(delta_time)
             # print("-"*30)
             # print(f"inst_id is {id}, type is {inst.inst_type}")
             logger.debug("-"*30)
@@ -214,6 +255,7 @@ class TableScheduler:
             match inst.inst_type:
                 case TaskType.READ:
                     # print(f"insert {id} into waiting queue")
+                    assert self.tag[id]
                     if self.tag[id]:
                         self.tag[id] = False
                         logger.debug(f"insert {id} into waiting queue")
@@ -221,6 +263,7 @@ class TableScheduler:
                 case TaskType.SEND:
                     if self.tasks[id].feat:
                         # print(f"insert {id} into waiting queue")
+                        assert self.tag[id]
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
@@ -235,8 +278,10 @@ class TableScheduler:
                 case TaskType.RECV:
                     if self.tasks[id].feat:
                         logger.debug(f"self.counter += 1")
+                        #即时触发
                         self.block_counter += 1
                 case TaskType.STAY:
+                    assert self.tag[id]
                     if self.tag[id]:
                         self.tag[id] = False
                         self.waiting_queue.put(id)
@@ -265,6 +310,7 @@ class TableScheduler:
             self.task_block_update()
         
     def update(self, data):
+        #新添加
         self.inst_counter += 1
         task_id = self.index2taskid[data.index]
         #print(data.index)
@@ -273,6 +319,11 @@ class TableScheduler:
         # print(f"{task_id} // {self.block_size} == {self.block_ptr}")
         logger.debug(f"updating {data.index}")
         logger.debug(f"{task_id} // {self.block_size} == {self.block_ptr}")
+        if self.program[task_id].layer_id ==  self.arch.layer_id:
+            self.arch.layer_id+=1
+            self.arch.layer_start.append(self.env.now)
+        if self.program[task_id].inst_type != TaskType.RECV:
+            assert task_id // self.block_size == self.block_ptr
         if task_id // self.block_size == self.block_ptr:
             # print(f"PE{self.id} self.counter += 1")
             logger.debug(f"PE{self.id} self.counter += 1")
@@ -287,11 +338,22 @@ class TableScheduler:
         
         if self.program[task_id].inst_type == TaskType.RECV:
             self.tasks[task_id].feat.append(data)
+            self.program[task_id].record.ready_run_time.append(self.env.now)
+            self.program[task_id].record.exe_start_time.append(self.env.now)
+            self.program[task_id].record.exe_end_time.append(self.env.now)
 
         #这里可以构建连线表示依赖关系
+        
+        
+
         for idx in range(len(self.program[task_id].trigger_index)):
+            #maybe bug
+            assert self.program[task_id].inst_type != TaskType.SEND
             tri_task_id = self.index2taskid[self.program[task_id].trigger_index[idx]]
+            self.program[tri_task_id].record.mulins.append(self.env.now)
+
             match self.program[task_id].data_type:
+                #这里放进去，后面更新
                 case DataType.PARA:
                     self.tasks[tri_task_id].para.append(data)
                 case DataType.FEAT:
@@ -316,19 +378,51 @@ class TableScheduler:
                 feat_len = len(self.tasks[tri_task_id].feat)
                 logger.debug("inside")
                 logger.debug(f"para:{para_len}/{self.tasks[tri_task_id].para_num} + feat:{feat_len}/{self.tasks[tri_task_id].feat_num}")
+                #if self.program[tri_task_id].inst_type==TaskType.WRITE:
+                #    print(self.program[task_id].inst_type)
+                #    print(self.program[task_id].feat_num)
+                #    print(self.tasks[task_id].feat_num)
+                #    print(self.tasks[task_id].para_num)
+                #    print("write")
+                #    print(self.tasks[tri_task_id].feat_num)
+                #    print(self.tasks[tri_task_id].para_num)
                 if self.program[tri_task_id].inst_type in self.comp_inst:
                     if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
                         if self.tag[tri_task_id]:
+                            if self.stage=="pre_analysis":
+                                self.program[task_id].next.append(self.program[tri_task_id])
                             logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
                             self.tag[tri_task_id] = False
                             self.waiting_queue.put(tri_task_id)
                 else:
                     # 非计算指令最多需要1个操作数，并且无需同步
                     if feat_len == self.tasks[tri_task_id].feat_num:
+                        assert para_len==0
+                        assert self.tasks[tri_task_id].para_num==0
                         if self.tag[tri_task_id]:
+                            if self.stage=="pre_analysis":
+                                self.program[task_id].next.append(self.program[tri_task_id])
                             logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
                             self.tag[tri_task_id] = False
                             self.waiting_queue.put(tri_task_id)
+                if(self.stage=="post_analysis"):
+                    assert self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len>=0
+                    if self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len==1:
+                        #关键路径
+                        self.program[tri_task_id].waitinglast=True
+            else:#指令之间的依赖考虑的是block内的，没有考虑block间的
+                #同上
+                para_len = len(self.tasks[tri_task_id].para)
+                feat_len = len(self.tasks[tri_task_id].feat)
+                if self.program[tri_task_id].inst_type in self.comp_inst:
+                    if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
+                        self.program[tri_task_id].start_time=self.env.now
+                else:
+                    # 非计算指令最多需要1个操作数，并且无需同步
+                    if feat_len == self.tasks[tri_task_id].feat_num:
+                        self.program[tri_task_id].start_time=self.env.now
+        
+                
 
     def schedule(self):
         if self.waiting_queue.empty():
@@ -358,11 +452,8 @@ def print_event_queue(env):
 
 
 
-
-
-
 class Core:
-    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int):
+    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int,arch,stage=None):
         self.env = env
         self.type = config.type
         self.program = program
@@ -370,10 +461,12 @@ class Core:
         self.spm_manager = SPMManager(env,config.spm)
         self.flow_out=[]
         self.flow_in=[]
+        self.stage=stage
+        #1.in a block,2.close to running instruction
+        self.waitinglist=[]
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
-        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id)
-
+        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id,self.env,arch,stage)        
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
         self.lsu = MonitoredResource(env=env, capacity=2)
@@ -381,6 +474,7 @@ class Core:
         
         self.data_in, self.data_out = None, None
         self.env.process(self.core_run())
+        self.arch=arch
 
     def bound_with_router(self, data_in, data_out):
         self.data_in = data_in
@@ -389,6 +483,7 @@ class Core:
     def core_run(self):
         # running 事件列表
         self.running_event = []
+        self.running_send = []
         self.event2task = {}
 
         while True:
@@ -398,7 +493,8 @@ class Core:
                     #print(type(task))
                     # 分配计算结果存储空间
                     self.spm_manager.allocate(task.string+str(task.index), task.output_size())
-                    task_event = self.env.process(task.run(self))
+                    instruction=self.program[self.scheduler.index2taskid[task.index]]
+                    task_event = self.env.process(task.run(self,instruction))
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}) into running queue.")
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
@@ -413,6 +509,13 @@ class Core:
                     # updated = True
                     msg = msg_arrive.value
                     #一定是RECV
+                    if self.stage=="post_analysis":
+                        src = msg.src
+                        inst = ind2ins[src][msg.data.index]
+                        #print(inst)
+                        assert inst in self.arch.cores[src].running_send
+                        self.arch.cores[src].running_send.remove(inst)
+
                     assert self.program[self.scheduler.index2taskid[msg.data.index]].inst_type == TaskType.RECV
                     #TODO:需要加入什么？
                     if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
@@ -429,7 +532,7 @@ class Core:
                     logger.info(f"Time {self.env.now:.2f}: After trigger::PE{self.id} data_len is: {self.data_in.len()}")
 
                     while self.data_in.len() > 0:
-                        # assert 0
+                        #assert 0
                         msg = yield self.data_in.get()
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                         logger.info(f"received data is {msg.data}")
@@ -452,7 +555,12 @@ class Core:
                         if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
                             if self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type == TaskType.SEND:
                                 self.flow_out.append((self.event2task[event].index, self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type,"send",self.env.now))
+                        #所有更新都经过update
                         self.scheduler.update(Data(index=self.event2task[event].index, tensor_slice=self.event2task[event].tensor_slice))
+                        #这个是仿真时间的瓶颈,大致用这个估算规模
+                        if self.stage=="post_analysis":
+                            if task.inst.inst_type==TaskType.SEND:
+                                self.running_send.append(task.inst)
                         self.running_event.remove(event)
 
             if self.scheduler.inst_counter == len(self.program):

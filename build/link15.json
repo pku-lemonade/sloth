@@ -1,6 +1,0 @@
-[
-{"name": "SEND138","ph":"B","ts":210,"pid":15,"tid":"link","args":{"lenthqueue":0,"dest":9}},
-{"name": "SEND138","ph":"E","ts":407,"pid":15,"tid":"link","args":{"lenthqueue":0,"dest":9}},
-{"name": "SEND142","ph":"B","ts":407,"pid":15,"tid":"link","args":{"lenthqueue":0,"dest":9}},
-{"name": "SEND142","ph":"E","ts":604,"pid":15,"tid":"link","args":{"lenthqueue":0,"dest":9}}
-]

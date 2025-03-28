@@ -15,4 +15,5 @@ test:
 
 clean:
 	rm -rf gen
+	rm -rf build
 
