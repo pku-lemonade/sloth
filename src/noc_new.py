@@ -31,7 +31,8 @@ class Link:
         self.env = env
         self.width = config.width
         self.delay = config.delay
-        self.store = simpy.Store(env)
+        # 按数据的index排序，需要Message的lt方法
+        self.store = simpy.PriorityStore(env)
         self.delay_factor = 1
         self.hop = 0
         self.linkentry = MonitoredResource(env,capacity=1)

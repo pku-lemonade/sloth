@@ -337,13 +337,6 @@ if __name__ == "__main__":
                                                     pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
                                                     # print(pre_range)
                                                     pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
-                                                    # print(pre_range)
-                                                    # dram_range = dram_range.max(pre_range)
-                                                    # print(cur_range)
-                                                    # counter += 1
-                                                    # print("-"*20)
-                                                    # if counter == 100:
-                                                    #     exit(0)
 
                                                     read_range = intersect(cur_range, pre_range)
                                                     if read_range.size() != 0:
@@ -368,18 +361,6 @@ if __name__ == "__main__":
                                                         pewls[pre_list_core_id].insts[id-1].trigger_index.append(global_inst_id)
                                                         pewls[pre_list_core_id].insts[id-1].trigger_core_id.append(list_core_id)
 
-                                    # # 计算当前层需要读入的数据
-                                    # cur_range = intersect(cur_range, dram_range)
-
-                                    # pewls[list_core_id].insts.append(
-                                    #     Instruction(
-                                    #         inst_type = TaskType.READ,
-                                    #         index = global_inst_id,
-                                    #         layer_id = lid,
-                                    #         data_type = DataType.FEAT,
-                                    #         tensor_slice = cur_range.tensor_slice
-                                    #     )
-                                    # )
                                 # 两层位于相同group，使用recv
                                 elif input.source_layer_id != -1:
                                     for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
@@ -602,9 +583,6 @@ if __name__ == "__main__":
                                 if net.layers[next_layer_id].layer_group_id != layer.layer_group_id:
                                     continue
 
-                                # if next_layer_id == 6:
-                                #     print(lid)
-
                                 for next_time in range(net.batch_size//net.layers[next_layer_id].layer_batch_size):
                                     # 触发层是否进行fetch
                                     next_fetch = net.layers[next_layer_id].input_fetch.num()
@@ -661,15 +639,6 @@ if __name__ == "__main__":
         last_seg_id = 0
 
         for (id, inst) in enumerate(pewls[pe_id].insts):
-            # if inst.index == 19729:
-            #     for i in range(id-5, id+5):
-            #         print(pewls[pe_id].insts[i])
-                # print(pe_id)   15
-                # print(inst.layer_id)   9
-            # if pe_id == 0:
-            #     print(f"layer:{inst.layer_id} inst_index:{inst.index}")
-            #     print(inst.inst_type)
-            #     print(inst.tensor_slice)
             # input指令指向comp指令，结束后last_seg_id指向comp指令
             if inst.inst_type in comp_inst:
                 while last_seg_id != id:

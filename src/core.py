@@ -532,10 +532,6 @@ class TableScheduler:
     def update(self, data):
         self.inst_counter += 1
         task_id = self.index2taskid[data.index]
-        #print(data.index)
-        #print(self.program[task_id].inst_type)
-        # print(f"updating {data.index}")
-        # print(f"{task_id} // {self.block_size} == {self.block_ptr}")
         logger.debug(f"updating {data.index}")
         logger.debug(f"{task_id} // {self.block_size} == {self.block_ptr}")
 
@@ -610,20 +606,9 @@ class TableScheduler:
                 case DataType.FEAT:
                     self.tasks[tri_task_id].feat.append(data)
 
-            # print(f"{data.index} has triggered {self.trigger[task_id][idx].index}")
-            # print(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
             logger.debug(f"{data.index} has triggered {self.program[task_id].trigger_index[idx]}")
             logger.debug(f"{tri_task_id} // {self.block_size} == {self.block_ptr}")
             if tri_task_id // self.block_size == self.block_ptr:
-                # logger.debug("inside")
-                # para = 1 if self.program[tri_task_id].inst_type in self.comp_inst and self.tasks[tri_task_id].para else 0
-                # feat = 1 if self.tasks[tri_task_id].feat else 0
-                # logger.debug(f"para:{para} + feat:{feat}")
-                # if para + feat == self.tasks[tri_task_id].num_operands:
-                #     if self.tag[tri_task_id]:
-                #         logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                #         self.tag[tri_task_id] = False
-                #         self.waiting_queue.put(tri_task_id)
 
                 para_len = len(self.tasks[tri_task_id].para)
                 feat_len = len(self.tasks[tri_task_id].feat)
@@ -745,9 +730,11 @@ class Core:
             slice = Slice(tensor_slice=msg.data.tensor_slice)
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
+            self.program[msg.data.index].record.exe_start_time.append(self.env.now)
             self.scheduler.data_update(msg.data)
         else:
             logger.debug(f"PE{self.id} insert data{msg.data.index} back into data_in")
+            self.program[msg.data.index].record.ready_run_time.append(self.env.now)
             self.data_in.insert(msg)
 
     def core_run(self):
@@ -757,30 +744,34 @@ class Core:
         self.event2task = {}
 
         while True:
-            while self.recv_queue:
-                top = self.recv_queue[0]
-                if top.index in range(self.scheduler.start, self.scheduler.end):      
-                    data = heapq.heappop(self.recv_queue)
+            # while self.recv_queue:
+            #     top = self.recv_queue[0]
+            #     if top.index in range(self.scheduler.start, self.scheduler.end):      
+            #         data = heapq.heappop(self.recv_queue)
 
-                    self.program[data.index].record.ready_run_time.append(self.env.now)
-                    self.program[data.index].record.exe_start_time.append(self.env.now)
-                    # task_id转换回index
-                    data.index = self.scheduler.taskid2index[data.index]
-                    logger.debug(f"PE{self.id} pop data{data.index} from recv_queue")
+            #         self.program[data.index].record.ready_run_time.append(self.env.now)
+            #         self.program[data.index].record.exe_start_time.append(self.env.now)
+            #         # task_id转换回index
+            #         data.index = self.scheduler.taskid2index[data.index]
+            #         logger.debug(f"PE{self.id} pop data{data.index} from recv_queue")
 
-                    slice = Slice(tensor_slice=data.tensor_slice)
-                    yield self.env.process(self.spm_manager.allocate("recv"+str(data.index), slice.size()))
-                    self.scheduler.data_update(data)
-                else:
-                    break
+            #         slice = Slice(tensor_slice=data.tensor_slice)
+            #         yield self.env.process(self.spm_manager.allocate("recv"+str(data.index), slice.size()))
+            #         self.scheduler.data_update(data)
+            #     else:
+            #         break
+
+            while self.data_in.len() > 0:
+                msg = yield self.data_in.get()
+
+                logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
+                logger.info(f"received data is {msg.data}")
+                
+                self.receive_data(msg)
 
             task_ready = self.scheduler.schedule()
             if task_ready:
                 for task in task_ready:
-
-                    # 分配计算结果存储空间
-                    # self.spm_manager.allocate(task.string+str(task.index), task.output_size())
-                    # print(f"PE{self.id} allocate: {task.output_size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
 
                     instruction = self.program[self.scheduler.index2taskid[task.index]]
                     task_event = self.env.process(task.run(self, instruction))
@@ -813,21 +804,7 @@ class Core:
 
                     self.receive_data(msg)
 
-                    # # 分配接收数据空间（原）
-                    # if self.scheduler.index2taskid[msg.data.index] in range(self.scheduler.start, self.scheduler.end):
-                    #     slice = Slice(tensor_slice=msg.data.tensor_slice)
-                    #     yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
-                    #     # 接收到的数据在block内才进行更新，否则放入recv_queue
-                    #     self.scheduler.data_update(msg.data)
-                    # else:
-                    #     logger.debug(f"PE{self.id} insert data{msg.data.index} back into data_in")
-                    #     self.data_in.insert(msg)
-                    #     logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
-                    #     # index转换成PE内id
-                    #     msg.data.index = self.scheduler.index2taskid[msg.data.index]
-                    #     heapq.heappush(self.recv_queue, msg.data)
-
-                    # 接收其他已经到达且在当前block的数据
+                    # 处理其他已经到达且在当前block的数据
                     while self.data_in.len() > 0:
                         msg = yield self.data_in.get()
 

@@ -231,6 +231,9 @@ class Message(BaseModel):
     data: Data
     dst: int
 
+    def __lt__(self, other: "Message") -> bool:
+        return self.data < other.data
+
 class Operation(BaseModel):
     operation: str
     layer_id: int
