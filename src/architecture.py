@@ -122,6 +122,7 @@ class Arch:
         self.cores = self.build_cores(arch.core, program)
 
         self.layer_start = [-1 for _ in range(25)]
+        self.layer_end = [-1 for _ in range(25)]
 
         self.net_name = net_name
         self.end_time = 0
@@ -212,6 +213,9 @@ class Arch:
             # TODO:timer should be in second stage
         if self.stage == "post_analysis":
             self.timer = Timer(self.env, 20000, cores)
+
+        for id in range(config.x * config.y):
+            cores[id].scheduler.bound_cores(cores)
 
         return cores
 
@@ -352,16 +356,17 @@ class Arch:
                     if inst.inst_type == TaskType.SEND or inst.inst_type == TaskType.RECV:
                         continue
                     
-                    assert len(inst.record.ready_run_time) == 1
-                    assert len(inst.record.exe_end_time) == 1
-                    assert len(inst.record.exe_start_time) == 1
-                    print(f"Instruction{inst.index}: type {inst.inst_type}, ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}", file=file)
-                    print(f"    operands_time: {inst.record.mulins}", file=file)
+                    # assert len(inst.record.ready_run_time) == 1
+                    # assert len(inst.record.exe_end_time) == 1
+                    # assert len(inst.record.exe_start_time) == 1
+                    # print(f"Instruction{inst.index}: type {inst.inst_type}, ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}", file=file)
+                    # print(f"    operands_time: {inst.record.mulins}", file=file)
 
         layer_file = os.path.join(file_path, "layer_info.txt") 
         with open(layer_file, "w") as file:
             for id, time in enumerate(self.layer_start):
                 print(f"Layer{id} start at {time}.", file=file)
+                print(f"Layer{id} end at {self.layer_end[id]}.", file=file)
 
         print("Finished.")
 
@@ -384,5 +389,7 @@ class Arch:
             self.process()
 
         self.output_data(self.net_name, self.fail_kind)
+
+        # self.draw()
 
         return self.env

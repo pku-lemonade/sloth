@@ -120,20 +120,24 @@ def output_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
         dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
 
         if i == 0:
+            # print(f"{step}%{fetch_sch.num()} // {dim_sizes[i]}")
             dim_poses.append((step%fetch_sch.num())//dim_sizes[i])
         else:
+            # print(f"{step}%{dim_sizes[i-1]} // {dim_sizes[i]}")
             dim_poses.append((step%dim_sizes[i-1])//dim_sizes[i])
+        
+        # print(f"{i} {dim_poses[i]} {dim_sizes[i]} {dim_lens[i]}")
 
     new_slice = []
     for id in range(len(a.tensor_slice)):
         remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
         if remain == 0:
-            start = dim_poses[id] * dim_lens[id]
-            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+            start = a.tensor_slice[id].start + dim_poses[id] * dim_lens[id]
+            end = a.tensor_slice[id].start + min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
             new_slice.append(DimSlice(start=start, end=end))
         else:
-            start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
-            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+            start = a.tensor_slice[id].start + dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+            end = a.tensor_slice[id].start + min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
             new_slice.append(DimSlice(start=start, end=end))
 
     return Slice(tensor_slice=new_slice)
@@ -162,12 +166,12 @@ def input_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
         if id != 1:
             remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
             if remain == 0:
-                start = dim_poses[id] * dim_lens[id]
-                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+                start = a.tensor_slice[id].start + dim_poses[id] * dim_lens[id]
+                end = a.tensor_slice[id].start + min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
                 new_slice.append(DimSlice(start=start, end=end))
             else:
-                start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
-                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+                start = a.tensor_slice[id].start + dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+                end = a.tensor_slice[id].start + min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
                 new_slice.append(DimSlice(start=start, end=end))
         else:
             # C维度不变
@@ -189,12 +193,12 @@ def wgt_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     # 计算该块的C维度范围（最后一块需要均分给前面的块）
     remain = (a.tensor_slice[1].end - a.tensor_slice[1].start) % len_c
     if remain == 0:
-        start = pos_c * len_c
-        end = min(pos_c*len_c+len_c, a.tensor_slice[1].end)
+        start = a.tensor_slice[1].start + pos_c * len_c
+        end = a.tensor_slice[1].start + min(pos_c*len_c+len_c, a.tensor_slice[1].end)
         a.tensor_slice[1] = DimSlice(start=start, end=end)
     else:
-        start = pos_c * len_c + (pos_c if pos_c < remain else remain)
-        end = min(pos_c*len_c+len_c+(pos_c+1 if pos_c+1<remain else remain), a.tensor_slice[1].end)
+        start = a.tensor_slice[1].start + pos_c * len_c + (pos_c if pos_c < remain else remain)
+        end = a.tensor_slice[1].start + min(pos_c*len_c+len_c+(pos_c+1 if pos_c+1<remain else remain), a.tensor_slice[1].end)
         a.tensor_slice[1] = DimSlice(start=start, end=end)
 
     return a
@@ -242,6 +246,7 @@ if __name__ == "__main__":
     pewls = [PEworkload(id=id) for id in range(core_num)]
     
     send_map = {}
+    write_map = {}
 
     # 先统一调整fetch，再生成指令
     for (lid, layer) in enumerate(net.layers):
@@ -251,10 +256,9 @@ if __name__ == "__main__":
         spm_size = get_spm_size(layer)
         # 若不够，则继续在batch维度切分，需要修改fetch的batch维度（fetch改动不影响每块partition）
         if spm_size > arch_configs.core.spm.size:
-            # print(f"Change layer_batch_size to {layer.input_fetch.dims[0]}.")
             print(f"Change fetch's Dim-B to {layer.layer_batch_size//layer.output_partition.dims[0]}.")
             layer.input_fetch.dims[0] = layer.layer_batch_size//layer.output_partition.dims[0]
-            # layer_batch_size需要是fetch_batch的整数倍 
+            # # layer_batch_size需要是fetch_batch的整数倍 
             # layer.layer_batch_size = layer.input_fetch.dims[0]
             # # 调整输入batch，四维是[B,C1,H_in,W_in]
             # for input in layer.input_feature:
@@ -267,8 +271,6 @@ if __name__ == "__main__":
             # # 权重batch，四维是[B=1,C2,C1,R*S]，无需调整
 
         spm_size = get_spm_size(layer)
-        # print(layer.input_fetch)
-        # print(f"current_spm_size:{spm_size}, current_input_size:{get_input_size(layer)}")
         c2_len = layer.output_feature[0].blocks[0].tensor_slice[1].end - layer.output_feature[0].blocks[0].tensor_slice[1].start
         # 若还不够，则继续在C2维度切分（影响权重和输出，不影响输入）
         if spm_size > arch_configs.core.spm.size:
@@ -280,6 +282,9 @@ if __name__ == "__main__":
     
     # 枚举层
     for (lid, layer) in enumerate(net.layers):
+        # counter = 0
+        # if lid == 2:
+        #     break
         print(f"Generating inst of layer{lid}.")
         # 当前层是否分多次计算
         for time in range(net.batch_size//layer.layer_batch_size):
@@ -292,7 +297,6 @@ if __name__ == "__main__":
                     if input.source == "dram":
                         for block in input.blocks:
                             for core in block.cores:
-                                global_inst_id += 1
 
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
                                 cur_range = time_range(cur_range, layer.layer_batch_size, time)
@@ -302,6 +306,8 @@ if __name__ == "__main__":
 
                                 # 输入直接从dram读
                                 if input.source_layer_id == -1:
+                                    global_inst_id += 1
+
                                     pewls[list_core_id].insts.append(
                                         Instruction(
                                             inst_type = TaskType.READ,
@@ -311,8 +317,9 @@ if __name__ == "__main__":
                                             tensor_slice = cur_range.tensor_slice
                                         )
                                     )
-                                # 两层位于不同group，也从dram读
+                                # 两层位于不同group，也从dram读，需要确保上层已经写回dram才能读
                                 elif input.source_layer_id != -1 and layer.layer_group_id != net.layers[input.source_layer_id].layer_group_id:
+                                    # print("branch 2")
                                     # 由于mapping格式问题，从dram读入的size也需要计算（输入除外）
                                     dram_range = [DimSlice(start=inf, end=0) for _ in range(len(cur_range.tensor_slice))]
                                     dram_range = Slice(tensor_slice=dram_range)
@@ -324,24 +331,55 @@ if __name__ == "__main__":
 
                                             for pre_block in net.layers[input.source_layer_id].output_feature[0].blocks:
                                                 for pre_core in pre_block.cores:
+                                                    # print(f"time:{pre_time} step:{pre_step}")
                                                     pre_range = Slice(tensor_slice=pre_block.tensor_slice)
+                                                    # print(pre_range)
                                                     pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
+                                                    # print(pre_range)
                                                     pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
-                                                    
-                                                    dram_range = dram_range.max(pre_range)
+                                                    # print(pre_range)
+                                                    # dram_range = dram_range.max(pre_range)
+                                                    # print(cur_range)
+                                                    # counter += 1
+                                                    # print("-"*20)
+                                                    # if counter == 100:
+                                                    #     exit(0)
 
-                                    # 计算当前层需要读入的数据
-                                    cur_range = intersect(cur_range, dram_range)
+                                                    read_range = intersect(cur_range, pre_range)
+                                                    if read_range.size() != 0:
+                                                        global_inst_id += 1
 
-                                    pewls[list_core_id].insts.append(
-                                        Instruction(
-                                            inst_type = TaskType.READ,
-                                            index = global_inst_id,
-                                            layer_id = lid,
-                                            data_type = DataType.FEAT,
-                                            tensor_slice = cur_range.tensor_slice
-                                        )
-                                    )
+                                                        pewls[list_core_id].insts.append(
+                                                            Instruction(
+                                                                inst_type = TaskType.READ,
+                                                                index = global_inst_id,
+                                                                layer_id = lid,
+                                                                data_type = DataType.FEAT,
+                                                                tensor_slice = read_range.tensor_slice,
+                                                                feat_num = 1
+                                                            )
+                                                        )
+                                                        
+                                                        pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
+                                                        info = (pre_time, pre_step, pre_list_core_id, input.source_layer_id, pre_range.tensor_slice[0].end, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end)
+                                                        
+                                                        # 依赖层的写回将触发当前层的读入，保证数据已经位于dram中
+                                                        (id, index) = write_map[info]
+                                                        pewls[pre_list_core_id].insts[id-1].trigger_index.append(global_inst_id)
+                                                        pewls[pre_list_core_id].insts[id-1].trigger_core_id.append(list_core_id)
+
+                                    # # 计算当前层需要读入的数据
+                                    # cur_range = intersect(cur_range, dram_range)
+
+                                    # pewls[list_core_id].insts.append(
+                                    #     Instruction(
+                                    #         inst_type = TaskType.READ,
+                                    #         index = global_inst_id,
+                                    #         layer_id = lid,
+                                    #         data_type = DataType.FEAT,
+                                    #         tensor_slice = cur_range.tensor_slice
+                                    #     )
+                                    # )
                                 # 两层位于相同group，使用recv
                                 elif input.source_layer_id != -1:
                                     for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
@@ -545,6 +583,12 @@ if __name__ == "__main__":
                                         tensor_slice = cur_range.tensor_slice
                                     )
                                 )
+                                info = (time, step, list_core_id, lid, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                if info in write_map:
+                                    print("Write map error!")
+                                    print(info)
+                                write_map[info] = (len(pewls[list_core_id].insts), global_inst_id)
+
                     # 需要发送
                     for block in output.blocks:
                         for core in block.cores:
@@ -602,7 +646,7 @@ if __name__ == "__main__":
 
                                                             info = (time, step, next_time, next_step, list_core_id, next_list_core_id, lid, next_layer_id, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[0].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
                                                             if info in send_map:
-                                                                print("Error!")
+                                                                print("Send map error!")
                                                                 print(info)
                                                             send_map[info] = global_inst_id
 

@@ -55,8 +55,12 @@ class Link:
         yield self.linkentry.execute("SEND"+str(msg.data.index),latency,msg.ins,attributes=msg.dst)
         self.store.put(msg)
     
-    def put(self,msg):
+    def put(self, msg):
         return self.env.process(self.calc_latency(msg))
+    
+    # 不带延迟的插入，处理block外的数据包时使用
+    def insert(self, msg):
+        self.store.put(msg)
 
     def get(self):
         return self.store.get()
