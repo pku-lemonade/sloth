@@ -14,3 +14,10 @@ __pycache__/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+tools/*.json
+tests/**/*.json
+gen/*.json
+build/*.json
+
+logging/*.log

@@ -1,16 +1,28 @@
 import os
 import sys
-import json
-from typing import List
-from enum import IntEnum
-from pydantic import BaseModel, ValidationError
+import math
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+import json
+from typing import List
+from src import ArchConfig
+from pydantic import BaseModel, ValidationError
 from src.sim_type import DimSlice, Slice, Instruction, PEworkload, Workload, TaskType, DataType
+
+def config_analyzer(filename: str) -> ArchConfig:
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        try:
+            config = ArchConfig.model_validate(data)
+            return config
+        except ValidationError as e:
+            print(e.json())
+
+arch_configs = config_analyzer("arch/gemini4_4.json")
+arch_configs.core.spm.size /= 4
 
 class Core(BaseModel):
     x: int
@@ -48,8 +60,11 @@ class Partition(BaseModel):
 class Layer(BaseModel):
     type: str
     layer_id: int
+    layer_group_id: int
+    group_num: int
     layer_batch_size: int
     output_partition: Partition
+    # input_fetch实际上以输出为视角fetch，C维度的fetch不影响输入
     input_fetch: Partition
     input_feature: List[IFeature]
     wgt_feature: List[WFeature]
@@ -70,7 +85,7 @@ def json_analyzer(filename: str) -> Network:
             print(e.json())
 
 def get_list_id(x: int, y: int) -> int:
-    return x * 4 + y
+    return x * arch_configs.core.y + y
 
 def intersect(a: Slice, b: Slice) -> Slice:
     new_slice = []
@@ -90,7 +105,8 @@ def time_range(a: Slice, lb_size: int, time: int) -> Slice:
     a.tensor_slice[0] = DimSlice(start=batch_start, end=batch_end)
     return a
 
-def fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
+# 对输出而言，四个维度都可能随fetch改变
+def output_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     if fetch_sch.num() == 1:
         return a
     
@@ -101,55 +117,169 @@ def fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
         for j in range(i+1, len(fetch_sch.dims)):
             dim_size = dim_size * fetch_sch.dims[j]
         dim_sizes.append(dim_size)
-        dim_lens.append(dim_slice.end-dim_slice.start)
+        dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
 
         if i == 0:
-            dim_poses.append((step%a.size())//dim_sizes[i])
+            dim_poses.append((step%fetch_sch.num())//dim_sizes[i])
         else:
             dim_poses.append((step%dim_sizes[i-1])//dim_sizes[i])
 
     new_slice = []
     for id in range(len(a.tensor_slice)):
-        new_slice.append(
-            DimSlice(
-                start = dim_lens[id]*dim_poses[id], 
-                end = dim_lens[id]*dim_poses[id]+dim_lens[id]
-            )
-        )
+        remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
+        if remain == 0:
+            start = dim_poses[id] * dim_lens[id]
+            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+            new_slice.append(DimSlice(start=start, end=end))
+        else:
+            start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+            end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+            new_slice.append(DimSlice(start=start, end=end))
 
     return Slice(tensor_slice=new_slice)
 
-# 对权重而言，只有输出的C维度的切分有影响
+# 对输入而言，C1维度的大小不随fetch的C改变
+def input_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
+    if fetch_sch.num() == 1:
+        return a
+    
+    dim_sizes, dim_lens, dim_poses = [], [], []
+
+    for (i, dim_slice) in enumerate(a.tensor_slice):
+        dim_size = 1
+        for j in range(i+1, len(fetch_sch.dims)):
+            dim_size = dim_size * fetch_sch.dims[j]
+        dim_sizes.append(dim_size)
+        dim_lens.append((dim_slice.end-dim_slice.start)//fetch_sch.dims[i])
+
+        if i == 0:
+            dim_poses.append((step%fetch_sch.num())//dim_sizes[i])
+        else:
+            dim_poses.append((step%dim_sizes[i-1])//dim_sizes[i])
+    
+    new_slice = []
+    for id in range(len(a.tensor_slice)):
+        if id != 1:
+            remain = (a.tensor_slice[id].end - a.tensor_slice[id].start) % dim_lens[id]
+            if remain == 0:
+                start = dim_poses[id] * dim_lens[id]
+                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id], a.tensor_slice[id].end)
+                new_slice.append(DimSlice(start=start, end=end))
+            else:
+                start = dim_poses[id] * dim_lens[id] + (dim_poses[id] if dim_poses[id] < remain else remain)
+                end = min(dim_poses[id]*dim_lens[id]+dim_lens[id]+(dim_poses[id]+1 if dim_poses[id]+1<remain else remain), a.tensor_slice[id].end)
+                new_slice.append(DimSlice(start=start, end=end))
+        else:
+            # C维度不变
+            new_slice.append(a.tensor_slice[id])
+
+    return Slice(tensor_slice=new_slice)
+
+# 对权重而言，只有fetch的C维度有影响（影响第二维）
 def wgt_fetch_range(a: Slice, fetch_sch: Partition, step: int) -> Slice:
     if fetch_sch.dims[1] == 1:
         return a
     
-    size_0, size_1 = 1, 1
-    for dim_part in fetch_sch.dims:
-        size_0 = size_0 * dim_part
-        size_1 = size_1 * dim_part
+    # fetch后C维度的大小
+    len_c = (a.tensor_slice[1].end - a.tensor_slice[1].start) // fetch_sch.dims[1]
+    # 当前step对应的是C维度的第几块
+    size_c = fetch_sch.num() // fetch_sch.dims[0]
+    pos_c = (step % size_c) // (fetch_sch.dims[2] * fetch_sch.dims[3])
+    # print(f"step:{step}, size_c:{size_c}, pos_c:{pos_c}")
+    # 计算该块的C维度范围（最后一块需要均分给前面的块）
+    remain = (a.tensor_slice[1].end - a.tensor_slice[1].start) % len_c
+    if remain == 0:
+        start = pos_c * len_c
+        end = min(pos_c*len_c+len_c, a.tensor_slice[1].end)
+        a.tensor_slice[1] = DimSlice(start=start, end=end)
+    else:
+        start = pos_c * len_c + (pos_c if pos_c < remain else remain)
+        end = min(pos_c*len_c+len_c+(pos_c+1 if pos_c+1<remain else remain), a.tensor_slice[1].end)
+        a.tensor_slice[1] = DimSlice(start=start, end=end)
 
-    size_0 = size_0 // fetch_sch.dims[0]
-    size_1 = size_1 // fetch_sch.dims[0] // fetch_sch.dims[1]
-
-    len_2 = a.tensor_slice[1].end - a.tensor_slice[1].start
-    pos_2 = (step % size_0) // size_1
-    a.tensor_slice[1] = DimSlice(start=len_2*pos_2, end=len_2*pos_2+len_2)
     return a
+
+def get_input_size(layer: Layer):
+    layer_input_part = layer.input_feature[0].blocks[0].tensor_slice
+    layer_input_part = Slice(tensor_slice=layer_input_part)
+    # print("input-before")
+    # print(layer_input_part)
+    # print(layer.input_fetch)
+    layer_input_part = input_fetch_range(layer_input_part, layer.input_fetch, 0)
+    # print("input-after")
+    # print(layer_input_part)
+    return layer_input_part.size()
+
+def get_spm_size(layer: Layer):
+    spm_size = 0
+    input_size = get_input_size(layer)
+    spm_size += input_size
+    
+    if layer.wgt_feature[0].blocks:
+        layer_wgt_part = layer.wgt_feature[0].blocks[0].tensor_slice
+        layer_wgt_part = Slice(tensor_slice=layer_wgt_part)
+        # print("wgt-before")
+        # print(layer_wgt_part)
+        layer_wgt_part = wgt_fetch_range(layer_wgt_part, layer.input_fetch, 0)
+        # print("wgt-agter")
+        # print(layer_wgt_part)
+        spm_size += layer_wgt_part.size()
+
+    # 计算当前分块下的output_slice
+    layer_output_part = layer.output_feature[0].blocks[0].tensor_slice
+    layer_output_part = Slice(tensor_slice=layer_output_part)
+    layer_output_part = output_fetch_range(layer_output_part, layer.input_fetch, 0)
+    spm_size += layer_output_part.size()
+
+    return spm_size
  
 if __name__ == "__main__":
     net = json_analyzer("tools/mapping.json")
+    core_num = arch_configs.core.x * arch_configs.core.y
 
-    max_inst = 10000
+    inf = 100000
     global_inst_id = 0
-    pewls = [PEworkload(id=id) for id in range(16)]
+    pewls = [PEworkload(id=id) for id in range(core_num)]
     
     send_map = {}
+
+    # 先统一调整fetch，再生成指令
+    for (lid, layer) in enumerate(net.layers):
+        print(f"Adjusting fetch of layer{lid}.")
+
+        # 判断spm是否足够
+        spm_size = get_spm_size(layer)
+        # 若不够，则继续在batch维度切分，需要修改fetch的batch维度（fetch改动不影响每块partition）
+        if spm_size > arch_configs.core.spm.size:
+            # print(f"Change layer_batch_size to {layer.input_fetch.dims[0]}.")
+            print(f"Change fetch's Dim-B to {layer.layer_batch_size//layer.output_partition.dims[0]}.")
+            layer.input_fetch.dims[0] = layer.layer_batch_size//layer.output_partition.dims[0]
+            # layer_batch_size需要是fetch_batch的整数倍 
+            # layer.layer_batch_size = layer.input_fetch.dims[0]
+            # # 调整输入batch，四维是[B,C1,H_in,W_in]
+            # for input in layer.input_feature:
+            #     for block in input.blocks:
+            #         block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
+            # # 调整输出batch，四维是[B,C2,H_out,W_out]
+            # for output in layer.output_feature:
+            #     for block in output.blocks:
+            #         block.tensor_slice[0] = DimSlice(start=0, end=layer.layer_batch_size)
+            # # 权重batch，四维是[B=1,C2,C1,R*S]，无需调整
+
+        spm_size = get_spm_size(layer)
+        # print(layer.input_fetch)
+        # print(f"current_spm_size:{spm_size}, current_input_size:{get_input_size(layer)}")
+        c2_len = layer.output_feature[0].blocks[0].tensor_slice[1].end - layer.output_feature[0].blocks[0].tensor_slice[1].start
+        # 若还不够，则继续在C2维度切分（影响权重和输出，不影响输入）
+        if spm_size > arch_configs.core.spm.size:
+            # 计算当前spm容量下一次能计算的最大通道数
+            max_channel_num = (arch_configs.core.spm.size-get_input_size(layer)) / ((spm_size-get_input_size(layer))//c2_len)
+            # 计算最小fetch块数
+            layer.input_fetch.dims[1] = math.ceil(c2_len/max_channel_num)
+            print(f"Change input_fetch's Dim-C to {layer.input_fetch.dims[1]}.")
     
     # 枚举层
     for (lid, layer) in enumerate(net.layers):
-        # if lid > 37:
-        #     continue
         print(f"Generating inst of layer{lid}.")
         # 当前层是否分多次计算
         for time in range(net.batch_size//layer.layer_batch_size):
@@ -158,8 +288,7 @@ if __name__ == "__main__":
             for step in range(fetch):
                 # 输入指令
                 for input in layer.input_feature:
-                    # print(f"lid{lid} time{time} step{step}")
-                    # 从DRAM读取数据
+                    # 从DRAM读取数据 
                     if input.source == "dram":
                         for block in input.blocks:
                             for core in block.cores:
@@ -167,18 +296,82 @@ if __name__ == "__main__":
 
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
                                 cur_range = time_range(cur_range, layer.layer_batch_size, time)
-                                cur_range = fetch_range(cur_range, layer.input_fetch, step)
+                                cur_range = input_fetch_range(cur_range, layer.input_fetch, step)
 
                                 list_core_id = get_list_id(core.x, core.y)
-                                pewls[list_core_id].insts.append(
-                                    Instruction(
-                                        inst_type = TaskType.READ,
-                                        index = global_inst_id,
-                                        layer_id = lid,
-                                        data_type = DataType.FEAT,
-                                        tensor_slice = cur_range.tensor_slice
+
+                                # 输入直接从dram读
+                                if input.source_layer_id == -1:
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.READ,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice
+                                        )
                                     )
-                                )
+                                # 两层位于不同group，也从dram读
+                                elif input.source_layer_id != -1 and layer.layer_group_id != net.layers[input.source_layer_id].layer_group_id:
+                                    # 由于mapping格式问题，从dram读入的size也需要计算（输入除外）
+                                    dram_range = [DimSlice(start=inf, end=0) for _ in range(len(cur_range.tensor_slice))]
+                                    dram_range = Slice(tensor_slice=dram_range)
+                                    
+                                    # 计算依赖层放入dram的shape
+                                    for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
+                                        pre_fetch = net.layers[input.source_layer_id].input_fetch.num()
+                                        for pre_step in range(pre_fetch):
+
+                                            for pre_block in net.layers[input.source_layer_id].output_feature[0].blocks:
+                                                for pre_core in pre_block.cores:
+                                                    pre_range = Slice(tensor_slice=pre_block.tensor_slice)
+                                                    pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
+                                                    pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
+                                                    
+                                                    dram_range = dram_range.max(pre_range)
+
+                                    # 计算当前层需要读入的数据
+                                    cur_range = intersect(cur_range, dram_range)
+
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.READ,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice
+                                        )
+                                    )
+                                # 两层位于相同group，使用recv
+                                elif input.source_layer_id != -1:
+                                    for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
+                                        pre_fetch = net.layers[input.source_layer_id].input_fetch.num()
+                                        for pre_step in range(pre_fetch):
+
+                                            for pre_block in net.layers[input.source_layer_id].output_feature[0].blocks:
+                                                for pre_core in pre_block.cores:
+                                                    pre_range = Slice(tensor_slice=pre_block.tensor_slice)
+                                                    pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
+                                                    pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
+
+                                                    intersection = intersect(cur_range, pre_range)
+                                                    pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
+
+                                                    if intersection.size() != 0:
+                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, input.source_layer_id, lid, pre_range.tensor_slice[0].end, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                                        recv_id = send_map[info]
+
+                                                        pewls[list_core_id].insts.append(
+                                                            Instruction(
+                                                                inst_type = TaskType.RECV,
+                                                                index = recv_id,
+                                                                layer_id = lid,
+                                                                data_type = DataType.FEAT,
+                                                                tensor_slice = intersection.tensor_slice
+                                                            )
+                                                        )
+                                
+
                     # 从前一层的core读取数据
                     else:
                         # 枚举当前层输入块
@@ -187,11 +380,7 @@ if __name__ == "__main__":
                                 # 当前块需要的输入块range
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
                                 cur_range = time_range(cur_range, layer.layer_batch_size, time)
-                                cur_range = fetch_range(cur_range, layer.input_fetch, step)
-
-                                # if lid == 17 and time == 7 and step == 0:
-                                #     print("cur_range")
-                                #     print(cur_range)
+                                cur_range = input_fetch_range(cur_range, layer.input_fetch, step)
 
                                 # 来源层是否进行多次计算
                                 for pre_time in range(net.batch_size//net.layers[input.source_layer_id].layer_batch_size):
@@ -204,13 +393,9 @@ if __name__ == "__main__":
                                                 # 来源层的输出块range
                                                 pre_range = Slice(tensor_slice=pre_block.tensor_slice)
                                                 pre_range = time_range(pre_range, net.layers[input.source_layer_id].layer_batch_size, pre_time)
-                                                pre_range = fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
+                                                pre_range = output_fetch_range(pre_range, net.layers[input.source_layer_id].input_fetch, pre_step)
                                                 # 计算交集
                                                 intersection = intersect(cur_range, pre_range)
-
-                                                # if lid == 17 and time == 7 and step == 0:
-                                                #     print(f"pre_range: pre_time->{pre_time} pre_fetch->{pre_fetch}")
-                                                #     print(pre_range)
 
                                                 if intersection.size() != 0:
                                                     # 一对send/recv共用id
@@ -218,11 +403,8 @@ if __name__ == "__main__":
                                                     pre_list_core_id = get_list_id(pre_core.x, pre_core.y)
                                                     
                                                     if list_core_id != pre_list_core_id:
-                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, lid, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
+                                                        info = (pre_time, pre_step, time, step, pre_list_core_id, list_core_id, input.source_layer_id, lid, pre_range.tensor_slice[0].end, pre_range.tensor_slice[1].end, pre_range.tensor_slice[2].end, pre_range.tensor_slice[3].end, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end)
                                                         recv_id = send_map[info]
-
-                                                        # if recv_id == 51877:
-                                                        #     print(f"RECV: PE{pre_list_core_id} -> PE{list_core_id}")
 
                                                         pewls[list_core_id].insts.append(
                                                             Instruction(
@@ -233,7 +415,6 @@ if __name__ == "__main__":
                                                                 tensor_slice = intersection.tensor_slice
                                                             )
                                                         )
-                wgt_inst_num = [0 for id in range(16)]
                 # 权重指令
                 for wgt in layer.wgt_feature:
                     # 只会从DRAM读取数据
@@ -263,15 +444,9 @@ if __name__ == "__main__":
 
                             cur_range = Slice(tensor_slice=block.tensor_slice)
                             cur_range = time_range(cur_range, layer.layer_batch_size, time)
-                            cur_range = fetch_range(cur_range, layer.input_fetch, step)
-
-                            # if global_inst_id == 25083:
-                            #     print("cur_range")
-                            #     print(cur_range)
+                            cur_range = output_fetch_range(cur_range, layer.input_fetch, step)
                             
                             list_core_id = get_list_id(core.x, core.y)
-                            # print(layer.type)
-                            # print(list_core_id)
                             match layer.type:
                                 case "conv":
                                     pewls[list_core_id].insts.append(
@@ -281,8 +456,6 @@ if __name__ == "__main__":
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
                                             tensor_slice = cur_range.tensor_slice,
-                                            # feat_num = input_inst_num[list_core_id],
-                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "pool":
@@ -294,8 +467,6 @@ if __name__ == "__main__":
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
                                             tensor_slice = cur_range.tensor_slice,
-                                            # feat_num = input_inst_num[list_core_id],
-                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "elewise":
@@ -306,8 +477,6 @@ if __name__ == "__main__":
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
                                             tensor_slice = cur_range.tensor_slice,
-                                            # feat_num = input_inst_num[list_core_id],
-                                            # para_num = wgt_inst_num[list_core_id]
                                         )
                                     )
                                 case "fc":
@@ -318,8 +487,39 @@ if __name__ == "__main__":
                                             layer_id = lid,
                                             data_type = DataType.FEAT,
                                             tensor_slice = cur_range.tensor_slice,
-                                            # feat_num = input_inst_num[list_core_id],
-                                            # para_num = wgt_inst_num[list_core_id]
+                                        )
+                                    )
+                                case "gconv":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.GCONV,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
+                                        )
+                                    )
+                                case "ptp":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.PTP,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
+                                        )
+                                    )
+                                case "trans":
+                                    pewls[list_core_id].insts.append(
+                                        Instruction(
+                                            inst_type = TaskType.TRANS,
+                                            index = global_inst_id,
+                                            layer_id = lid,
+                                            group_num = layer.group_num,
+                                            data_type = DataType.FEAT,
+                                            tensor_slice = cur_range.tensor_slice,
                                         )
                                     )
                 
@@ -333,7 +533,7 @@ if __name__ == "__main__":
 
                                 cur_range = Slice(tensor_slice=block.tensor_slice)
                                 cur_range = time_range(cur_range, layer.layer_batch_size, time)
-                                cur_range = fetch_range(cur_range, layer.input_fetch, step)
+                                cur_range = output_fetch_range(cur_range, layer.input_fetch, step)
 
                                 list_core_id = get_list_id(core.x, core.y)
                                 pewls[list_core_id].insts.append(
@@ -351,52 +551,42 @@ if __name__ == "__main__":
 
                             cur_range = Slice(tensor_slice=block.tensor_slice)
                             cur_range = time_range(cur_range, layer.layer_batch_size, time)
-                            cur_range = fetch_range(cur_range, layer.input_fetch, step)
+                            cur_range = output_fetch_range(cur_range, layer.input_fetch, step)
                             
-                            # if lid == 14:
-                            #     print(f"cur_range: time->{time} step->{step}")
-                            #     print(cur_range)
-
                             for next_layer_id in output.next:
+                                # group ID相同才需要发送
+                                if net.layers[next_layer_id].layer_group_id != layer.layer_group_id:
+                                    continue
+
+                                # if next_layer_id == 6:
+                                #     print(lid)
+
                                 for next_time in range(net.batch_size//net.layers[next_layer_id].layer_batch_size):
                                     # 触发层是否进行fetch
                                     next_fetch = net.layers[next_layer_id].input_fetch.num()
                                     for next_step in range(next_fetch):
                                         
                                         for next_input in net.layers[next_layer_id].input_feature:
-                                            # if lid == 36:
-                                            #     print(next_input.source)
-
-                                            if next_input.source == "dram" or next_input.source_layer_id != lid:
+                                            if next_input.source_layer_id != lid:
                                                 continue
-                                            # loop_time = 0
+
                                             for next_block in next_input.blocks:
                                                 for next_core in next_block.cores:
-                                                    # loop_time += 1
                                                     # 触发层的输出块range
                                                     next_range = Slice(tensor_slice=next_block.tensor_slice)
                                                     next_range = time_range(next_range, net.layers[next_layer_id].layer_batch_size, next_time)
-                                                    next_range = fetch_range(next_range, net.layers[next_layer_id].input_fetch, next_step)
+                                                    next_range = input_fetch_range(next_range, net.layers[next_layer_id].input_fetch, next_step)
+                                                    
+                                                    # if lid == 3:
+                                                    #     print(next_range)
                                                     # 计算交集
                                                     intersection = intersect(cur_range, next_range)
-
-                                                    # if lid == 14:
-                                                    #     print(f"next_range: time->{next_time} step->{next_step}")
-                                                    #     print(next_range)
 
                                                     if intersection.size() != 0:
                                                         # 一对send/recv共用id
                                                         global_inst_id += 1
                                                         list_core_id = get_list_id(core.x, core.y)
                                                         next_list_core_id = get_list_id(next_core.x, next_core.y)
-                                                        
-                                                        # if global_inst_id == 51877:
-                                                        #     print(f"cur_range: time->{time} step->{step}")
-                                                        #     print(cur_range)
-                                                        #     print(list_core_id)
-                                                        #     print(f"next_range: time->{next_time} step->{next_step} next_lid->{next_layer_id}")
-                                                        #     print(next_range)
-                                                        #     print(next_list_core_id)
                                                         
                                                         if list_core_id != next_list_core_id:
                                                             pewls[list_core_id].insts.append(
@@ -410,26 +600,28 @@ if __name__ == "__main__":
                                                                 )
                                                             )
 
-                                                            # if global_inst_id == 51877:
-                                                            #     print(f"SEND: PE{list_core_id} -> PE{next_list_core_id}")
-
-                                                            info = (time, step, next_time, next_step, list_core_id, next_list_core_id, next_layer_id, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
+                                                            info = (time, step, next_time, next_step, list_core_id, next_list_core_id, lid, next_layer_id, cur_range.tensor_slice[0].end, cur_range.tensor_slice[1].end, cur_range.tensor_slice[2].end, cur_range.tensor_slice[3].end, next_range.tensor_slice[0].end, next_range.tensor_slice[1].end, next_range.tensor_slice[2].end, next_range.tensor_slice[3].end)
                                                             if info in send_map:
                                                                 print("Error!")
-                                                            # print(info)
+                                                                print(info)
                                                             send_map[info] = global_inst_id
 
                                             # print(f"loop_time is {loop_time}")
 
     # 构建指令trigger关系
     input_inst = [TaskType.READ, TaskType.RECV]
-    comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC]
+    comp_inst = [TaskType.CONV, TaskType.POOL, TaskType.ELEM, TaskType.FC, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
     output_inst = [TaskType.WRITE, TaskType.SEND]
 
-    for pe_id in range(16):
+    for pe_id in range(core_num):
         last_seg_id = 0
 
         for (id, inst) in enumerate(pewls[pe_id].insts):
+            # if inst.index == 19729:
+            #     for i in range(id-5, id+5):
+            #         print(pewls[pe_id].insts[i])
+                # print(pe_id)   15
+                # print(inst.layer_id)   9
             # if pe_id == 0:
             #     print(f"layer:{inst.layer_id} inst_index:{inst.index}")
             #     print(inst.inst_type)
@@ -456,3 +648,6 @@ if __name__ == "__main__":
 
     with open("tools/workload.json", "w") as file:
         print(workload_json, file=file)
+
+    with open("tools/mapping_adjust.json", "w") as file:
+        print(net.model_dump_json(indent=4), file=file)

@@ -5,7 +5,7 @@ from functools import partial, wraps
 from src.core import Core
 from src.noc_new import NoC, Link, Direction
 from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
-from src.sim_type import Instruction, FailSlow, Data, Message
+from src.sim_type import Instruction, FailSlow, Data, Message,RouterFail, LinkFail, LsuFail, TpuFail, Direction
 from src.common import cfg,Timer,init_graph,ind2ins
 from src.draw import draw_grid
 from typing import List
@@ -39,7 +39,7 @@ def monitor(data, t, prio, eid, event):
         logger.info((t, eid, event.proc._generator, type(event), event.resource, event.value))
     # else:
         # logger.info((t, eid, type(event), event.value))
-    # data.append((t, eid, type(event)))
+    data.append((t, eid, type(event)))
 
 monitor = partial(monitor, data)
 
@@ -118,6 +118,8 @@ class Arch:
         #0时刻第0层
         self.layer_start=[0]
         self.layer_id = 1
+
+        self.end_time = 0
         
         trace(self.env, monitor)
         patch_resource(self.cores[9].data_in.store, pre=monitor1, post=monitor2)
@@ -128,6 +130,68 @@ class Arch:
     def debug(self):
         for d in data:
             logger.info(d)
+
+    def link_fail(self, fail: LinkFail):
+        yield self.env.timeout(fail.start_time)
+        match fail.direction:
+            case Direction.NORTH:
+                self.noc.routers[fail.router_id].north_in.change_delay(fail.times)
+                self.noc.routers[fail.router_id].north_out.change_delay(fail.times)
+            case Direction.SOUTH:
+                self.noc.routers[fail.router_id].south_in.change_delay(fail.times)
+                self.noc.routers[fail.router_id].south_out.change_delay(fail.times)
+            case Direction.EAST:
+                self.noc.routers[fail.router_id].east_in.change_delay(fail.times)
+                self.noc.routers[fail.router_id].east_out.change_delay(fail.times)
+            case Direction.WEST:
+                self.noc.routers[fail.router_id].west_in.change_delay(fail.times)
+                self.noc.routers[fail.router_id].west_out.change_delay(fail.times)
+        
+        yield self.env.timeout(fail.end_time-fail.start_time)
+        match fail.direction:
+            case Direction.NORTH:
+                self.noc.routers[fail.router_id].north_in.recover_delay(fail.times)
+                self.noc.routers[fail.router_id].north_out.recover_delay(fail.times)
+            case Direction.SOUTH:
+                self.noc.routers[fail.router_id].south_in.recover_delay(fail.times)
+                self.noc.routers[fail.router_id].south_out.recover_delay(fail.times)
+            case Direction.EAST:
+                self.noc.routers[fail.router_id].east_in.recover_delay(fail.times)
+                self.noc.routers[fail.router_id].east_out.recover_delay(fail.times)
+            case Direction.WEST:
+                self.noc.routers[fail.router_id].west_in.recover_delay(fail.times)
+                self.noc.routers[fail.router_id].west_out.recover_delay(fail.times)
+
+    def router_fail(self, fail: RouterFail):
+        yield self.env.timeout(fail.start_time)
+        self.noc.routers[fail.router_id].router_fail(fail.times)
+        yield self.env.timeout(fail.end_time-fail.start_time)
+        self.noc.routers[fail.router_id].router_recover(fail.times)
+
+    def lsu_fail(self, fail: LsuFail):
+        yield self.env.timeout(fail.start_time)
+        self.cores[fail.pe_id].lsu_fail(fail.times)
+        yield self.env.timeout(fail.end_time-fail.start_time)
+        self.cores[fail.pe_id].lsu_recover(fail.times)
+
+    def tpu_fail(self, fail: TpuFail):
+        yield self.env.timeout(fail.start_time)
+        self.cores[fail.pe_id].tpu_fail(fail.times)
+        yield self.env.timeout(fail.end_time-fail.start_time)
+        self.cores[fail.pe_id].tpu_recover(fail.times)
+
+    def run_fail_slow(self):
+        for link_fail in self.fail_slow.link:
+            self.env.process(self.link_fail(link_fail))
+        
+        for router_fail in self.fail_slow.router:
+            self.env.process(self.router_fail(router_fail))
+
+        for lsu_fail in self.fail_slow.lsu:
+            self.env.process(self.lsu_fail(lsu_fail))
+
+        for tpu_fail in self.fail_slow.tpu:
+            self.env.process(self.tpu_fail(tpu_fail))
 
     def build_cores(self, config: CoreConfig, program: List[List[Instruction]]) -> List[Core]:
         cores = []
@@ -259,12 +323,16 @@ class Arch:
 
     def run(self):
         print("Start simulation.")
+        
+        #self.run_fail_slow()
+
         self.env.run()
-        #print(self.program[0][2].prev)
-        #print(self.cores[2].scheduler.block_hot)
-        #program
-        for id in range(16):
+
+        for id in range(len(self.cores)):
+            self.end_time = max(self.end_time, self.cores[id].end_time)
             print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
+            print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
+
         print("Simulation finished.")
         #将值传入json文件
         self.make_print()
@@ -275,7 +343,9 @@ class Arch:
             for inst in insts:
                 if inst.record.exe_start_time==[]:
                     print(inst.inst_type)
-                print(inst.record.ready_run_time,inst.record.mulins)
+                if inst.record.ready_run_time[0]!=inst.record.exe_start_time[0]:
+                    print(inst.record.ready_run_time,inst.record.exe_start_time)
+                if inst.record.ready_run_time[0]!=inst.record.exe_start_time[0]:
         print("=="*40)
         for id,layer in enumerate(self.layer_start):
             print(f"Layer {self.layer_id} start at {layer}.")

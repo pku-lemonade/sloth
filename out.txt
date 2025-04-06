@@ -137942,5 +137942,5 @@ Layer 72 start at 1231540677.
 Layer 72 start at 1259031825.
 Layer 72 start at 1259111666.
 ========================================
-Simulation time is 37.98433876037598.
+Simulation time is 36.77739095687866.
 Total simulation cycles is 1344542148.

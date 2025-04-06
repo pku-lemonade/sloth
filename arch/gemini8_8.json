@@ -1,32 +1,32 @@
 {
 	"core" : {
 		"type" : "Simple",
-		"x" : 4,
-		"y" : 4,
-		"width" : 128,
-		"blk_size" : 10,
+		"x" : 8,
+		"y" : 8,
+		"width" : 8,
+		"blk_size" : 20,
 		"spm" : {
-			"size" : 2147483648,
-			"delay" : 1
+			"size" : 2097152,
+			"delay" : 0
 		},
 		"tpu" : {
 			"flops" : 1024
 		},
 		"lsu" : {
-			"width" : 128
+			"width" : 4
 		}
 	},
 	"noc" : {
 		"type" : "Mesh",
-		"x" : 4,
-		"y" : 4,
+		"x" : 8,
+		"y" : 8,
 		"router" : {
 			"type" : "XY",
 			"vc" : 2
 		},
 		"link" : {
-			"width" : 64,
-			"delay" : 1
+			"width" : 16,
+			"delay" : 0
 		}
 	},
 	"mem" : {

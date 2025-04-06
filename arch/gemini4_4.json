@@ -4,16 +4,16 @@
 		"x" : 4,
 		"y" : 4,
 		"width" : 8,
-		"blk_size" : 1000,
+		"blk_size" : 10,
 		"spm" : {
-			"size" : 2147483647,
+			"size" : 2097152,
 			"delay" : 0
 		},
 		"tpu" : {
-			"flops" : 32
+			"flops" : 1024
 		},
 		"lsu" : {
-			"width" : 8
+			"width" : 4
 		}
 	},
 	"noc" : {

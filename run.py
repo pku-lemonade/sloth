@@ -89,7 +89,7 @@ def main():
 
     print("="*40)
     print(f"Simulation time is {simulation_time}.")
-    print(f"Total simulation cycles is {result.now}.")
+    print(f"Total simulation cycles is {arch.end_time:.0f}.")
 
 
 if __name__ == '__main__':
