@@ -1,0 +1,94 @@
+4c4
+< from src.common import MonitoredResource,cfg,cores_deps
+---
+> from src.common import MonitoredResource,cfg,ind2ins
+174d173
+<         self.arch=arch
+175a175
+>         self.arch=arch
+188,190c188,191
+<             if self.stage=="post_analysis":
+<                 if inst.prev==None:
+<                     inst.running=True
+---
+>             #只考虑running_event
+>             #if self.stage=="post_analysis":
+>                 #if inst.prev==None:
+>                     #inst.running=True
+199c200
+<                     self.tasks.append(Stay(index=inst.index, tensor_slice=inst.tensor_slice))
+---
+>                     self.tasks.append(Stay(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
+201c202
+<                     self.tasks.append(Recv(index=inst.index, tensor_slice=inst.tensor_slice))
+---
+>                     self.tasks.append(Recv(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
+203c204
+<                     self.tasks.append(Read(index=inst.index, tensor_slice=inst.tensor_slice))
+---
+>                     self.tasks.append(Read(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
+205c206
+<                     self.tasks.append(Write(index=inst.index, tensor_slice=inst.tensor_slice))
+---
+>                     self.tasks.append(Write(index=inst.index, tensor_slice=inst.tensor_slice,inst=inst))
+207c208
+<                     self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position))
+---
+>                     self.tasks.append(Send(index=inst.index, tensor_slice=inst.tensor_slice, dst=inst.position,inst=inst))
+209c210
+<                     self.tasks.append(Conv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+---
+>                     self.tasks.append(Conv(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
+211c212
+<                     self.tasks.append(Pool(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+---
+>                     self.tasks.append(Pool(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
+213c214
+<                     self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+---
+>                     self.tasks.append(Elem(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
+215c216
+<                     self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id))
+---
+>                     self.tasks.append(FC(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, layer_id=inst.layer_id,inst=inst))
+282d282
+<                         #self.waiting_queue.put(id)
+353a354
+> 
+392c393
+<                                 self.program[tri_task_id].prev=self.program[task_id]
+---
+>                                 self.program[task_id].next.append(self.program[tri_task_id])
+395,396d395
+<                             if self.stage=="post_analysis":
+<                                 self.program[tri_task_id].running=True
+405c404
+<                                 self.program[tri_task_id].prev=self.program[task_id]
+---
+>                                 self.program[task_id].next.append(self.program[tri_task_id])
+408,409d406
+<                             if self.stage=="post_analysis":
+<                                 self.program[tri_task_id].running=True
+466a464
+>         self.stage=stage
+478a477
+>         self.arch=arch
+486a486
+>         self.running_send = []
+496,497c496
+<                     instruction=self.program[self.scheduler.index2taskid[task.index]]
+<                     task_event = self.env.process(task.run(self,instruction))
+---
+>                     task_event = self.env.process(task.run(self))
+511a511,517
+>                     if self.stage=="post_analysis":
+>                         src = msg.src
+>                         inst = ind2ins[src][msg.data.index]
+>                         #print(inst)
+>                         assert inst in self.arch.cores[src].running_send
+>                         self.arch.cores[src].running_send.remove(inst)
+> 
+553a560,562
+>                         if self.stage=="post_analysis":
+>                             if task.inst.inst_type==TaskType.SEND:
+>                                 self.running_send.append(task.inst)

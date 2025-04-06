@@ -66,16 +66,25 @@ setup_logging(args.log, level)
 
 print("Finished.")
 
+
+
+
 def main():
     
-
-    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow)
-
+    stage=None
+    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow,stage)
     start_time = time.time()
     result = arch.run()
     end_time = time.time()
     simulation_time = end_time - start_time
 
+    if stage=="pre_analysis":
+        stage="post_analysis"
+        arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow,stage)
+        start_time = time.time()
+        result = arch.run()
+        end_time = time.time()
+        simulation_time = end_time - start_time
     # arch.debug()
 
     print("="*40)

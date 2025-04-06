@@ -116,6 +116,7 @@ def inst_analyzer(filename: str) -> List[List[Instruction]]:
 
 
 workload = inst_analyzer("tools/instructions.txt")
+print(workload)
 workload_json = workload.model_dump_json(indent=4)
 
 with open("tools/workload.json", "w") as file:
