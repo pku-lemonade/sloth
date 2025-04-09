@@ -36,7 +36,7 @@ class SPMManager:
         self.delay = config.delay
         self.env = env
         self.id = id
-        self.container = simpy.Container(self.env, init=config.size*2, capacity=config.size*2)
+        self.container = simpy.Container(self.env, init=config.size, capacity=config.size)
         self.max_buf = 0
         self.data=[]
 
@@ -182,7 +182,7 @@ class GraphScheduler:
                             return FC(flops=inst.size, layer_id=inst.layer_id)
 
 class TableScheduler:
-    def __init__(self, program, spm, block_size, id, env, arch, stage):
+    def __init__(self, program, spm, block_size, id, env, arch, data_in, stage):
         self.program = program
         self.spm = spm
 
@@ -196,6 +196,8 @@ class TableScheduler:
         # 记录block的时间list，便于在inst_ready之后将等待的时间返回到block
         self.block_time = []
         self.block_hot = []
+
+        self.data_in = data_in
         
         # 当前block的id区间 [start, end)
         self.start = 0
@@ -317,10 +319,14 @@ class TableScheduler:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
+                # 只有当前block的RECV才会接收，应该不需要这里的逻辑
                 case TaskType.RECV:
                     if self.tasks[id].feat:
-                        logger.debug(f"self.counter += 1")
-                        self.block_counter += 1
+                        # if self.tag[id]:
+                        #     self.tag[id] = False
+                        #     logger.debug(f"self.counter += 1")
+                        #     self.block_counter += 1
+                        logger.debug(f"data{inst.index} has already arrived")
                 case TaskType.STAY:
                     if self.tag[id]:
                         self.tag[id] = False
@@ -369,8 +375,8 @@ class TableScheduler:
 
         # 维护block_counter和block更新（会接收到的数据应该都是在当前block内的，应该可以删掉if）
         if task_id // self.block_size == self.block_ptr:
-            logger.debug(f"PE{self.id} self.counter += 1, [{self.block_counter}/{self.block_size}]")
             self.block_counter += 1
+            logger.debug(f"PE{self.id} self.counter += 1, [{self.block_counter}/{self.block_size}]")
 
             if self.block_counter == self.block_size:
                 self.task_block_update()
@@ -386,7 +392,10 @@ class TableScheduler:
 
             # 更新被触发指令的操作数信息
             self.program[tri_task_id].record.mulins.append(self.env.now)
-            self.tasks[tri_task_id].feat.append(data)
+            if self.program[task_id].data_type == DataType.FEAT:
+                self.tasks[tri_task_id].feat.append(data)
+            else:
+                self.tasks[tri_task_id].para.append(data)
             
             # 更新被触发的指令
             logger.debug(f"triggered block_ptr is {tri_task_id//self.block_size}")
@@ -439,8 +448,8 @@ class TableScheduler:
         # 记录每层结束时间
         self.arch.layer_end[layer_id] = max(self.arch.layer_end[layer_id], self.env.now)
 
-        logger.debug(f"PE{self.id} self.counter += 1, [{self.block_counter}/{self.block_size}]")
         self.block_counter += 1
+        logger.debug(f"PE{self.id} self.counter += 1, [{self.block_counter}/{self.block_size}]")
         if self.block_counter == self.block_size:
             self.task_block_update()
 
@@ -462,7 +471,8 @@ class TableScheduler:
                             pur_sche.tasks[tri_task_id].para.append(Data())
                         case DataType.FEAT:
                             pur_sche.tasks[tri_task_id].feat.append(Data())
-
+                    
+                    # 不在当前block没有影响
                     if tri_task_id // pur_sche.block_size != pur_sche.block_ptr:
                         continue
                     
@@ -474,10 +484,17 @@ class TableScheduler:
                     
                     if feat_len == pur_sche.tasks[tri_task_id].feat_num and para_len == pur_sche.tasks[tri_task_id].para_num:
                         if pur_sche.tag[tri_task_id]:
-
-                            logger.debug(f"PE{pur_sche.id} insert {tri_task_id} into waiting_queue")
+                            # 在当前block以数据的形式放入data_in
+                            logger.debug(f"PE{tri_core_id} put {tri_task_id} into data_in")
                             pur_sche.tag[tri_task_id] = False
-                            pur_sche.waiting_queue.put(tri_task_id)
+
+                            if tri_core_id != self.id:
+                                self.cores[tri_core_id].data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                            else:
+                                self.data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                            # logger.debug(f"PE{pur_sche.id} insert {tri_task_id} into waiting_queue")
+                            # pur_sche.tag[tri_task_id] = False
+                            # pur_sche.waiting_queue.put(tri_task_id)
 
         # 处理其他指令
         else:
@@ -497,36 +514,36 @@ class TableScheduler:
                 # 更新被触发的指令
                 logger.debug(f"triggered block_ptr is {tri_task_id//self.block_size}")
                 # block内指令更新
-            if tri_task_id // self.block_size == self.block_ptr:
-                logger.debug(f"update triggered instruction...")
-                para_len = len(self.tasks[tri_task_id].para)
-                feat_len = len(self.tasks[tri_task_id].feat)
-                logger.debug(f"para:{para_len}/{self.tasks[tri_task_id].para_num} + feat:{feat_len}/{self.tasks[tri_task_id].feat_num}")
-                
-                # 判断操作数是否到齐
-                if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
-                    if self.tag[tri_task_id]:
-                        logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
-                        self.tag[tri_task_id] = False
-                        self.waiting_queue.put(tri_task_id)
-                        # 暂时没用到
-                        if self.stage=="pre_analysis":
-                            self.program[task_id].next.append(self.program[tri_task_id])
-                
-                # 暂时没用到
-                if self.stage == "post_analysis":
-                    assert self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len >= 0
-                    if self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len == 1:
-                        # 关键路径
-                        self.program[tri_task_id].waitinglast = True
+                if tri_task_id // self.block_size == self.block_ptr:
+                    logger.debug(f"update triggered instruction...")
+                    para_len = len(self.tasks[tri_task_id].para)
+                    feat_len = len(self.tasks[tri_task_id].feat)
+                    logger.debug(f"para:{para_len}/{self.tasks[tri_task_id].para_num} + feat:{feat_len}/{self.tasks[tri_task_id].feat_num}")
+                    
+                    # 判断操作数是否到齐
+                    if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
+                        if self.tag[tri_task_id]:
+                            logger.debug(f"PE{self.id} insert {tri_task_id} into waiting_queue")
+                            self.tag[tri_task_id] = False
+                            self.waiting_queue.put(tri_task_id)
+                            # 暂时没用到
+                            if self.stage=="pre_analysis":
+                                self.program[task_id].next.append(self.program[tri_task_id])
+                    
+                    # 暂时没用到
+                    if self.stage == "post_analysis":
+                        assert self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len >= 0
+                        if self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len == 1:
+                            # 关键路径
+                            self.program[tri_task_id].waitinglast = True
 
-            # block间指令更新
-            else:
-                para_len = len(self.tasks[tri_task_id].para)
-                feat_len = len(self.tasks[tri_task_id].feat)
-                # block外的指令不会放入waiting_queue，但需要记录就绪时间
-                if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
-                    self.program[tri_task_id].start_time = self.env.now
+                # block间指令更新
+                else:
+                    para_len = len(self.tasks[tri_task_id].para)
+                    feat_len = len(self.tasks[tri_task_id].feat)
+                    # block外的指令不会放入waiting_queue，但需要记录就绪时间
+                    if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
+                        self.program[tri_task_id].start_time = self.env.now
     
     # 原来的二合一update，已弃用
     def update(self, data):
@@ -678,7 +695,7 @@ def print_event_queue(env):
 
 
 class Core:
-    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int, arch, stage=None):
+    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int, arch, link1, link2, stage=None):
         self.env = env
         self.type = config.type
         self.program = program
@@ -687,6 +704,9 @@ class Core:
         self.flow_out = []
         self.flow_in = []
         self.stage = stage
+
+        self.bound_with_router(link2, link1)
+
         # 1.in a block, 2.close to running instruction
         self.waitinglist = []
 
@@ -695,7 +715,7 @@ class Core:
         self.end_time = 0
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
-        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id, self.env, arch, stage)
+        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id, self.env, arch, self.data_in, stage)
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
@@ -704,7 +724,7 @@ class Core:
 
         self.data_ready = {}
         
-        self.data_in, self.data_out = None, None
+        
         self.arch = arch
         self.env.process(self.core_run())
 
@@ -725,17 +745,21 @@ class Core:
         self.tpu_flops *= times
 
     def receive_data(self, msg):
+        logger.debug(f"in function receive_data()")
+        task_id = self.scheduler.index2taskid[msg.data.index]
         # 接收到的数据在block内才进行更新，否则放回data_in
-        if self.scheduler.index2taskid[msg.data.index] in range(self.scheduler.start, self.scheduler.end):
+        if task_id in range(self.scheduler.start, self.scheduler.end):
             slice = Slice(tensor_slice=msg.data.tensor_slice)
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
-            self.program[msg.data.index].record.exe_start_time.append(self.env.now)
+            self.program[task_id].record.exe_start_time.append(self.env.now)
             self.scheduler.data_update(msg.data)
         else:
-            logger.debug(f"PE{self.id} insert data{msg.data.index} back into data_in")
-            self.program[msg.data.index].record.ready_run_time.append(self.env.now)
-            self.data_in.insert(msg)
+            logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
+            
+            msg.data.index = self.scheduler.index2taskid[msg.data.index]
+            heapq.heappush(self.recv_queue, msg)
+            # yield self.env.process(self.data_in.insert(msg))
 
     def core_run(self):
         # running 事件列表
@@ -744,30 +768,31 @@ class Core:
         self.event2task = {}
 
         while True:
-            # while self.recv_queue:
-            #     top = self.recv_queue[0]
-            #     if top.index in range(self.scheduler.start, self.scheduler.end):      
-            #         data = heapq.heappop(self.recv_queue)
+            while self.recv_queue:
+                top = self.recv_queue[0]
+                if top.data.index in range(self.scheduler.start, self.scheduler.end):      
+                    msg = heapq.heappop(self.recv_queue)
 
-            #         self.program[data.index].record.ready_run_time.append(self.env.now)
-            #         self.program[data.index].record.exe_start_time.append(self.env.now)
-            #         # task_id转换回index
-            #         data.index = self.scheduler.taskid2index[data.index]
-            #         logger.debug(f"PE{self.id} pop data{data.index} from recv_queue")
+                    self.program[msg.data.index].record.exe_start_time.append(self.env.now)
+                    # task_id转换回index
+                    msg.data.index = self.scheduler.taskid2index[msg.data.index]
+                    logger.debug(f"PE{self.id} pop data{msg.data.index} from recv_queue")
 
-            #         slice = Slice(tensor_slice=data.tensor_slice)
-            #         yield self.env.process(self.spm_manager.allocate("recv"+str(data.index), slice.size()))
-            #         self.scheduler.data_update(data)
-            #     else:
+                    yield self.env.process(self.receive_data(msg))
+                else:
+                    break
+
+            # while self.data_in.len() > 0:
+            #     # 防止一个数据不断被取出放回
+            #     if self.scheduler.index2taskid[self.data_in.store.items[0].data.index] not in range(self.scheduler.start, self.scheduler.end):
             #         break
 
-            while self.data_in.len() > 0:
-                msg = yield self.data_in.get()
+            #     msg = yield self.data_in.get()
 
-                logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                logger.info(f"received data is {msg.data}")
+            #     logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
+            #     logger.info(f"received data is {msg.data}")
                 
-                self.receive_data(msg)
+            #     self.env.process(self.receive_data(msg))
 
             task_ready = self.scheduler.schedule()
             if task_ready:
@@ -780,13 +805,30 @@ class Core:
                     self.running_event.append(task_event)
                     self.event2task[task_event] = task
 
+            if self.id == 12:
+                logger.debug(f"Before AnyOf yield")
+                logger.debug(f"PE{self.id}'s running_queue is {self.running_event}")
+
             with self.data_in.get() as msg_arrive:
+                if self.id == 12:
+                    logger.debug(f"PE{self.id} is yielding AnyOf")
+
+                # 其他core更新当前core的任务时，控制权不在当前core
+                # running_event无法及时更新（可能为空），导致只yield了msg，没数据来就会卡死
+                # 把WRITE触发的READ数据包装到data_in里，而非修改waiting_queue可以解决
                 result = yield simpy.events.AnyOf(self.env, self.running_event + [msg_arrive])
+                if self.id == 12:
+                    logger.debug(f"PE{self.id} finish yielding AnyOf")
+
                 logger.info(f"Time {self.env.now:.2f}: PE{self.id}'s result is {result}")
             
                 # 从NoC接收数据
                 if msg_arrive.triggered:
                     msg = msg_arrive.value
+
+                    # 记录数据到达的时间（可能未及时接收）
+                    task_id = self.scheduler.index2taskid[msg.data.index]
+                    self.program[task_id].record.ready_run_time.append(self.env.now)
 
                     # 暂时没用到
                     if self.stage == "post_analysis":
@@ -802,7 +844,12 @@ class Core:
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                     logger.debug(f"received data is {msg.data}")
 
-                    self.receive_data(msg)
+                    logger.debug(f"function call: receive_data()")
+                    yield self.env.process(self.receive_data(msg))
+
+                    if self.data_in.len() > 0:
+                        if self.scheduler.index2taskid[self.data_in.store.items[0].data.index] not in range(self.scheduler.start, self.scheduler.end):
+                            break
 
                     # 处理其他已经到达且在当前block的数据
                     while self.data_in.len() > 0:
@@ -811,7 +858,8 @@ class Core:
                         logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
                         logger.info(f"received data is {msg.data}")
                         
-                        self.receive_data(msg)
+                        logger.debug(f"function call: receive_data()")
+                        yield self.env.process(self.receive_data(msg))
 
                 #注意，单纯put的msg一定是send，这里还有msg是其它的
                 for event in self.running_event:

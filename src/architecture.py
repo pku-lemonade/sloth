@@ -6,7 +6,7 @@ from functools import partial, wraps
 from src.core import Core
 from src.noc_new import NoC, Link, Direction
 from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
-from src.sim_type import Instruction, FailSlow, RouterFail, LinkFail, LsuFail, TpuFail, Direction, TaskType
+from src.sim_type import *
 from src.common import cfg,Timer, init_graph, ind2ins
 from src.draw import draw_grid
 from typing import List
@@ -203,12 +203,11 @@ class Arch:
     def build_cores(self, config: CoreConfig, program: List[List[Instruction]]) -> List[Core]:
         cores = []
         for id in range(config.x * config.y):
-            core = Core(self.env, config, program[id], id, self, self.stage)
-
             link1 = Link(self.env, LinkConfig(width=128, delay=1))
             link2 = Link(self.env, LinkConfig(width=128, delay=1))
+            core = Core(self.env, config, program[id], id, self, link1, link2, self.stage)
+
             self.noc.routers[id].bound_with_core(link1, link2)
-            core.bound_with_router(link2, link1)
             cores.append(core)
             # TODO:timer should be in second stage
         if self.stage == "post_analysis":
@@ -353,14 +352,14 @@ class Arch:
                     if inst.record.exe_start_time == []:
                         print(f"Instruction{inst.index} not executed.", file=file)
                     
-                    if inst.inst_type == TaskType.SEND or inst.inst_type == TaskType.RECV:
+                    if inst.inst_type not in compute_task:
                         continue
                     
-                    # assert len(inst.record.ready_run_time) == 1
-                    # assert len(inst.record.exe_end_time) == 1
-                    # assert len(inst.record.exe_start_time) == 1
-                    # print(f"Instruction{inst.index}: type {inst.inst_type}, ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}", file=file)
-                    # print(f"    operands_time: {inst.record.mulins}", file=file)
+                    assert len(inst.record.ready_run_time) > 0
+                    assert len(inst.record.exe_end_time) == 1
+                    assert len(inst.record.exe_start_time) == 1
+                    print(f"Instruction{inst.index}: type {inst.inst_type}, ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}", file=file)
+                    print(f"    operands_time: {inst.record.mulins}", file=file)
 
         layer_file = os.path.join(file_path, "layer_info.txt") 
         with open(layer_file, "w") as file:

@@ -58,6 +58,8 @@ class TaskType(IntEnum):
     PTP = 10
     TRANS = 11
 
+compute_task = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
+
 class OperationType(IntEnum):
     CONV = 0
     POOL = 1

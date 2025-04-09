@@ -61,7 +61,7 @@ class Link:
     
     # 不带延迟的插入，处理block外的数据包时使用
     def insert(self, msg):
-        self.store.put(msg)
+        yield self.store.put(msg)
 
     def get(self):
         return self.store.get()
