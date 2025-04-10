@@ -137,6 +137,7 @@ class IOTask(Task):
 
     def run(self, core, ins):
         ins.record.ready_run_time.append(core.env.now)
+        ins.record.pe_id = core.id
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         yield core.lsu.execute(self.opcode+str(self.index),ceil(self.size(), core.lsu_bandwidth), ins, self.index)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
@@ -165,6 +166,7 @@ class ComputeTask(Task):
     def run(self, core, ins):
         self.calc_flops()
         ins.record.ready_run_time.append(core.env.now)
+        ins.record.pe_id = core.id
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, self.index)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
@@ -175,6 +177,8 @@ class Record(BaseModel):
     ready_run_time: List[int] = []
     # 记录多个指令的唤醒
     mulins: List[int] = []
+    # 记录指令执行的PE
+    pe_id: int = -1
 
 class CommunicationTask(Task):
     dst: int

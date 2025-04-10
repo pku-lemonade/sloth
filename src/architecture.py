@@ -9,6 +9,7 @@ from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemCo
 from src.sim_type import *
 from src.common import cfg,Timer, init_graph, ind2ins
 from src.draw import draw_grid
+from analysis.trace_format import CompTrace, InstTrace
 from typing import List
 logger = logging.getLogger("Arch")
 
@@ -344,6 +345,8 @@ class Arch:
             os.mkdir(file_path)
 
         inst_file = os.path.join(file_path, "inst_info.txt")
+        compute_trace = []
+
         with open(inst_file, "w") as file:
             # 指令时间数据
             for insts in self.program:
@@ -358,8 +361,26 @@ class Arch:
                     assert len(inst.record.ready_run_time) > 0
                     assert len(inst.record.exe_end_time) == 1
                     assert len(inst.record.exe_start_time) == 1
-                    print(f"Instruction{inst.index}: type {inst.inst_type}, ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}", file=file)
+                    print(f"Instruction{inst.index}: type {inst.inst_type}, layer_id {inst.layer_id}, pe_id {inst.record.pe_id}", file=file)
+                    print(f"    ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}, end_time {inst.record.exe_start_time[0]}", file=file)
                     print(f"    operands_time: {inst.record.mulins}", file=file)
+                    
+                    compute_trace.append(
+                        InstTrace(
+                            instruction_id = inst.index,
+                            instruction_type = inst.inst_type,
+                            layer_id = inst.layer_id,
+                            pe_id = inst.record.pe_id,
+                            ready_time = inst.record.ready_run_time[0],
+                            end_time = inst.record.exe_end_time[0]
+                        )
+                    )
+
+        compute_trace = CompTrace(trace=compute_trace)
+        comp_json_file = os.path.join(file_path, "comp_trace.json")
+        with open(comp_json_file, "w") as file:
+            comp_json = compute_trace.model_dump_json(indent=4)
+            print(comp_json, file=file)
 
         layer_file = os.path.join(file_path, "layer_info.txt") 
         with open(layer_file, "w") as file:
