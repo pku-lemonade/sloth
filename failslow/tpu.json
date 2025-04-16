@@ -5,7 +5,7 @@
     "tpu" : [
         {
             "start_time" : 0,
-            "end_time" : 40000000,
+            "end_time" : 1000000000,
             "pe_id" : 10,
             "times" : 16
         }

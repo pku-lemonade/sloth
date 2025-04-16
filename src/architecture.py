@@ -371,7 +371,7 @@ class Arch:
                             instruction_type = inst.inst_type,
                             layer_id = inst.layer_id,
                             pe_id = inst.record.pe_id,
-                            ready_time = inst.record.ready_run_time[0],
+                            start_time = inst.record.exe_start_time[0],
                             end_time = inst.record.exe_end_time[0]
                         )
                     )

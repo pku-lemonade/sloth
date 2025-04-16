@@ -6,7 +6,7 @@ class InstTrace(BaseModel):
     instruction_type: int
     layer_id: int
     pe_id: int
-    ready_time: int
+    start_time: int
     end_time: int
 
 class CompTrace(BaseModel):
