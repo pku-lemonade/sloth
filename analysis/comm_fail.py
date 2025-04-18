@@ -128,11 +128,21 @@ class CommGraph:
                 src = (layer2group[inst_trace.layer_id], inst_trace.src_id)
                 dst = (layer2group[inst_trace.layer_id], inst_trace.dst_id)
                 waiting_time = inst_trace.end_time - inst_trace.start_time
-                self.pe2pe(src, dst, waiting_time)
+                self.pe2pe(src=src, dst=dst, waiting_time=waiting_time)
 
             elif inst_trace.instruction_type == TaskType.READ:
-
+                dst = (layer2group[inst_trace.layer_id], inst_trace.dst_id)
+                waiting_time = inst_trace.end_time - inst_trace.start_time
+                self.dram2pe(dram_id=layer2group[inst_trace.layer_id], dst=dst, waiting_time=waiting_time)
+            
             elif inst_trace.instruction_type == TaskType.WRITE:
+                src = (layer2group[inst_trace.layer_id], inst_trace.src_id)
+                waiting_time = inst_trace.end_time - inst_trace.start_time
+                self.pe2dram(src=src, dram_id=layer2group[inst_trace.layer_id], waiting_time=waiting_time)
+
+    def LinkPressureGraph(self):
+        # todo
+        pass
 
 if __name__ == '__main__':
     net = json_analyzer("tools/mapping/json")
