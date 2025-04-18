@@ -68,7 +68,7 @@ percent = 1
 arch_configs = config_analyzer("arch/gemini4_4.json")
 
 def get_id(x: int, y: int):
-        return x * arch_configs.core.y + y
+    return x * arch_configs.core.y + y
 
 if __name__ == '__main__':
     net = json_analyzer("tools/mapping.json")

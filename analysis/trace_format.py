@@ -14,8 +14,8 @@ class CompTrace(BaseModel):
 
 # PE依赖关系建图
 class CommInst(InstTrace):
-    dependency_id: int
-    operands_time: List[int]
+    src_id: int = -1
+    dst_id: int = -1
 
 class CommTrace(BaseModel):
     trace: List[CommInst]

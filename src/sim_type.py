@@ -334,7 +334,11 @@ class Send(CommunicationTask):
     src: int = -1
     feat_num: int = 1
     def run(self, core, ins):
+        # 分析时send/recv合并处理，因为index一致
+        ins.record.pe_id = core.id
+        ins.record.ready_run_time.append(core.env.now)
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        ins.record.exe_start_time.append(core.env.now)
         yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
 
     def input_size(self):
@@ -348,8 +352,7 @@ class Recv(CommunicationTask):
     dst: int = -1
     src: int = -1
     def run(self, core, ins):
-        ins.record.ready_run_time.append(core.env.now)
-        ins.record.exe_start_time.append(core.env.now)
+        ins.record.pe_id = core.id
         ins.record.exe_end_time.append(core.env.now)
 
     def input_size(self):
