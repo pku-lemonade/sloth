@@ -62,7 +62,8 @@ class DepEdge:
         # (start_time, exe_time)
         self.events = []
 
-    def insert(self, start_time: int, exe_time: int):
+    # exe_time是归一化时间
+    def insert(self, start_time: int, exe_time: float):
         # print(f"edge start:{start_time}")
         self.events.append((start_time, exe_time))
 
@@ -74,26 +75,32 @@ class DepEdge:
         # print(f"{min(times)}, {max(times)}")
         return min(times), max(times)
     
-    # 生成时间窗口
+    # 生成时间窗口（数据包数量）
     def get_time_window(self, window_size: int, step: int):
         if not self.events:
             return []
 
+        self.events.sort()
         start_time, end_time = self.start_time_range()
 
         # (window_start_time, [window_events_exe_time])
         windows = []
-        curr_time = start_time
+        cur_pos = 0
+        
+        while cur_pos < len(self.events):
+            # print("loop1")
+            event_num = 0
+            window_events = []
 
-        while curr_time < end_time:
-            window_start = curr_time
-            window_end = curr_time + window_size
-            window_events = [
-                exe_time for (start_time, exe_time) in self.events
-                if window_start <= start_time < window_end
-            ]
-            windows.append((window_start, window_events))
-            curr_time += step
+            while event_num < window_size:
+                # print("loop2")
+                if cur_pos + event_num >= len(self.events):
+                    break
+                window_events.append(self.events[cur_pos+event_num][1])
+                event_num += 1
+
+            windows.append((self.events[cur_pos][0], window_events))
+            cur_pos += step
 
         return windows
     
@@ -111,6 +118,7 @@ class DepEdge:
             t1, avg1, _ = stats[i]
 
             if avg0 > 0 and avg1 / avg0 > threshold:
+                # print(f"{avg0} vs {avg1}")
                 if fail_start == -1:
                     fail_start = t0
 
@@ -120,8 +128,21 @@ class DepEdge:
                     fail_start = -1
 
         if fail_start != -1:
-            failslow.append((fail_start, windows[-1][0]+step))
-        return failslow
+            failslow.append((fail_start, windows[-1][0]))
+
+        if not failslow:
+            return []
+
+        # 重叠区间合并
+        interval_begin = 0
+        merged_failslow = []
+        for id in range(1, len(failslow)):
+            if failslow[id-1][1]+1 < failslow[id][0]:
+                merged_failslow.append((failslow[interval_begin][0], failslow[id-1][1]))
+                interval_begin = id
+        merged_failslow.append((failslow[interval_begin][0], failslow[-1][1]))
+
+        return merged_failslow
 
 class CommGraph:
     def __init__(self, trace):
@@ -135,10 +156,12 @@ class CommGraph:
         # (src_id, dst_id) -> edge
         self.edges = {}
 
+        self.vis = {}
+
         self.build_graph(trace)
 
     # SEND/RECV
-    def pe2pe(self, src: tuple[int, int], dst: tuple[int, int], start_time: int, exe_time: int):
+    def pe2pe(self, src: tuple[int, int], dst: tuple[int, int], start_time: int, exe_time: float):
         if src not in self.nodes:
             self.node_num += 1
             self.node_id[src] = self.node_num
@@ -161,7 +184,7 @@ class CommGraph:
             self.edges[(self.node_id[src], self.node_id[dst])].insert(start_time=start_time, exe_time=exe_time)
 
     # WRITE
-    def pe2dram(self, src: tuple[int, int], dram_id: int, start_time: int, exe_time: int):
+    def pe2dram(self, src: tuple[int, int], dram_id: int, start_time: int, exe_time: float):
         if src not in self.nodes:
             self.node_num += 1
             self.node_id[src] = self.node_num
@@ -184,7 +207,7 @@ class CommGraph:
             self.edges[(self.node_id[src], self.node_id[(dram_id, -1)])].insert(start_time=start_time, exe_time=exe_time)
 
     # READ
-    def dram2pe(self, dram_id: int, dst: tuple[int, int], start_time: int, exe_time: int):
+    def dram2pe(self, dram_id: int, dst: tuple[int, int], start_time: int, exe_time: float):
         if (dram_id, -1) not in self.nodes:
             self.node_num += 1
             self.node_id[(dram_id, -1)] = self.node_num
@@ -212,39 +235,44 @@ class CommGraph:
                 src = (layer2group[inst_trace.layer_id], inst_trace.src_id)
                 dst = (layer2group[inst_trace.layer_id], inst_trace.dst_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.pe2pe(src=src, dst=dst, start_time=inst_trace.start_time, exe_time=exe_time)
+                self.pe2pe(src=src, dst=dst, start_time=inst_trace.start_time, exe_time=exe_time/inst_trace.data_size)
 
             elif inst_trace.instruction_type == TaskType.READ:
                 dst = (layer2group[inst_trace.layer_id], inst_trace.pe_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.dram2pe(dram_id=layer2group[inst_trace.layer_id]-1, dst=dst, start_time=inst_trace.start_time, exe_time=exe_time)
+                self.dram2pe(dram_id=layer2group[inst_trace.layer_id]-1, dst=dst, start_time=inst_trace.start_time, exe_time=0.25)
             
             elif inst_trace.instruction_type == TaskType.WRITE:
                 src = (layer2group[inst_trace.layer_id], inst_trace.pe_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.pe2dram(src=src, dram_id=layer2group[inst_trace.layer_id], start_time=inst_trace.start_time, exe_time=exe_time)
+                self.pe2dram(src=src, dram_id=layer2group[inst_trace.layer_id], start_time=inst_trace.start_time, exe_time=0.25)
 
-    def DFS(self, curNode, window_size, step, threshold):
-        # print(f"curNode: {self.node_info[curNode.id][0]} {self.node_info[curNode.id][1]}")
+    def DFS(self, curNode, threshold):
+        if (self.node_info[curNode.id][0], self.node_info[curNode.id][1]) in self.vis:
+            return
+        
+        self.vis[(self.node_info[curNode.id][0], self.node_info[curNode.id][1])] = 1
         for edge in curNode.out_edges:
+            window_size = len(edge.events) // 10
+            step = max(window_size // 2, 1)
             failslow = edge.failslow_detect(window_size, step, threshold)
             if failslow:
                 print(f"Path pe({self.node_info[edge.src.id][1]}) -> pe({self.node_info[edge.dst.id][1]}) failslow at time {failslow}.")
             
             next_node = edge.dst
-            self.DFS(next_node, window_size, step, threshold)
+            self.DFS(next_node, threshold)
 
-    def LinkAnalyze(self, window_size: int = 10000, step: int = 5000, threshold = 2):
+    def LinkAnalyze(self, threshold = 2):
         for node in self.nodes.values():
             if len(node.in_edges) == 0:
-                self.DFS(node, window_size, step, threshold)
+                self.DFS(node, threshold)
 
         # todo: failslow spread
 
 if __name__ == '__main__':
     net = json_analyzer("tools/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
-    comm_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
+    comm_trace = comm_analyzer("data/darknet19/router/comm_trace.json")
 
     core_num = arch_configs.core.x * arch_configs.core.y
     layer_mapping = [[] for _ in range(len(net.layers))]
@@ -272,6 +300,8 @@ if __name__ == '__main__':
         layer2group[ind] = net.layers[cur_layer_id].layer_group_id
         group_layers.append(ind)
 
+    # print(layer2group)
+
     cur_layer_id = id
     layer_group_divide.append(group_layers)
 
@@ -281,8 +311,9 @@ if __name__ == '__main__':
     # for lygp, pe_id in comm_graph.nodes.keys():
     #     print(f"Node: {lygp, pe_id} in_edge_num: {len(comm_graph.nodes[(lygp, pe_id)].in_edges)}")
 
-    for edge in comm_graph.edges.values():
-        print(edge.events)
+    # for edge in comm_graph.edges.values():
+    #     print(edge.events)
+    #     break
 
-    # comm_graph.LinkAnalyze()
+    comm_graph.LinkAnalyze(threshold=5)
     

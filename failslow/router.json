@@ -1,8 +1,8 @@
 {
     "router" : [
         {
-            "start_time" : 0,
-            "end_time" : 40000000,
+            "start_time" : 5000000,
+            "end_time" : 20000000,
             "router_id" : 10,
             "times" : 10
         }

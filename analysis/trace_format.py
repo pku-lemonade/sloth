@@ -25,6 +25,8 @@ class CompTrace(BaseModel):
 # PE依赖关系建图
 # 通信指令trace无需instruction_id可以少16bit
 class CommInst(InstTrace):
+    # 归一化传输时间
+    data_size: int
     src_id: int = -1
     dst_id: int = -1
 

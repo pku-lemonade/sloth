@@ -392,7 +392,8 @@ class Arch:
                                 layer_id = inst.layer_id,
                                 pe_id = inst.record.pe_id,
                                 start_time = inst.record.exe_start_time[0],
-                                end_time = inst.record.exe_end_time[0]
+                                end_time = inst.record.exe_end_time[0],
+                                data_size = Slice(tensor_slice=inst.tensor_slice).size(),
                             )
                         )
                     else:
@@ -412,6 +413,7 @@ class Arch:
                         pe_id = recv_inst.record.pe_id,
                         start_time = comm_record[recv_inst.index].exe_start_time[0],
                         end_time = recv_inst.record.exe_end_time[0],
+                        data_size = Slice(tensor_slice=inst.tensor_slice).size(),
                         src_id = comm_record[recv_inst.index].pe_id,
                         dst_id = recv_inst.record.pe_id
                     )
