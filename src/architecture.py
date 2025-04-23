@@ -351,9 +351,12 @@ class Arch:
         comm_record = {}
         comm_trace = []
 
+        recv_insts = []
+
         with open(inst_file, "w") as file:
             # 指令时间数据
-            for insts in self.program:
+            for id, insts in enumerate(self.program):
+                # 每个PE的指令
                 for inst in insts:
                     # 没有被执行的指令
                     if inst.record.exe_start_time == []:
@@ -377,36 +380,42 @@ class Arch:
                                 end_time = inst.record.exe_end_time[0]
                             )
                         )
+                    elif inst.inst_type in io_task:
+                        if len(inst.record.exe_start_time) == 0:
+                            print(f"exe_start error:: {inst.index} on PE{id}")
+
+                        comm_trace.append(
+                            CommInst(
+                                instruction_id = inst.index,
+                                instruction_type = inst.inst_type,
+                                # 当前层的id
+                                layer_id = inst.layer_id,
+                                pe_id = inst.record.pe_id,
+                                start_time = inst.record.exe_start_time[0],
+                                end_time = inst.record.exe_end_time[0]
+                            )
+                        )
                     else:
+                        # 按pe遍历指令，可能存在某条RECV在SEND之前被访问到，所以先只处理SEND
                         if inst.inst_type == TaskType.SEND:
                             comm_record[inst.index] = inst.record
-                        elif inst.inst_type == TaskType.RECV:
-                            comm_trace.append(
-                                CommInst(
-                                    instruction_id = inst.index,
-                                    instruction_type = inst.inst_type,
-                                    # 当前层的id
-                                    layer_id = inst.layer_id,
-                                    pe_id = inst.record.pe_id,
-                                    start_time = comm_record[inst.index].exe_start_time[0],
-                                    end_time = inst.record.exe_end_time[0],
-                                    src_id = comm_record[inst.index].pe_id,
-                                    dst_id = inst.record.pe_id
-                                )
-                            )
-                        # READ/WRITE
                         else:
-                            comm_trace.append(
-                                CommInst(
-                                    instruction_id = inst.index,
-                                    instruction_type = inst.inst_type,
-                                    # 当前层的id
-                                    layer_id = inst.layer_id,
-                                    pe_id = inst.record.pe_id,
-                                    start_time = inst.record.exe_start_time[0],
-                                    end_time = inst.record.exe_end_time[0]
-                                )
-                            )
+                            recv_insts.append(inst)
+
+            for recv_inst in recv_insts:
+                comm_trace.append(
+                    CommInst(
+                        instruction_id = recv_inst.index,
+                        instruction_type = recv_inst.inst_type,
+                        # 当前层的id
+                        layer_id = recv_inst.layer_id,
+                        pe_id = recv_inst.record.pe_id,
+                        start_time = comm_record[recv_inst.index].exe_start_time[0],
+                        end_time = recv_inst.record.exe_end_time[0],
+                        src_id = comm_record[recv_inst.index].pe_id,
+                        dst_id = recv_inst.record.pe_id
+                    )
+                )
 
         compute_trace = CompTrace(trace=compute_trace)
         comp_json_file = os.path.join(file_path, "comp_trace.json")

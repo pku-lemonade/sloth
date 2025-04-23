@@ -59,6 +59,8 @@ class TaskType(IntEnum):
     TRANS = 11
 
 compute_task = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
+communication_task = [TaskType.SEND, TaskType.RECV]
+io_task = [TaskType.READ, TaskType.WRITE]
 
 class OperationType(IntEnum):
     CONV = 0
@@ -139,7 +141,7 @@ class IOTask(Task):
         ins.record.ready_run_time.append(core.env.now)
         ins.record.pe_id = core.id
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        yield core.lsu.execute(self.opcode+str(self.index),ceil(self.size(), core.lsu_bandwidth), ins, self.index)
+        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins, self.index)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
 
 class ComputeTask(Task):

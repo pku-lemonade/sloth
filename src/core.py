@@ -472,6 +472,9 @@ class TableScheduler:
                         case DataType.FEAT:
                             pur_sche.tasks[tri_task_id].feat.append(Data())
                     
+                    # 维护跨核心更新的record
+                    pur_sche.program[tri_task_id].record.mulins.append(self.env.now)
+                    
                     # 不在当前block没有影响
                     if tri_task_id // pur_sche.block_size != pur_sche.block_ptr:
                         continue
@@ -750,9 +753,12 @@ class Core:
         # 接收到的数据在block内才进行更新，否则放回data_in
         if task_id in range(self.scheduler.start, self.scheduler.end):
             slice = Slice(tensor_slice=msg.data.tensor_slice)
+
+            self.program[task_id].record.exe_start_time.append(self.env.now)
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
-            self.program[task_id].record.exe_start_time.append(self.env.now)
+            # RECV完成
+            self.program[task_id].record.exe_end_time.append(self.env.now)
             self.scheduler.data_update(msg.data)
         else:
             logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
@@ -773,7 +779,6 @@ class Core:
                 if top.data.index in range(self.scheduler.start, self.scheduler.end):      
                     msg = heapq.heappop(self.recv_queue)
 
-                    self.program[msg.data.index].record.exe_start_time.append(self.env.now)
                     # task_id转换回index
                     msg.data.index = self.scheduler.taskid2index[msg.data.index]
                     logger.debug(f"PE{self.id} pop data{msg.data.index} from recv_queue")
@@ -797,6 +802,9 @@ class Core:
             task_ready = self.scheduler.schedule()
             if task_ready:
                 for task in task_ready:
+
+                    # if task.index == 3969:
+                    #     print(f"task3969 is triggered")
 
                     instruction = self.program[self.scheduler.index2taskid[task.index]]
                     task_event = self.env.process(task.run(self, instruction))
@@ -826,9 +834,15 @@ class Core:
                 if msg_arrive.triggered:
                     msg = msg_arrive.value
 
+                    # if msg.data.index == 3969:
+                    #     print(f"task3969 is triggered")
+
                     # 记录数据到达的时间（可能未及时接收）
                     task_id = self.scheduler.index2taskid[msg.data.index]
+
+                    # RECV 或者包装后的 READ
                     self.program[task_id].record.ready_run_time.append(self.env.now)
+                    self.program[task_id].record.pe_id = self.id
 
                     # 暂时没用到
                     if self.stage == "post_analysis":
@@ -865,7 +879,7 @@ class Core:
                 for event in self.running_event:
                     if event.triggered:
                         # updated = True
-                        task=self.event2task[event]
+                        task = self.event2task[event]
 
                         # print(f"PE{self.id} free: {task.input_size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
 
