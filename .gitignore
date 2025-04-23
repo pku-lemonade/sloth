@@ -21,3 +21,4 @@ gen/*.json
 build/*.json
 
 logging/*.log
+data/**/*.json
