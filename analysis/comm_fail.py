@@ -5,7 +5,7 @@ import math
 import numpy as np
 from typing import List
 from trace_format import CommTrace, CommInst
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 from comp_fail import get_id
 from src.sim_type import TaskType
 
@@ -55,12 +55,25 @@ def calc_window(windows):
             stats.append((start_time, avg, std))
     return stats
 
+def interval_merge(failslow):
+    interval_begin = 0
+    merged_failslow = []
+
+    for id in range(1, len(failslow)):
+        if failslow[id-1][1]+1 < failslow[id][0]:
+            merged_failslow.append((failslow[interval_begin][0], failslow[id-1][1]))
+            interval_begin = id
+    merged_failslow.append((failslow[interval_begin][0], failslow[-1][1]))
+    
+    return merged_failslow
+
 class DepEdge:
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
         # (start_time, exe_time)
         self.events = []
+        self.failslow = []
 
     # exe_time是归一化时间
     def insert(self, start_time: int, exe_time: float):
@@ -134,19 +147,142 @@ class DepEdge:
             return []
 
         # 重叠区间合并
-        interval_begin = 0
-        merged_failslow = []
-        for id in range(1, len(failslow)):
-            if failslow[id-1][1]+1 < failslow[id][0]:
-                merged_failslow.append((failslow[interval_begin][0], failslow[id-1][1]))
-                interval_begin = id
-        merged_failslow.append((failslow[interval_begin][0], failslow[-1][1]))
-
+        merged_failslow = interval_merge(failslow)
         return merged_failslow
+    
+class LinkFailslow(BaseModel):
+    src_layer: int
+    src_node: int
+    dst_layer: int
+    dst_node: int
 
+# 物理链路回溯，建反向边
+class Mesh:
+    def __init__(self, group_num: int, x: int, y: int):
+        self.group_num = group_num
+        self.x = x
+        self.y = y
+        self.num = self.x * self.y
+
+        # print(f"{self.group_num}-{self.x}-{self.y}")
+        
+        # [(node_id, [failslow list])]
+        self.edges = [[] for _ in range(group_num*x*y)]
+        # {node_id, edge_index}
+        self.mp = [{} for _ in range(group_num*x*y)]
+        # {next_node_id, count}
+        self.count = [{} for _ in range(group_num*x*y)]
+
+    def mapping(self, src, dst):
+        if src[1] == -1 or dst[1] == -1:
+            return
+        
+        # print(f"{src} and {dst}")
+        src_x = src[1] // self.y
+        src_y = src[1] % self.y
+        dst_x = dst[1] // self.y
+        dst_y = dst[1] % self.y
+
+        while src_x != dst_x or src_y != dst_y:
+            # X first
+            if src_x != dst_x:
+                if dst_x > src_x:
+                    src_x += 1
+                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                    nextNode = src[0]*self.x*self.y+(src_x-1)*self.y+src_y
+                    if nextNode not in self.mp[curNode]:
+                        # print(f"{curNode} --> {nextNode}")
+                        self.edges[curNode].append((nextNode, []))
+                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    continue
+                else:
+                    src_x -= 1
+                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                    nextNode = src[0]*self.x*self.y+(src_x+1)*self.y+src_y
+                    if nextNode not in self.mp[curNode]:
+                        # print(f"{curNode} --> {nextNode}")
+                        self.edges[curNode].append((nextNode, []))
+                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    continue
+        
+            # then Y
+            if src_y != dst_y:
+                if dst_y > src_y:
+                    src_y += 1
+                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                    nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y-1)
+                    if nextNode not in self.mp[curNode]:
+                        # print(f"{curNode} --> {nextNode}")
+                        self.edges[curNode].append((nextNode, []))
+                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    continue
+                else:
+                    src_y -= 1
+                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                    nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y+1)
+                    if nextNode not in self.mp[curNode]:
+                        # print(f"{curNode} --> {nextNode}")
+                        self.edges[curNode].append((nextNode, []))
+                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    continue
+
+        # print("-"*40)
+
+    def backtracking(self, curNode, failslow, step, limit):
+        if step == limit:
+            return
+        
+        for id, nextNode in enumerate(self.edges[curNode]):
+            nextNode[1].extend(failslow)
+            if nextNode[0] not in self.count[curNode]:
+                self.count[curNode][nextNode[0]] = 1
+            else:
+                self.count[curNode][nextNode[0]] += 1
+            self.backtracking(curNode=nextNode[0], failslow=failslow, step=step+1, limit=limit)
+
+    def summary(self):
+        merged_count = {}
+        failslow_interval = {}
+        for id, count in enumerate(self.count):
+            for nextNode, cnt in count.items():
+                src = id % self.num
+                dst = nextNode % self.num
+                if src > dst: 
+                    src, dst = dst, src
+                if (src, dst) not in merged_count:
+                    merged_count[(src, dst)] = cnt
+                    failslow_interval[(src, dst)] = self.edges[id][self.mp[id][nextNode]][1]
+                else:
+                    merged_count[(src, dst)] += cnt
+                    failslow_interval[(src, dst)].extend(self.edges[id][self.mp[id][nextNode]][1])
+
+        max_count = 0
+        max_count_links = []
+        for link, count in merged_count.items():
+            src = link[0]
+            dst = link[1]
+            if cnt > max_count:
+                max_count = cnt
+                max_count_links = [(src, dst, failslow_interval[(src, dst)])]
+            else:
+                max_count_links.append((src, dst, failslow_interval[(src, dst)]))
+
+        print(f"{max_count} {len(max_count_links)}")
+
+        for src, dst, failslow in max_count_links:
+            failslow.sort()
+            # print(len(failslow))
+            failslow = interval_merge(failslow)
+            if len(failslow) <= 1:
+                continue
+            print(f"Link pe({src}) - pe({dst}) failslow at time {failslow}.")
+
+# 多层级通信图
 class CommGraph:
-    def __init__(self, trace):
+    def __init__(self, trace, mesh):
         self.node_num = 0
+        self.mesh = mesh
+        self.failslow_edge = []
         # (group_id, pe_id) -> Node
         self.nodes = {}
         # (group_id, pe_id) -> node_id
@@ -256,8 +392,14 @@ class CommGraph:
             window_size = len(edge.events) // 10
             step = max(window_size // 2, 1)
             failslow = edge.failslow_detect(window_size, step, threshold)
+
+            # 建立回溯反向边
+            # print(f"{edge.src.id} -> {edge.dst.id}")
+            self.mesh.mapping(self.node_info[edge.src.id], self.node_info[edge.dst.id])
             if failslow:
-                print(f"Path pe({self.node_info[edge.src.id][1]}) -> pe({self.node_info[edge.dst.id][1]}) failslow at time {failslow}.")
+                edge.failslow.extend(failslow)
+                self.failslow_edge.append(edge)
+                print(f"Layer {self.node_info[edge.src.id][0]}:: Path pe({self.node_info[edge.src.id][1]}) -> pe({self.node_info[edge.dst.id][1]}) failslow at time {failslow}.")
             
             next_node = edge.dst
             self.DFS(next_node, threshold)
@@ -304,8 +446,9 @@ if __name__ == '__main__':
 
     cur_layer_id = id
     layer_group_divide.append(group_layers)
+    mesh = Mesh(group_num=len(layer_group_divide)+1, x=arch_configs.core.x, y=arch_configs.core.y)
 
-    comm_graph = CommGraph(comm_trace.trace)
+    comm_graph = CommGraph(comm_trace.trace, mesh)
     print(f"Finish building comm_graph, there are {len(comm_graph.nodes)} nodes and {len(comm_graph.edges)} edges in the graph.")
     
     # for lygp, pe_id in comm_graph.nodes.keys():
@@ -315,5 +458,12 @@ if __name__ == '__main__':
     #     print(edge.events)
     #     break
 
+    # 失速路径分析
     comm_graph.LinkAnalyze(threshold=5)
-    
+
+    # 物理链路回溯
+    for failslow_edge in comm_graph.failslow_edge:
+        dst_id = comm_graph.node_info[failslow_edge.dst.id][0]*core_num + comm_graph.node_info[failslow_edge.dst.id][1]
+        mesh.backtracking(curNode=dst_id, failslow=failslow_edge.failslow, step=0, limit=2)
+
+    mesh.summary()
