@@ -4,6 +4,7 @@ import json
 import math
 import numpy as np
 from typing import List
+from scipy.stats import norm
 from trace_format import CommTrace, CommInst
 from pydantic import ValidationError, BaseModel
 from comp_fail import get_id
@@ -156,6 +157,29 @@ class LinkFailslow(BaseModel):
     dst_layer: int
     dst_node: int
 
+class FailSlowDetector:
+    def __init__(self, threshold=0.01):
+        self.mean = None
+        self.std = None
+        self.threshold = threshold
+        self.fitted = False
+
+    def fit(self, performance_data):
+        self.mean = np.mean(performance_data)
+        self.std = np.std(performance_data)
+        self.fitted = True
+
+    def failslow_probability(self, x):
+        if not self.fitted:
+            raise ValueError("Model not fitted. Call `fit` with training data first.")
+        
+        z = abs(x - self.mean) / self.std
+        p = 2 * norm.sf(z)
+        return p
+
+    def is_failslow(self, x):
+        return self.failslow_probability(x) < self.threshold
+
 # 物理链路回溯，建反向边
 class Mesh:
     def __init__(self, group_num: int, x: int, y: int):
@@ -172,6 +196,14 @@ class Mesh:
         self.mp = [{} for _ in range(group_num*x*y)]
         # {next_node_id, count}
         self.count = [{} for _ in range(group_num*x*y)]
+        self.path_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
+
+        # 目前还未引入时序信息
+        # 基于概率分布的失速检测
+        self.detector = FailSlowDetector(threshold=0.1)
+        self.failslow_prob = np.zeros(self.group_num*self.num)
+        # 概率转移矩阵
+        self.transition_matrix = np.zeros((self.group_num*self.num, self.group_num*self.num))
 
     # 传入的节点信息为 (group_id, pe_id)
     # 传入的边为正向边
@@ -199,6 +231,8 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    self.path_count[curNode][nextNode] += 1
+                    self.path_count[nextNode][curNode] += 1
             else:
                 src_x -= 1
                 curNode = src[0]*self.x*self.y+src_x*self.y+src_y
@@ -207,6 +241,8 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    self.path_count[curNode][nextNode] += 1
+                    self.path_count[nextNode][curNode] += 1
         
         # then Y
         while src_y != dst_y:
@@ -218,6 +254,8 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    self.path_count[curNode][nextNode] += 1
+                    self.path_count[nextNode][curNode] += 1
             else:
                 src_y -= 1
                 curNode = src[0]*self.x*self.y+src_x*self.y+src_y
@@ -226,8 +264,24 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+                    self.path_count[curNode][nextNode] += 1
+                    self.path_count[nextNode][curNode] += 1
 
         # print("-"*40)
+
+    def prob_init(self):
+        # 初始化概率转移矩阵
+        for i in range(self.group_num*self.num):
+            path_num = self.path_count[i].sum()
+            if path_num == 0:
+                continue
+
+            for j in range(self.group_num*self.num):
+                self.transition_matrix[i][j] = self.path_count[i][j] / path_num
+
+        # 初始化结点故障概率
+        for i in range(self.group_num*self.num):
+            self.failslow_prob[i] = self.detector.failslow_probability()
 
     def backtracking(self, father, curNode, failslow, step, limit):
         print(f"searching: {curNode//self.num} {curNode%self.num}")
@@ -239,6 +293,10 @@ class Mesh:
                 continue
             # 失速区间传递
             nextNode[1].extend(failslow)
+            
+            # 失速概率更新
+            # self.failslow_prob[nextNode[0]] = ...
+
             # 记录链路被重复使用的次数
             if nextNode[0] not in self.count[curNode]:
                 self.count[curNode][nextNode[0]] = 1
