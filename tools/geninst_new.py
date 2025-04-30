@@ -21,7 +21,7 @@ def config_analyzer(filename: str) -> ArchConfig:
         except ValidationError as e:
             print(e.json())
 
-arch_configs = config_analyzer("arch/gemini4_4.json")
+arch_configs = config_analyzer("arch/gemini8_8.json")
 arch_configs.core.spm.size /= 4
 
 class Core(BaseModel):

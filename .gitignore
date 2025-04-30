@@ -22,3 +22,4 @@ build/*.json
 
 logging/*.log
 data/**/*.json
+data/**/*.txt

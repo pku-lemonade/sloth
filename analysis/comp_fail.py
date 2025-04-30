@@ -71,7 +71,7 @@ def get_id(x: int, y: int):
     return x * arch_configs.core.y + y
 
 if __name__ == '__main__':
-    net = json_analyzer("tools/mapping.json")
+    net = json_analyzer("tests/darknet19/mapping.json")
     
     comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
 

@@ -122,8 +122,8 @@ class Arch:
 
         self.cores = self.build_cores(arch.core, program)
 
-        self.layer_start = [-1 for _ in range(25)]
-        self.layer_end = [-1 for _ in range(25)]
+        self.layer_start = [-1 for _ in range(101)]
+        self.layer_end = [-1 for _ in range(101)]
 
         self.net_name = net_name
         self.end_time = 0
@@ -233,40 +233,47 @@ class Arch:
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task,ts, lenthqueue, ation, ph = line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue}}}}}")
+            f.write("]\n")
 
     # 这个由学长来编号,对于每个编号(id)怎么处理的逻辑我已经写好了:
     def processesmonitorlink(self,data,file,id,source):
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task,ts, lenthqueue, ation, ph,dest = line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue},\"dest\":{dest}}}}}")
+            f.write("]\n")
 
     def processesspm(self,data,file,id,source):
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task, capacity, action, size ,ts , ph= line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\":\"{task}\" ,\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"act\":\"{action}\",\"capacity\":{capacity},\"size\":{size}}}}}")
+            f.write("]\n")
 
     def processesflow(self,data,file,id,source):
          if len(data)==0:
             return
          with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 index, _, action, ts= line
                 task=action+str(index)
@@ -282,7 +289,7 @@ class Arch:
                 else:
                     f.write(",\n")
                     f.write(f"{{\"name\":\"connect\",\"ph\":\"f\",\"bp\":\"e\",\"id\":{index},\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\"}}")
-
+            f.write("]\n")
 
                 
                             
@@ -453,7 +460,7 @@ class Arch:
 
         print("Simulation finished.")
         # 将值传入json文件
-        # self.make_print()
+        self.make_print()
         if self.stage == "post_analysis":
             self.process()
 

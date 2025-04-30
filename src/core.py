@@ -47,7 +47,8 @@ class SPMManager:
             logger.debug(f"Time {self.env.now:.2f}: PE{self.id} after-allocate: {size}, [{self.container.level}/{self.container.capacity}]")
         #TODO:add instruction type and id and check if need record
         self.max_buf = max(self.max_buf, self.container.capacity-self.container.level)
-        self.data.append((string, self.container.level, "alloc", size, self.env.now, "B"))
+        if "recv" not in string:
+            self.data.append((string, self.container.level, "alloc", size, self.env.now, "B"))
 
     def free(self, string, size):
         if size > 0:

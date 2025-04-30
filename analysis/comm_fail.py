@@ -267,7 +267,7 @@ class Mesh:
             else:
                 max_count_links.append((src, dst, failslow_interval[(src, dst)]))
 
-        print(f"{max_count} {len(max_count_links)}")
+        # print(f"{max_count} {len(max_count_links)}")
 
         for src, dst, failslow in max_count_links:
             failslow.sort()
