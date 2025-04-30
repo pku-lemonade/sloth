@@ -1,14 +1,21 @@
 import simpy
 import os
+import sys
 import logging
 from functools import partial, wraps
 from src.core import Core
 from src.noc_new import NoC, Link, Direction
 from src.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
-from src.sim_type import Instruction, FailSlow, RouterFail, LinkFail, LsuFail, TpuFail, Direction
-from src.common import cfg
+from src.sim_type import *
+from src.common import cfg,Timer, init_graph, ind2ins
+from src.draw import draw_grid
+from analysis.trace_format import *
 from typing import List
 logger = logging.getLogger("Arch")
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 def trace(env, callback):
     """Replace the ``step()`` method of *env* with a tracing function
@@ -102,16 +109,25 @@ monitor1 = partial(monitor1, data)
 monitor2 = partial(monitor2, data)
 
 class Arch:
-    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow):
+    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, stage=None):
         print("Constructing hardware architecture.")
         self.env = simpy.Environment()
-        
+        self.stage = stage
         
         self.noc = self.build_noc(arch.noc)
         #print(len(self.noc.r2r_links))
+        if stage == "pre_analysis":
+            init_graph(program)
+        self.program = program
+
         self.cores = self.build_cores(arch.core, program)
 
+        self.layer_start = [-1 for _ in range(101)]
+        self.layer_end = [-1 for _ in range(101)]
+
+        self.net_name = net_name
         self.end_time = 0
+        self.fail_kind = fail_kind
         
         trace(self.env, monitor)
         patch_resource(self.cores[9].data_in.store, pre=monitor1, post=monitor2)
@@ -188,13 +204,18 @@ class Arch:
     def build_cores(self, config: CoreConfig, program: List[List[Instruction]]) -> List[Core]:
         cores = []
         for id in range(config.x * config.y):
-            core = Core(self.env, config, program[id], id)
-
             link1 = Link(self.env, LinkConfig(width=128, delay=1))
             link2 = Link(self.env, LinkConfig(width=128, delay=1))
+            core = Core(self.env, config, program[id], id, self, link1, link2, self.stage)
+
             self.noc.routers[id].bound_with_core(link1, link2)
-            core.bound_with_router(link2, link1)
             cores.append(core)
+            # TODO:timer should be in second stage
+        if self.stage == "post_analysis":
+            self.timer = Timer(self.env, 20000, cores)
+
+        for id in range(config.x * config.y):
+            cores[id].scheduler.bound_cores(cores)
 
         return cores
 
@@ -203,49 +224,56 @@ class Arch:
         return NoC(self.env, config).build_connection()
 
 
-    #输出可视化文件
+    # 输出可视化文件
     def make_print_lsu():
-        #对于每个lsu
-        count=0
-        #req->count+=1 release->count-=1
+        # 对于每个lsu
+        count = 0
+        # req->count+=1 release->count-=1
     def processesmonitor(self,data,file,id,source):
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task,ts, lenthqueue, ation, ph = line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue}}}}}")
+            f.write("]\n")
 
-    #这个由学长来编号,对于每个编号(id)怎么处理的逻辑我已经写好了:
+    # 这个由学长来编号,对于每个编号(id)怎么处理的逻辑我已经写好了:
     def processesmonitorlink(self,data,file,id,source):
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task,ts, lenthqueue, ation, ph,dest = line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\": \"{task}\",\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"lenthqueue\":{lenthqueue},\"dest\":{dest}}}}}")
+            f.write("]\n")
 
     def processesspm(self,data,file,id,source):
         if len(data)==0:
             return
         with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 task, capacity, action, size ,ts , ph= line
                 # 如果不是第一行，则在行前添加逗号和换行符
                 if idx != 0:
                     f.write(",\n")
                 f.write(f"{{\"name\":\"{task}\" ,\"ph\":\"{ph}\",\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\",\"args\":{{\"act\":\"{action}\",\"capacity\":{capacity},\"size\":{size}}}}}")
+            f.write("]\n")
 
     def processesflow(self,data,file,id,source):
          if len(data)==0:
             return
          with open(file,"w") as f: 
+            f.write("[\n")
             for idx, line in enumerate(data):
                 index, _, action, ts= line
                 task=action+str(index)
@@ -261,7 +289,7 @@ class Arch:
                 else:
                     f.write(",\n")
                     f.write(f"{{\"name\":\"connect\",\"ph\":\"f\",\"bp\":\"e\",\"id\":{index},\"ts\":{ts},\"pid\":{id},\"tid\":\"{source}\"}}")
-
+            f.write("]\n")
 
                 
                             
@@ -287,6 +315,139 @@ class Arch:
             for i in range(len(self.cores)):
                 self.processesflow(self.cores[i].flow_out,"gen/flow_out"+str(i)+".json",i,"flow_out")
 
+    def draw(self):
+        L, H = 4, 4
+        data = [
+            [3, 1, 1, 2],
+            [3, 3, 2, 3],
+            [1, 1, 3, 3],
+            [3, 3, 3, 1]
+        ]
+        links = []
+        for i in self.noc.r2r_links:
+            if i.tag == 1:
+                links.append((i.corefrom, i.coreto, i.hop))
+            else:
+                print(i.tag)
+        draw_grid(L, H, data, links)
+
+    # 输出采集的数据（two stages）
+    def process(self):
+        for pos, pe in enumerate(self.program):
+            for id, inst in enumerate(pe):
+                print(pos, inst.index, inst.inst_type, inst.hot)
+
+    def output_data(self, net: str, fail: str):
+        print("Writing performance data...")
+
+        fail = fail.split("/")
+        fail = fail[-1].split(".")[0]
+
+        file_path = os.path.join("data/", net)
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+
+        file_path = os.path.join(file_path, fail)
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+
+        inst_file = os.path.join(file_path, "inst_info.txt")
+        compute_trace = []
+        
+        # inst_index -> record 
+        comm_record = {}
+        comm_trace = []
+
+        recv_insts = []
+
+        with open(inst_file, "w") as file:
+            # 指令时间数据
+            for id, insts in enumerate(self.program):
+                # 每个PE的指令
+                for inst in insts:
+                    # 没有被执行的指令
+                    if inst.record.exe_start_time == []:
+                        print(f"Instruction{inst.index} not executed.", file=file)
+                    
+                    if inst.inst_type in compute_task:
+                        assert len(inst.record.ready_run_time) > 0
+                        assert len(inst.record.exe_end_time) == 1
+                        assert len(inst.record.exe_start_time) == 1
+                        print(f"Instruction{inst.index}: type {inst.inst_type}, layer_id {inst.layer_id}, pe_id {inst.record.pe_id}", file=file)
+                        print(f"    ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}, end_time {inst.record.exe_start_time[0]}", file=file)
+                        print(f"    operands_time: {inst.record.mulins}", file=file)
+                        
+                        compute_trace.append(
+                            InstTrace(
+                                instruction_id = inst.index,
+                                instruction_type = inst.inst_type,
+                                layer_id = inst.layer_id,
+                                pe_id = inst.record.pe_id,
+                                start_time = inst.record.exe_start_time[0],
+                                end_time = inst.record.exe_end_time[0]
+                            )
+                        )
+                    elif inst.inst_type in io_task:
+                        if len(inst.record.exe_start_time) == 0:
+                            print(f"exe_start error:: {inst.index} on PE{id}")
+
+                        comm_trace.append(
+                            CommInst(
+                                instruction_id = inst.index,
+                                instruction_type = inst.inst_type,
+                                # 当前层的id
+                                layer_id = inst.layer_id,
+                                pe_id = inst.record.pe_id,
+                                start_time = inst.record.exe_start_time[0],
+                                end_time = inst.record.exe_end_time[0],
+                                data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                            )
+                        )
+                    else:
+                        # 按pe遍历指令，可能存在某条RECV在SEND之前被访问到，所以先只处理SEND
+                        if inst.inst_type == TaskType.SEND:
+                            comm_record[inst.index] = inst.record
+                        else:
+                            recv_insts.append(inst)
+            
+            # comm_record是send指令信息
+            for recv_inst in recv_insts:
+                comm_trace.append(
+                    CommInst(
+                        instruction_id = recv_inst.index,
+                        instruction_type = recv_inst.inst_type,
+                        # 当前层的id
+                        layer_id = recv_inst.layer_id,
+                        pe_id = recv_inst.record.pe_id,
+                        # send完成时间为数据包在noc中开始传输的时间
+                        start_time = comm_record[recv_inst.index].exe_end_time[0],
+                        # recv就绪时间为数据包完成noc传输的时间
+                        end_time = recv_inst.record.ready_run_time[0],
+                        data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                        src_id = comm_record[recv_inst.index].pe_id,
+                        dst_id = recv_inst.record.pe_id
+                    )
+                )
+
+        compute_trace = CompTrace(trace=compute_trace)
+        comp_json_file = os.path.join(file_path, "comp_trace.json")
+        with open(comp_json_file, "w") as file:
+            comp_json = compute_trace.model_dump_json(indent=4)
+            print(comp_json, file=file)
+
+        comm_trace = CommTrace(trace=comm_trace)
+        comp_json_file = os.path.join(file_path, "comm_trace.json")
+        with open(comp_json_file, "w") as file:
+            comp_json = comm_trace.model_dump_json(indent=4)
+            print(comp_json, file=file)
+
+        layer_file = os.path.join(file_path, "layer_info.txt") 
+        with open(layer_file, "w") as file:
+            for id, time in enumerate(self.layer_start):
+                print(f"Layer{id} start at {time}.", file=file)
+                print(f"Layer{id} end at {self.layer_end[id]}.", file=file)
+
+        print("Finished.")
 
     def run(self):
         print("Start simulation.")
@@ -301,6 +462,13 @@ class Arch:
             print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
 
         print("Simulation finished.")
-        #将值传入json文件
-        # self.make_print()
+        # 将值传入json文件
+        self.make_print()
+        if self.stage == "post_analysis":
+            self.process()
+
+        self.output_data(self.net_name, self.fail_kind)
+
+        # self.draw()
+
         return self.env

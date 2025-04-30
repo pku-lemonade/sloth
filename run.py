@@ -44,37 +44,43 @@ def setup_logging(filename, level):
         filemode = 'w'
     )
 
-print("Reading architecture config.")
-arch_config = config_analyzer(args.arch)
-print("Finished.")
-
-print("Loading fail-slow setting.")
-fail_slow = fail_analyzer(args.fail)
-print(f"Finished loading fail-slow setting.")
-
-print("Loading simulation workload.")
-workload = workload_analyzer(args.workload)
-print(f"Finished loading {workload.name} as simulation workload.")
-
-print("Setting up logging.")
-
-if args.level == "debug":
-    level = logging.DEBUG
-elif args.level == "info":
-    level = logging.INFO
-setup_logging(args.log, level)
-
-print("Finished.")
-
 def main():
-    
+    print("Reading architecture config.")
+    arch_config = config_analyzer(args.arch)
+    print("Finished.")
 
-    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow)
+    print("Loading fail-slow setting.")
+    fail_slow = fail_analyzer(args.fail)
+    print(f"Finished loading fail-slow setting.")
+
+    print("Loading simulation workload.")
+    workload = workload_analyzer(args.workload)
+    print(f"Finished loading {workload.name} as simulation workload.")
+
+    print("Setting up logging.")
+
+    if args.level == "debug":
+        level = logging.DEBUG
+    elif args.level == "info":
+        level = logging.INFO
+    setup_logging(args.log, level)
+
+    print("Finished.")
+
+    stage = None
+    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow, workload.name, args.fail, stage)
 
     start_time = time.time()
     result = arch.run()
     end_time = time.time()
     simulation_time = end_time - start_time
+
+    if stage == "pre_analysis":
+        stage = "post_analysis"
+        arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow, stage)
+        result = arch.run()
+        end_time = time.time()
+        simulation_time = end_time - start_time
 
     # arch.debug()
 

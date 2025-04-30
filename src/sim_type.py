@@ -58,6 +58,10 @@ class TaskType(IntEnum):
     PTP = 10
     TRANS = 11
 
+compute_task = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
+communication_task = [TaskType.SEND, TaskType.RECV]
+io_task = [TaskType.READ, TaskType.WRITE]
+
 class OperationType(IntEnum):
     CONV = 0
     POOL = 1
@@ -96,18 +100,15 @@ class Slice(BaseModel):
         return Slice(tensor_slice=res)
     
 class Data(BaseModel):
-    index: int
-    tensor_slice: List[DimSlice]
+    index: int = -1
+    tensor_slice: List[DimSlice] = []
 
     def __lt__(self, other: "Data") -> bool:
         return self.index < other.index
 
-class Message(BaseModel):
-    data: Data
-    dst: int
-
 class Task(BaseModel):
-    string: str
+    layer_id: int = -1
+    opcode: str
     index: int
     tensor_slice: List[DimSlice]
     flops: int = 0
@@ -116,16 +117,32 @@ class Task(BaseModel):
     para_num: int = 0
     feat: List[Data] = []
     para: List[Data] = []
+    inst: "Instruction" = None
     def size(self) -> int:
         cur_slice = Slice(tensor_slice=self.tensor_slice)
         return cur_slice.size()
 
 class Nop(Task):
-    def run(self, core):
+    def run(self, core, ins):
+        ins.record.exe_start_time.append(core.env.now)
         yield core.env.timeout(0, self.index)
+        ins.record.exe_end_time.append(core.env.now)
 
 class IOTask(Task):
     num_operands: int = 0
+
+    def input_size(self):
+        raise NotImplementedError(f"{self.opcode} 类未实现 input_size 方法")
+
+    def output_size(self):
+        raise NotImplementedError(f"{self.opcode} 类未实现 output_size 方法")
+
+    def run(self, core, ins):
+        ins.record.ready_run_time.append(core.env.now)
+        ins.record.pe_id = core.id
+        yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins, self.index)
+        core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
 
 class ComputeTask(Task):
     layer_id: int
@@ -144,6 +161,26 @@ class ComputeTask(Task):
 
     def output_size(self):
         return self.size()
+    
+    def calc_flops(self):
+        raise NotImplementedError(f"{self.opcode} 类未实现 calc_flops 方法")
+    
+    def run(self, core, ins):
+        self.calc_flops()
+        ins.record.ready_run_time.append(core.env.now)
+        ins.record.pe_id = core.id
+        yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, self.index)
+        core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
+    
+class Record(BaseModel):
+    exe_start_time: List[int] = []
+    exe_end_time: List[int] = []
+    ready_run_time: List[int] = []
+    # 记录多个指令的唤醒
+    mulins: List[int] = []
+    # 记录指令执行的PE
+    pe_id: int = -1
 
 class CommunicationTask(Task):
     dst: int
@@ -154,6 +191,8 @@ class Instruction(BaseModel):
     inst_type: TaskType
     index: int
     trigger_index: List[int] = []
+    # 只有WRITE指令会用到
+    trigger_core_id: List[int] = []
     layer_id: int
     group_num: int = 1
     data_type: DataType
@@ -161,6 +200,47 @@ class Instruction(BaseModel):
     tensor_slice: List[DimSlice]
     feat_num: int = 0
     para_num: int = 0
+
+    # 在想应该累计每个block对后面造成的影响，这样的热点或许更有效
+    start_time: int = -1
+    record: Record = Record()
+    # 目前我没想细化这些，ready到finish都是running
+    # 通过last_trigger_tree反向搜索，找到第一个running的指令,并将它作为性能的瓶颈
+    # ready: bool = False
+    running: bool = False
+    # 在pre_analysis中将真的只有1个来wait的置为1
+    waitinglast: bool = False
+    # finish: bool = False
+    hot: int = 0
+    next: List["Instruction"] = []
+    # 以及每个指令造成的影响是一样的吗？
+    # tensor_slice is unused in hash
+    def trig(self):
+        self.ready = True
+
+    def run(self):
+        self.running = True
+
+    def addhot(self, hot):
+        self.hot += hot
+
+    def __eq__(self, other):
+        if not isinstance(other, Instruction):
+            return NotImplemented
+        return (self.inst_type, self.index, self.layer_id, self.data_type, self.position) == \
+               (other.inst_type, other.index, other.layer_id, other.data_type, other.position)
+
+    def __hash__(self):
+        return hash((self.inst_type, self.index, self.layer_id, self.data_type, self.position))
+    
+class Message(BaseModel):
+    ins: Instruction
+    src: int
+    data: Data
+    dst: int
+
+    def __lt__(self, other: "Message") -> bool:
+        return self.data < other.data
 
 class Operation(BaseModel):
     operation: str
@@ -175,13 +255,7 @@ class Workload(BaseModel):
     pes: List[PEworkload] = []
 
 class Read(IOTask):
-    string: str = "Read"
-    def run(self, core):
-        # if(self.index==101):
-        #     print(f"Read101:{self.size}")
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.lsu.execute("Read"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
+    opcode: str = "Read"
 
     def input_size(self):
         return 0
@@ -190,78 +264,41 @@ class Read(IOTask):
         return self.size()
 
 class Write(IOTask):
-    string: str = "Write"
+    opcode: str = "Write"
     feat_num: int = 1
 
-    def run(self, core):
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.lsu.execute("Write"+str(self.index),ceil(self.size(), core.lsu_bandwidth), self.index)
-
     def input_size(self):
-        # return self.size()
         return 0
 
     def output_size(self):
         return 0
 
 class Conv(ComputeTask):
-    string: str = "Conv"
+    opcode: str = "Conv"
     def calc_flops(self):
-        # for CNN
         wgt_slice = Slice(tensor_slice=self.para[0].tensor_slice)
         wgt_H = wgt_slice.tensor_slice[2].end - wgt_slice.tensor_slice[2].start
         wgt_W = wgt_slice.tensor_slice[3].end - wgt_slice.tensor_slice[3].start
 
         self.flops = self.size() * wgt_H * wgt_W
 
-    def run(self, core):
-        self.calc_flops()
-        # self.flops = 0
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.tpu.execute("Conv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
-
 class Pool(ComputeTask):
-    string: str = "Pool"
-
+    opcode: str = "Pool"
     def calc_flops(self):
         self.flops = self.size() * 4
-
-    def run(self, core):
-        self.calc_flops()
-        # self.flops = 0
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.tpu.execute("Pool"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
     
 class Elem(ComputeTask):
-    string: str = "Elem"
-
+    opcode: str = "Elem"
     def calc_flops(self):
         self.flops = self.size()
 
-    def run(self, core):
-        self.calc_flops()
-        # self.flops = 0
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.tpu.execute("Elem"+str(self.index),ceil(self.flops, core.tpu_flops), self.index)
-
 class FC(ComputeTask):
-    string: str = "FC"
+    opcode: str = "FC"
     def calc_flops(self):
         self.flops = self.input_size() * self.size()
 
-    def run(self, core):
-        self.calc_flops()
-        # self.flops = 0
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.tpu.execute("FC"+str(self.index),ceil(self.flops, core.tpu_flops),self.index)
-
 class GConv(ComputeTask):
-    string: str = "GConv"
+    opcode: str = "GConv"
     group_num: int
     def calc_flops(self):
         wgt_slice = Slice(tensor_slice=self.para[0].tensor_slice)
@@ -270,34 +307,19 @@ class GConv(ComputeTask):
 
         self.flops = self.size() * wgt_H * wgt_W
         self.flops //= self.group_num
-        
-    def run(self, core):
-        self.calc_flops()
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        yield core.tpu.execute("GConv"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
 
 class PTP(ComputeTask):
-    string: str = "PTP"
+    opcode: str = "PTP"
     def calc_flops(self):
         self.flops = self.size() * 7
 
-    def run(self, core):
-        self.calc_flops()
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        yield core.tpu.execute("PTP"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
-
 class Trans(ComputeTask):
-    string: str = "Trans"
+    opcode: str = "Trans"
     def calc_flops(self):
         self.flops = 0
 
-    def run(self, core):
-        self.calc_flops()
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        yield core.tpu.execute("Trans"+str(self.index), ceil(self.flops, core.tpu_flops), self.index)
-
 class Stay(Task):
-    string: str = "Stay"
+    opcode: str = "Stay"
     flops: int = -1
     def run(self, core):
         yield core.env.timeout(0)
@@ -308,32 +330,33 @@ class Stay(Task):
     def output_size(self):
         return 0
 
+# 这里不用ins.record吗
 class Send(CommunicationTask):
-    string: str = "Send"
+    opcode: str = "Send"
     src: int = -1
     feat_num: int = 1
-    def run(self, core):
-        # print(f"data{self.index} was put into router{core.router.id}")
-        # yield core.env.process(core.link.transmit(self.size))
-        # core.router.route_queue_len += 1
-        # yield core.router.route_queue.put(Message(data=Data(index=self.index, size=self.size), dst=self.dst))
-        yield core.env.process(core.spm_manager.allocate(self.string+str(self.index), self.output_size()))
-        # core.spm_manager.allocate(self.string+str(self.index), self.output_size())
-        yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst))
+    def run(self, core, ins):
+        # 分析时send/recv合并处理，因为index一致
+        ins.record.pe_id = core.id
+        ins.record.ready_run_time.append(core.env.now)
+        # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        ins.record.exe_start_time.append(core.env.now)
+        yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
+        ins.record.exe_end_time.append(core.env.now)
 
     def input_size(self):
-        # return self.size()
         return 0
 
     def output_size(self):
         return 0
 
 class Recv(CommunicationTask):
-    string: str = "Recv"
+    opcode: str = "Recv"
     dst: int = -1
     src: int = -1
-    def run(self, core):
-        pass
+    def run(self, core, ins):
+        ins.record.pe_id = core.id
+        # ins.record.exe_end_time.append(core.env.now)
 
     def input_size(self):
         return 0

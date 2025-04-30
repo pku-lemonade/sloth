@@ -31,9 +31,17 @@ class Link:
         self.env = env
         self.width = config.width
         self.delay = config.delay
-        self.store = simpy.Store(env)
+        # 按数据的index排序，需要Message的lt方法
+        self.store = simpy.PriorityStore(env)
         self.delay_factor = 1
+        self.hop = 0
         self.linkentry = MonitoredResource(env,capacity=1)
+        self.tag = False
+
+    def bind(self, idx1, idx2, tag):
+        self.corefrom = idx1
+        self.coreto = idx2
+        self.tag = tag
         
     def calc_latency(self, msg):
         #calc latency:
@@ -42,11 +50,18 @@ class Link:
         latency = self.delay + transmission_time
         latency = latency * self.delay_factor
 
-        yield self.linkentry.execute("SEND"+str(msg.data.index),latency,attributes=msg.dst)
+        self.hop += slice.size()/64
+        # 对于数据包,记录了路由路径中每个link的ready_run_time
+        msg.ins.record.ready_run_time.append(self.env.now)
+        yield self.linkentry.execute("SEND"+str(msg.data.index),latency,msg.ins,attributes=msg.dst)
         self.store.put(msg)
     
-    def put(self,msg):
+    def put(self, msg):
         return self.env.process(self.calc_latency(msg))
+    
+    # 不带延迟的插入，处理block外的数据包时使用
+    def insert(self, msg):
+        yield self.store.put(msg)
 
     def get(self):
         return self.store.get()
@@ -265,6 +280,9 @@ class NoC:
                     link1 = Link(self.env, self.link_config)
                     link2 = Link(self.env, self.link_config)
 
+                    link2.bind((row,col), (row+1,col), True)
+                    link1.bind((row+1,col), (row,col), True)
+
                     self.routers[router_id].bound_with_east(link1, link2)
                     self.routers[east_router_id].bound_with_west(link2, link1)
 
@@ -277,6 +295,9 @@ class NoC:
 
                     link1 = Link(self.env, self.link_config)
                     link2 = Link(self.env, self.link_config)
+
+                    link2.bind((row,col), (row,col-1), True)
+                    link1.bind((row,col-1), (row,col), True)
 
                     self.routers[router_id].bound_with_south(link1, link2)
                     self.routers[south_router_id].bound_with_north(link2, link1)
