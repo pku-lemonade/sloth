@@ -173,80 +173,91 @@ class Mesh:
         # {next_node_id, count}
         self.count = [{} for _ in range(group_num*x*y)]
 
+    # 传入的节点信息为 (group_id, pe_id)
+    # 传入的边为正向边
     def mapping(self, src, dst):
+        # 忽略READ和WRITE
         if src[1] == -1 or dst[1] == -1:
             return
         
         # print(f"{src} and {dst}")
+        # 获取src和dst的二维坐标
         src_x = src[1] // self.y
         src_y = src[1] % self.y
         dst_x = dst[1] // self.y
         dst_y = dst[1] % self.y
 
-        while src_x != dst_x or src_y != dst_y:
-            # X first
-            if src_x != dst_x:
-                if dst_x > src_x:
-                    src_x += 1
-                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                    nextNode = src[0]*self.x*self.y+(src_x-1)*self.y+src_y
-                    if nextNode not in self.mp[curNode]:
-                        # print(f"{curNode} --> {nextNode}")
-                        self.edges[curNode].append((nextNode, []))
-                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    continue
-                else:
-                    src_x -= 1
-                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                    nextNode = src[0]*self.x*self.y+(src_x+1)*self.y+src_y
-                    if nextNode not in self.mp[curNode]:
-                        # print(f"{curNode} --> {nextNode}")
-                        self.edges[curNode].append((nextNode, []))
-                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    continue
+        # X first
+        while src_x != dst_x:
+            if dst_x > src_x:
+                src_x += 1
+                # 路由后的结点
+                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                # 路由前结点
+                nextNode = src[0]*self.x*self.y+(src_x-1)*self.y+src_y
+                if nextNode not in self.mp[curNode]:
+                    # print(f"{curNode} --> {nextNode}")
+                    self.edges[curNode].append((nextNode, []))
+                    self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+            else:
+                src_x -= 1
+                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                nextNode = src[0]*self.x*self.y+(src_x+1)*self.y+src_y
+                if nextNode not in self.mp[curNode]:
+                    # print(f"{curNode} --> {nextNode}")
+                    self.edges[curNode].append((nextNode, []))
+                    self.mp[curNode][nextNode] = len(self.edges[curNode])-1
         
-            # then Y
-            if src_y != dst_y:
-                if dst_y > src_y:
-                    src_y += 1
-                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                    nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y-1)
-                    if nextNode not in self.mp[curNode]:
-                        # print(f"{curNode} --> {nextNode}")
-                        self.edges[curNode].append((nextNode, []))
-                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    continue
-                else:
-                    src_y -= 1
-                    curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                    nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y+1)
-                    if nextNode not in self.mp[curNode]:
-                        # print(f"{curNode} --> {nextNode}")
-                        self.edges[curNode].append((nextNode, []))
-                        self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    continue
+        # then Y
+        while src_y != dst_y:
+            if dst_y > src_y:
+                src_y += 1
+                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y-1)
+                if nextNode not in self.mp[curNode]:
+                    # print(f"{curNode} --> {nextNode}")
+                    self.edges[curNode].append((nextNode, []))
+                    self.mp[curNode][nextNode] = len(self.edges[curNode])-1
+            else:
+                src_y -= 1
+                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y+1)
+                if nextNode not in self.mp[curNode]:
+                    # print(f"{curNode} --> {nextNode}")
+                    self.edges[curNode].append((nextNode, []))
+                    self.mp[curNode][nextNode] = len(self.edges[curNode])-1
 
         # print("-"*40)
 
-    def backtracking(self, curNode, failslow, step, limit):
+    def backtracking(self, father, curNode, failslow, step, limit):
+        print(f"searching: {curNode//self.num} {curNode%self.num}")
         if step == limit:
             return
         
         for id, nextNode in enumerate(self.edges[curNode]):
+            if nextNode[0] == father:
+                continue
+            # 失速区间传递
             nextNode[1].extend(failslow)
+            # 记录链路被重复使用的次数
             if nextNode[0] not in self.count[curNode]:
                 self.count[curNode][nextNode[0]] = 1
             else:
                 self.count[curNode][nextNode[0]] += 1
-            self.backtracking(curNode=nextNode[0], failslow=failslow, step=step+1, limit=limit)
+            self.backtracking(curNode=nextNode[0], father=curNode, failslow=failslow, step=step+1, limit=limit)
 
     def summary(self):
         merged_count = {}
         failslow_interval = {}
         for id, count in enumerate(self.count):
+            # id：起始节点id
+            # count：{key：目标结点id，次数}
             for nextNode, cnt in count.items():
+                # 多层合并
                 src = id % self.num
                 dst = nextNode % self.num
+                # print(f"{src}-{dst}-{cnt}")
+
                 if src > dst: 
                     src, dst = dst, src
                 if (src, dst) not in merged_count:
@@ -264,7 +275,7 @@ class Mesh:
             if cnt > max_count:
                 max_count = cnt
                 max_count_links = [(src, dst, failslow_interval[(src, dst)])]
-            else:
+            elif cnt == max_count:
                 max_count_links.append((src, dst, failslow_interval[(src, dst)]))
 
         # print(f"{max_count} {len(max_count_links)}")
@@ -273,8 +284,8 @@ class Mesh:
             failslow.sort()
             # print(len(failslow))
             failslow = interval_merge(failslow)
-            if len(failslow) <= 1:
-                continue
+            # if len(failslow) <= 1:
+            #     continue
             print(f"Link pe({src}) - pe({dst}) failslow at time {failslow}.")
 
 # 多层级通信图
@@ -295,6 +306,11 @@ class CommGraph:
         self.vis = {}
 
         self.build_graph(trace)
+
+    def debug(self):
+        for id, edge in enumerate(self.edges.values()):
+            print(f"edge {self.node_info[edge.src.id]} -> {self.node_info[edge.dst.id]}")
+            print(edge.events)
 
     # SEND/RECV
     def pe2pe(self, src: tuple[int, int], dst: tuple[int, int], start_time: int, exe_time: float):
@@ -395,6 +411,7 @@ class CommGraph:
 
             # 建立回溯反向边
             # print(f"{edge.src.id} -> {edge.dst.id}")
+            # 传入的节点信息为 (group_id, pe_id)
             self.mesh.mapping(self.node_info[edge.src.id], self.node_info[edge.dst.id])
             if failslow:
                 edge.failslow.extend(failslow)
@@ -451,19 +468,16 @@ if __name__ == '__main__':
     comm_graph = CommGraph(comm_trace.trace, mesh)
     print(f"Finish building comm_graph, there are {len(comm_graph.nodes)} nodes and {len(comm_graph.edges)} edges in the graph.")
     
-    # for lygp, pe_id in comm_graph.nodes.keys():
-    #     print(f"Node: {lygp, pe_id} in_edge_num: {len(comm_graph.nodes[(lygp, pe_id)].in_edges)}")
-
-    # for edge in comm_graph.edges.values():
-    #     print(edge.events)
-    #     break
+    # comm_graph.debug()
 
     # 失速路径分析
-    comm_graph.LinkAnalyze(threshold=5)
+    comm_graph.LinkAnalyze(threshold=2)
 
     # 物理链路回溯
     for failslow_edge in comm_graph.failslow_edge:
+        # 链路图中dst_id
         dst_id = comm_graph.node_info[failslow_edge.dst.id][0]*core_num + comm_graph.node_info[failslow_edge.dst.id][1]
-        mesh.backtracking(curNode=dst_id, failslow=failslow_edge.failslow, step=0, limit=2)
+        print(f"backtracking start from {comm_graph.node_info[failslow_edge.dst.id]}")
+        mesh.backtracking(curNode=dst_id, father=-1, failslow=failslow_edge.failslow, step=0, limit=1)
 
     mesh.summary()

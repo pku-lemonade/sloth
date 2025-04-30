@@ -409,7 +409,8 @@ class Arch:
                             comm_record[inst.index] = inst.record
                         else:
                             recv_insts.append(inst)
-
+            
+            # comm_record是send指令信息
             for recv_inst in recv_insts:
                 comm_trace.append(
                     CommInst(
@@ -418,8 +419,10 @@ class Arch:
                         # 当前层的id
                         layer_id = recv_inst.layer_id,
                         pe_id = recv_inst.record.pe_id,
-                        start_time = comm_record[recv_inst.index].exe_start_time[0],
-                        end_time = recv_inst.record.exe_end_time[0],
+                        # send完成时间为数据包在noc中开始传输的时间
+                        start_time = comm_record[recv_inst.index].exe_end_time[0],
+                        # recv就绪时间为数据包完成noc传输的时间
+                        end_time = recv_inst.record.ready_run_time[0],
                         data_size = Slice(tensor_slice=inst.tensor_slice).size(),
                         src_id = comm_record[recv_inst.index].pe_id,
                         dst_id = recv_inst.record.pe_id
