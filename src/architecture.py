@@ -378,13 +378,14 @@ class Arch:
                         print(f"    operands_time: {inst.record.mulins}", file=file)
                         
                         compute_trace.append(
-                            InstTrace(
+                            CompInst(
                                 instruction_id = inst.index,
                                 instruction_type = inst.inst_type,
                                 layer_id = inst.layer_id,
                                 pe_id = inst.record.pe_id,
                                 start_time = inst.record.exe_start_time[0],
-                                end_time = inst.record.exe_end_time[0]
+                                end_time = inst.record.exe_end_time[0],
+                                flops = inst.record.flops
                             )
                         )
                     elif inst.inst_type in io_task:
