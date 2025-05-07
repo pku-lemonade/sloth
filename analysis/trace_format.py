@@ -19,8 +19,11 @@ class InstTrace(BaseModel):
     end_time: int
     # 如果存执行时间只需20bit
 
+class CompInst(InstTrace):
+    flops: int
+
 class CompTrace(BaseModel):
-    trace: List[InstTrace]
+    trace: List[CompInst]
 
 # PE依赖关系建图
 # 通信指令trace无需instruction_id可以少16bit

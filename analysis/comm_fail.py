@@ -5,10 +5,11 @@ import math
 import numpy as np
 from typing import List
 from scipy.stats import norm
-from trace_format import CommTrace, CommInst
+from trace_format import CommTrace, CommInst, CompInst
 from pydantic import ValidationError, BaseModel
-from comp_fail import get_id
+from comp_fail import get_id, comp_analyzer
 from src.sim_type import TaskType
+from distribution import CoreDist
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
@@ -72,14 +73,23 @@ class DepEdge:
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
-        # (start_time, exe_time)
+        # (start_time, exe_time, pkg_size)
         self.events = []
         self.failslow = []
 
     # exe_time是归一化时间
-    def insert(self, start_time: int, exe_time: float):
+    def insert(self, start_time: int, exe_time: float, size: int):
         # print(f"edge start:{start_time}")
-        self.events.append((start_time, exe_time))
+        self.events.append((start_time, exe_time, size))
+
+    def sum(self):
+        if not self.events:
+            return 0
+        # 获取传输数据量总和
+        res = 0
+        for event in self.events:
+            res += event[2]
+        return res
 
     def start_time_range(self):
         if not self.events:
@@ -188,6 +198,8 @@ class Mesh:
         self.y = y
         self.num = self.x * self.y
 
+        self.core_dist = CoreDist()
+
         # print(f"{self.group_num}-{self.x}-{self.y}")
         
         # [(node_id, [failslow list])]
@@ -196,18 +208,24 @@ class Mesh:
         self.mp = [{} for _ in range(group_num*x*y)]
         # {next_node_id, count}
         self.count = [{} for _ in range(group_num*x*y)]
-        self.path_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        # 记录每条链路被失速路径覆盖次数
+        self.link_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        # 记录每条链路通信数据量
+        self.link_size_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
 
         # 目前还未引入时序信息
         # 基于概率分布的失速检测
         self.detector = FailSlowDetector(threshold=0.1)
-        self.failslow_prob = np.zeros(self.group_num*self.num)
-        # 概率转移矩阵
+        # 核心故障概率
+        self.core_failslow_prob = np.zeros(self.group_num*self.num)
+        # 链路故障概率
+        self.link_failslow_prob = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        # 链路权重矩阵
         self.transition_matrix = np.zeros((self.group_num*self.num, self.group_num*self.num))
 
     # 传入的节点信息为 (group_id, pe_id)
     # 传入的边为正向边
-    def mapping(self, src, dst):
+    def mapping(self, src, dst, size, failslow):
         # 忽略READ和WRITE
         if src[1] == -1 or dst[1] == -1:
             return
@@ -231,8 +249,11 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    self.path_count[curNode][nextNode] += 1
-                    self.path_count[nextNode][curNode] += 1
+                    self.link_size_count[curNode][nextNode] += size
+                    self.link_size_count[nextNode][curNode] += size
+                    if failslow:
+                        self.link_count[curNode][nextNode] += 1
+                        self.link_count[nextNode][curNode] += 1
             else:
                 src_x -= 1
                 curNode = src[0]*self.x*self.y+src_x*self.y+src_y
@@ -241,8 +262,11 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    self.path_count[curNode][nextNode] += 1
-                    self.path_count[nextNode][curNode] += 1
+                    self.link_size_count[curNode][nextNode] += size
+                    self.link_size_count[nextNode][curNode] += size
+                    if failslow:
+                        self.link_count[curNode][nextNode] += 1
+                        self.link_count[nextNode][curNode] += 1
         
         # then Y
         while src_y != dst_y:
@@ -254,8 +278,11 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    self.path_count[curNode][nextNode] += 1
-                    self.path_count[nextNode][curNode] += 1
+                    self.link_size_count[curNode][nextNode] += size
+                    self.link_size_count[nextNode][curNode] += size
+                    if failslow:
+                        self.link_count[curNode][nextNode] += 1
+                        self.link_count[nextNode][curNode] += 1
             else:
                 src_y -= 1
                 curNode = src[0]*self.x*self.y+src_x*self.y+src_y
@@ -264,24 +291,41 @@ class Mesh:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
                     self.mp[curNode][nextNode] = len(self.edges[curNode])-1
-                    self.path_count[curNode][nextNode] += 1
-                    self.path_count[nextNode][curNode] += 1
+                    self.link_size_count[curNode][nextNode] += size
+                    self.link_size_count[nextNode][curNode] += size
+                    if failslow:
+                        self.link_count[curNode][nextNode] += 1
+                        self.link_count[nextNode][curNode] += 1
 
         # print("-"*40)
 
     def prob_init(self):
-        # 初始化概率转移矩阵
+        # 初始化链路边权、故障概率
+        max_fail_count = self.link_count.max()
         for i in range(self.group_num*self.num):
-            path_num = self.path_count[i].sum()
+            path_num = self.link_size_count[i].sum()
             if path_num == 0:
                 continue
-
+            # 根据传输数据量计算权重
             for j in range(self.group_num*self.num):
-                self.transition_matrix[i][j] = self.path_count[i][j] / path_num
+                self.transition_matrix[i][j] = self.link_size_count[i][j] / path_num
+                self.link_failslow_prob[i][j] = self.link_count[i][j] / max_fail_count
 
         # 初始化结点故障概率
         for i in range(self.group_num*self.num):
-            self.failslow_prob[i] = self.detector.failslow_probability()
+            self.core_failslow_prob[i] = self.detector.failslow_probability()
+
+    # 参考GrootRank进行根因定位
+    def pagerank(self, alpha = 0.85, tol = 1e-6, max_iter = 100):
+        N = self.num * self.group_num
+
+        for _ in range(max_iter):
+            new_prob = alpha * self.transition_matrix.T @ self.core_failslow_prob + (1 - alpha) / N
+            if np.linalg.norm(new_prob-self.core_failslow_prob, ord=1) < tol:
+                break
+            self.core_failslow_prob = new_prob
+
+        return self.core_failslow_prob
 
     def backtracking(self, father, curNode, failslow, step, limit):
         print(f"searching: {curNode//self.num} {curNode%self.num}")
@@ -371,7 +415,7 @@ class CommGraph:
             print(edge.events)
 
     # SEND/RECV
-    def pe2pe(self, src: tuple[int, int], dst: tuple[int, int], start_time: int, exe_time: float):
+    def pe2pe(self, src: tuple[int, int], dst: tuple[int, int], start_time: int, exe_time: float, size: int):
         if src not in self.nodes:
             self.node_num += 1
             self.node_id[src] = self.node_num
@@ -386,15 +430,15 @@ class CommGraph:
 
         if (self.node_id[src], self.node_id[dst]) not in self.edges:
             edge = DepEdge(src=self.nodes[src], dst=self.nodes[dst])
-            edge.insert(start_time=start_time, exe_time=exe_time)
+            edge.insert(start_time=start_time, exe_time=exe_time, size=size)
             self.edges[(self.node_id[src], self.node_id[dst])] = edge
             self.nodes[src].out_edges.append(edge)
             self.nodes[dst].in_edges.append(edge)
         else:
-            self.edges[(self.node_id[src], self.node_id[dst])].insert(start_time=start_time, exe_time=exe_time)
+            self.edges[(self.node_id[src], self.node_id[dst])].insert(start_time=start_time, exe_time=exe_time, size=size)
 
     # WRITE
-    def pe2dram(self, src: tuple[int, int], dram_id: int, start_time: int, exe_time: float):
+    def pe2dram(self, src: tuple[int, int], dram_id: int, start_time: int, exe_time: float, size: int):
         if src not in self.nodes:
             self.node_num += 1
             self.node_id[src] = self.node_num
@@ -409,15 +453,15 @@ class CommGraph:
 
         if (self.node_id[src], self.node_id[(dram_id, -1)]) not in self.edges:
             edge = DepEdge(src=self.nodes[src], dst=self.nodes[(dram_id, -1)])
-            edge.insert(start_time=start_time, exe_time=exe_time)
+            edge.insert(start_time=start_time, exe_time=exe_time, size=size)
             self.edges[(self.node_id[src], self.node_id[(dram_id, -1)])] = edge
             self.nodes[src].out_edges.append(edge)
             self.nodes[(dram_id, -1)].in_edges.append(edge)
         else:
-            self.edges[(self.node_id[src], self.node_id[(dram_id, -1)])].insert(start_time=start_time, exe_time=exe_time)
+            self.edges[(self.node_id[src], self.node_id[(dram_id, -1)])].insert(start_time=start_time, exe_time=exe_time, size=size)
 
     # READ
-    def dram2pe(self, dram_id: int, dst: tuple[int, int], start_time: int, exe_time: float):
+    def dram2pe(self, dram_id: int, dst: tuple[int, int], start_time: int, exe_time: float, size: int):
         if (dram_id, -1) not in self.nodes:
             self.node_num += 1
             self.node_id[(dram_id, -1)] = self.node_num
@@ -432,12 +476,12 @@ class CommGraph:
         
         if (self.node_id[(dram_id, -1)], self.node_id[dst]) not in self.edges:
             edge = DepEdge(src=self.nodes[(dram_id, -1)], dst=self.nodes[dst])
-            edge.insert(start_time=start_time, exe_time=exe_time)
+            edge.insert(start_time=start_time, exe_time=exe_time, size=size)
             self.edges[(self.node_id[(dram_id, -1)], self.node_id[dst])] = edge
             self.nodes[(dram_id, -1)].out_edges.append(edge)
             self.nodes[dst].in_edges.append(edge)
         else:
-            self.edges[(self.node_id[(dram_id, -1)], self.node_id[dst])].insert(start_time=start_time, exe_time=exe_time)
+            self.edges[(self.node_id[(dram_id, -1)], self.node_id[dst])].insert(start_time=start_time, exe_time=exe_time, size=size)
 
     def build_graph(self, trace: List[CommInst]):
         for inst_trace in trace:
@@ -445,17 +489,17 @@ class CommGraph:
                 src = (layer2group[inst_trace.layer_id], inst_trace.src_id)
                 dst = (layer2group[inst_trace.layer_id], inst_trace.dst_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.pe2pe(src=src, dst=dst, start_time=inst_trace.start_time, exe_time=exe_time/inst_trace.data_size)
+                self.pe2pe(src=src, dst=dst, start_time=inst_trace.start_time, exe_time=exe_time/inst_trace.data_size, size=inst_trace.data_size)
 
             elif inst_trace.instruction_type == TaskType.READ:
                 dst = (layer2group[inst_trace.layer_id], inst_trace.pe_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.dram2pe(dram_id=layer2group[inst_trace.layer_id]-1, dst=dst, start_time=inst_trace.start_time, exe_time=0.25)
+                self.dram2pe(dram_id=layer2group[inst_trace.layer_id]-1, dst=dst, start_time=inst_trace.start_time, exe_time=0.25, size=inst_trace.data_size)
             
             elif inst_trace.instruction_type == TaskType.WRITE:
                 src = (layer2group[inst_trace.layer_id], inst_trace.pe_id)
                 exe_time = inst_trace.end_time - inst_trace.start_time
-                self.pe2dram(src=src, dram_id=layer2group[inst_trace.layer_id], start_time=inst_trace.start_time, exe_time=0.25)
+                self.pe2dram(src=src, dram_id=layer2group[inst_trace.layer_id], start_time=inst_trace.start_time, exe_time=0.25, size=inst_trace.data_size)
 
     def DFS(self, curNode, threshold):
         if (self.node_info[curNode.id][0], self.node_info[curNode.id][1]) in self.vis:
@@ -470,12 +514,14 @@ class CommGraph:
             # 建立回溯反向边
             # print(f"{edge.src.id} -> {edge.dst.id}")
             # 传入的节点信息为 (group_id, pe_id)
-            self.mesh.mapping(self.node_info[edge.src.id], self.node_info[edge.dst.id])
             if failslow:
+                self.mesh.mapping(self.node_info[edge.src.id], self.node_info[edge.dst.id], edge.sum(), True)
                 edge.failslow.extend(failslow)
                 self.failslow_edge.append(edge)
                 print(f"Layer {self.node_info[edge.src.id][0]}:: Path pe({self.node_info[edge.src.id][1]}) -> pe({self.node_info[edge.dst.id][1]}) failslow at time {failslow}.")
-            
+            else:
+                self.mesh.mapping(self.node_info[edge.src.id], self.node_info[edge.dst.id], edge.sum(), False)
+
             next_node = edge.dst
             self.DFS(next_node, threshold)
 
@@ -487,9 +533,10 @@ class CommGraph:
         # todo: failslow spread
 
 if __name__ == '__main__':
-    net = json_analyzer("tools/mapping.json")
+    net = json_analyzer("tests/darknet19/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
     comm_trace = comm_analyzer("data/darknet19/router/comm_trace.json")
+    comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
 
     core_num = arch_configs.core.x * arch_configs.core.y
     layer_mapping = [[] for _ in range(len(net.layers))]
@@ -516,8 +563,6 @@ if __name__ == '__main__':
     for ind in range(cur_layer_id, len(net.layers)):
         layer2group[ind] = net.layers[cur_layer_id].layer_group_id
         group_layers.append(ind)
-
-    # print(layer2group)
 
     cur_layer_id = id
     layer_group_divide.append(group_layers)
