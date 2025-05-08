@@ -5,6 +5,7 @@ import math
 import numpy as np
 from typing import List
 from scipy.stats import norm
+# from scipy.special import softmax
 from trace_format import CommTrace, CommInst, CompInst
 from pydantic import ValidationError, BaseModel
 from comp_fail import get_id, comp_analyzer
@@ -189,6 +190,11 @@ class FailSlowDetector:
 
     def is_failslow(self, x):
         return self.failslow_probability(x) < self.threshold
+    
+def softmax(x, beta = 1.0):
+    x = np.array(x)
+    e_x = np.exp(beta * (x - np.max(x)))
+    return e_x / e_x.sum()
 
 # 物理链路回溯，建反向边
 class Mesh:
@@ -197,37 +203,60 @@ class Mesh:
         self.x = x
         self.y = y
         self.num = self.x * self.y
+        # DRAM用一个结点表示
+        self.N = self.group_num * self.num + 1
+        self.time_range = [(0, 0) for _ in range(self.N)]
 
         self.core_dist = CoreDist()
 
         # print(f"{self.group_num}-{self.x}-{self.y}")
         
         # [(node_id, [failslow list])]
-        self.edges = [[] for _ in range(group_num*x*y)]
+        self.edges = [[] for _ in range(self.N)]
         # {node_id, edge_index}
-        self.mp = [{} for _ in range(group_num*x*y)]
+        self.mp = [{} for _ in range(self.N)]
         # {next_node_id, count}
-        self.count = [{} for _ in range(group_num*x*y)]
+        self.count = [{} for _ in range(self.N)]
         # 记录每条链路被失速路径覆盖次数
-        self.link_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        self.link_count = np.zeros((self.N, self.N))
         # 记录每条链路通信数据量
-        self.link_size_count = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        self.link_size_count = np.zeros((self.N, self.N))
 
         # 目前还未引入时序信息
         # 基于概率分布的失速检测
         self.detector = FailSlowDetector(threshold=0.1)
         # 核心故障概率
-        self.core_failslow_prob = np.zeros(self.group_num*self.num)
+        self.core_failslow_prob = np.zeros(self.N)
         # 链路故障概率
-        self.link_failslow_prob = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        self.link_failslow_prob = np.zeros((self.N, self.N))
         # 链路权重矩阵
-        self.transition_matrix = np.zeros((self.group_num*self.num, self.group_num*self.num))
+        self.transition_matrix = np.zeros((self.N, self.N))
 
     # 传入的节点信息为 (group_id, pe_id)
     # 传入的边为正向边
     def mapping(self, src, dst, size, failslow):
-        # 忽略READ和WRITE
-        if src[1] == -1 or dst[1] == -1:
+        # READ
+        if src[1] == -1:
+            dst_x = dst[1] // self.y
+            dst_y = dst[1] % self.y
+            dst_id = (dst[0]-1)*self.num + dst_x*self.y + dst_y
+            self.link_size_count[self.N-1][dst_id] += size
+            self.link_size_count[dst_id][self.N-1] += size
+            if failslow:
+                self.link_count[self.N-1][dst_id] += 1
+                self.link_count[dst_id][self.N-1] += 1
+            return
+        
+        # WRITE
+        if dst[1] == -1:
+            src_x = src[1] // self.y
+            src_y = src[1] % self.y
+            src_id = (src[0]-1)*self.num + src_x*self.y + src_y
+            self.link_size_count[src_id][self.N-1] += size
+            self.link_size_count[self.N-1][src_id] += size
+            if failslow:
+                self.link_count[src_id][self.N-1] += 1
+                self.link_count[self.N-1][src_id] += 1
             return
         
         # print(f"{src} and {dst}")
@@ -242,9 +271,9 @@ class Mesh:
             if dst_x > src_x:
                 src_x += 1
                 # 路由后的结点
-                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
+                curNode = (src[0]-1)*self.x*self.y+src_x*self.y+src_y
                 # 路由前结点
-                nextNode = src[0]*self.x*self.y+(src_x-1)*self.y+src_y
+                nextNode = (src[0]-1)*self.x*self.y+(src_x-1)*self.y+src_y
                 if nextNode not in self.mp[curNode]:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
@@ -256,8 +285,8 @@ class Mesh:
                         self.link_count[nextNode][curNode] += 1
             else:
                 src_x -= 1
-                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                nextNode = src[0]*self.x*self.y+(src_x+1)*self.y+src_y
+                curNode = (src[0]-1)*self.x*self.y+src_x*self.y+src_y
+                nextNode = (src[0]-1)*self.x*self.y+(src_x+1)*self.y+src_y
                 if nextNode not in self.mp[curNode]:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
@@ -272,8 +301,8 @@ class Mesh:
         while src_y != dst_y:
             if dst_y > src_y:
                 src_y += 1
-                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y-1)
+                curNode = (src[0]-1)*self.x*self.y+src_x*self.y+src_y
+                nextNode = (src[0]-1)*self.x*self.y+src_x*self.y+(src_y-1)
                 if nextNode not in self.mp[curNode]:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
@@ -285,8 +314,8 @@ class Mesh:
                         self.link_count[nextNode][curNode] += 1
             else:
                 src_y -= 1
-                curNode = src[0]*self.x*self.y+src_x*self.y+src_y
-                nextNode = src[0]*self.x*self.y+src_x*self.y+(src_y+1)
+                curNode = (src[0]-1)*self.x*self.y+src_x*self.y+src_y
+                nextNode = (src[0]-1)*self.x*self.y+src_x*self.y+(src_y+1)
                 if nextNode not in self.mp[curNode]:
                     # print(f"{curNode} --> {nextNode}")
                     self.edges[curNode].append((nextNode, []))
@@ -302,29 +331,34 @@ class Mesh:
     def link_prob_init(self):
         # 初始化链路边权、故障概率
         max_fail_count = self.link_count.max()
-        for i in range(self.group_num*self.num):
+        for i in range(self.N):
             path_num = self.link_size_count[i].sum()
             if path_num == 0:
                 continue
             # else:
             #     print(f"{i}: {path_num}")
             # 根据传输数据量计算权重
-            for j in range(self.group_num*self.num):
+            for j in range(self.N):
                 # print(f"{self.link_size_count[i][j]} / {path_num} = {self.link_size_count[i][j] / path_num}")
-                self.transition_matrix[i][j] = (self.link_size_count[i][j] / path_num) + (1 / (self.group_num*self.num))
-                self.link_failslow_prob[i][j] = self.link_count[i][j] / max_fail_count + 0.5
+                # print(1.0/self.N)
+                self.transition_matrix[i][j] = (self.link_size_count[i][j] / path_num)
+                self.link_failslow_prob[i][j] = self.link_count[i][j] / max_fail_count
 
-    def core_prob_init(self, layer_group, pe_id, flops):
-        core_id = layer_group * self.num + pe_id
+    def core_prob_init(self, layer_group, pe_id, flops, start_time, end_time):
+        core_id = (layer_group-1) * self.num + pe_id
         # 初始化结点故障概率
-        self.core_failslow_prob[core_id] = self.core_dist.failslow_prob(flops)+0.5
+        self.core_failslow_prob[core_id] = self.core_dist.failslow_prob(flops)# + (1 / (self.N))
+        self.time_range[core_id] = (start_time, end_time)
 
     # 参考GrootRank进行根因定位
     def pagerank(self, alpha = 0.85, tol = 1e-2, max_iter = 100):
-        N = self.num * self.group_num
+        jump_prob = self.core_failslow_prob
 
         for _ in range(max_iter):
-            new_prob = alpha * self.transition_matrix.T @ self.core_failslow_prob + (1 - alpha) / N
+            new_prob = alpha * self.transition_matrix.T @ self.core_failslow_prob
+            # 根据聚类结果设置随机跳转策略
+            for i in range(self.N):
+                new_prob[i] += (1-alpha) * jump_prob[i] / jump_prob.sum()
             if np.linalg.norm(new_prob-self.core_failslow_prob, ord=1) < tol:
                 break
             self.core_failslow_prob = new_prob
@@ -352,11 +386,45 @@ class Mesh:
                 self.count[curNode][nextNode[0]] += 1
             self.backtracking(curNode=nextNode[0], father=curNode, failslow=failslow, step=step+1, limit=limit)
 
-    def pagerank_summary(self):
+    def pagerank_summary(self, k=30, threshold=0.2):
+        print("="*20)
         output_file = 'output.csv'
-        np.savetxt(output_file, self.transition_matrix, delimiter=',', fmt='%d')
-        for i in range(self.group_num*self.num):
-            print(f"Node{i}'s pagerank score is {self.core_failslow_prob[i]}")
+        np.savetxt(output_file, self.transition_matrix, delimiter=',', fmt='%f')
+
+        # print(self.core_failslow_prob[0:self.N-1])
+        # failslow_prob = softmax(self.core_failslow_prob[0:self.N-1], k=30, beta=100)
+        # print(failslow_prob)
+        # sorted_prob_id = np.argsort(-failslow_prob)
+        # sorted_prob = failslow_prob[sorted_prob_id]
+
+        # 分层计算失速概率
+        for group_id in range(self.group_num):
+            start_id = group_id * self.num
+            end_id = start_id + self.num
+
+            # print("="*40)
+            # print(self.core_failslow_prob[start_id:end_id])
+            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=15000)
+            # print(group_prob)
+
+            for id in range(self.num):
+                if group_prob[id] < threshold:
+                    continue
+                node_id = start_id + id
+                print(f"FailSlow: PE{node_id%self.num} during cycle [{self.time_range[node_id][0]},{self.time_range[node_id][1]}], Prob {group_prob[id]*100:.2f}%.")
+
+        # sorted_PR_id = np.argsort(-self.core_failslow_prob[0:self.N-1])
+        # sorted_PR = self.core_failslow_prob[sorted_PR_id]
+        # sorted_PR = sorted_PR ** 2
+        # # print(sorted_PR)
+        # topk_prob = softmax(sorted_PR[0:k], beta=10000)
+        # # print(topk_prob)
+
+        # for id in range(k):
+        #     if topk_prob[id] < threshold:
+        #         break
+        #     node_id = sorted_PR_id[id]
+        #     print(f"FailSlow: PE{node_id%self.num} during cycle [{self.time_range[node_id][0]},{self.time_range[node_id][1]}], Prob {topk_prob[id]*100:.2f}%.")
 
     def summary(self):
         merged_count = {}
@@ -545,6 +613,7 @@ class CommGraph:
 def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
     tot_flops = {}
     inst_num = {}
+    start_time, end_time = {}, {}
     average_flops = []
 
     for id in layer_mapping:
@@ -555,12 +624,20 @@ def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
         # 指令flops需求 / 执行时间 得到 单周期flops
         tot_flops[inst_trace.pe_id] += inst_trace.flops / (inst_trace.end_time - inst_trace.start_time)
         inst_num[inst_trace.pe_id] += 1
+        if inst_trace.pe_id in start_time:
+            start_time[inst_trace.pe_id] = min(inst_trace.start_time, start_time[inst_trace.pe_id])
+        else:
+            start_time[inst_trace.pe_id] = inst_trace.start_time
+        if inst_trace.pe_id in end_time:
+            end_time[inst_trace.pe_id] = max(inst_trace.end_time, end_time[inst_trace.pe_id])
+        else:
+            end_time[inst_trace.pe_id] = inst_trace.end_time
 
     for id in layer_mapping:
         average_flops.append(tot_flops[id] / inst_num[id])
 
     # print(f"average flops: {average_flops}")
-    return average_flops
+    return average_flops, start_time, end_time
 
 if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
@@ -603,15 +680,16 @@ if __name__ == '__main__':
     for inst_trace in comp_trace.trace:
         comp_trace_layer[inst_trace.layer_id].append(inst_trace)
 
-    mesh = Mesh(group_num=len(layer_group_divide)+1, x=arch_configs.core.x, y=arch_configs.core.y)
+    mesh = Mesh(group_num=len(layer_group_divide), x=arch_configs.core.x, y=arch_configs.core.y)
 
     # 初始化结点故障概率
     for layer_trace in comp_trace_layer:
         layer_id = layer_trace[0].layer_id
-        average_flops = calc_pe_flops(layer_trace, layer_mapping[layer_id])
+        average_flops, start_time, end_time = calc_pe_flops(layer_trace, layer_mapping[layer_id])
         # 为当前层的每个pe进行初始化
         for id, pe_id in enumerate(layer_mapping[layer_id]):
-            mesh.core_prob_init(layer_group=layer2group[layer_id], pe_id=pe_id, flops=average_flops[id])
+            mesh.core_prob_init(layer_group=layer2group[layer_id], pe_id=pe_id, flops=average_flops[id],
+                                start_time=start_time[pe_id], end_time=end_time[pe_id])
 
     comm_graph = CommGraph(comm_trace.trace, mesh)
     print(f"Finish building comm_graph, there are {len(comm_graph.nodes)} nodes and {len(comm_graph.edges)} edges in the graph.")
@@ -632,9 +710,9 @@ if __name__ == '__main__':
     
     # pagerank RCA
     # 利用检测的失速路径初始化链路故障概率
-    print("before pagerank")
-    mesh.pagerank_summary()
+    # print("before pagerank")
+    # mesh.pagerank_summary()
     mesh.link_prob_init()
     mesh.pagerank()
-    print("after pagerank")
+    # print("after pagerank")
     mesh.pagerank_summary()

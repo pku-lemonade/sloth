@@ -4,9 +4,9 @@
     "lsu" : [],
     "tpu" : [
         {
-            "start_time" : 0,
-            "end_time" : 100000000,
-            "pe_id" : 10,
+            "start_time" : 5000000,
+            "end_time" : 40000000,
+            "pe_id" : 7,
             "times" : 16
         }
     ]
