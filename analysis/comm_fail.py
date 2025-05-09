@@ -11,6 +11,7 @@ from pydantic import ValidationError, BaseModel
 from comp_fail import get_id, comp_analyzer
 from src.sim_type import TaskType
 from distribution import CoreDist
+from tomography import NoCTomography
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
@@ -639,6 +640,32 @@ def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
     # print(f"average flops: {average_flops}")
     return average_flops, start_time, end_time
 
+def link_failslow_detection():
+    factor = 10000
+    arch_configs = config_analyzer("arch/gemini4_4.json")
+    baseline_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
+    detection_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
+    
+    # 建立基准
+    baseline = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor)
+    baseline_paths = []
+    for inst_trace in baseline_trace.trace:
+        if inst_trace.instruction_type == TaskType.RECV:
+            exe_time = inst_trace.end_time - inst_trace.start_time
+            baseline_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
+    baseline_bandwidth = baseline.train(baseline_paths)
+    
+    detection = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor)
+    detection_paths = []
+    for inst_trace in detection_trace.trace:
+        if inst_trace.instruction_type == TaskType.RECV:
+            exe_time = inst_trace.end_time - inst_trace.start_time
+            detection_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
+    detection_bandwidth = detection.train(detection_paths)
+
+    for link in baseline_bandwidth.keys():
+        print(f"Link_{link[0]}_{link[1]}: baseline: {baseline_bandwidth[link]} B/cycle, detection: {detection_bandwidth[link]} B/cycle.")
+
 if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
@@ -694,10 +721,12 @@ if __name__ == '__main__':
     comm_graph = CommGraph(comm_trace.trace, mesh)
     print(f"Finish building comm_graph, there are {len(comm_graph.nodes)} nodes and {len(comm_graph.edges)} edges in the graph.")
     
+    link_failslow_detection()
+
     # comm_graph.debug()
 
     # 失速路径分析
-    comm_graph.LinkAnalyze(threshold=2)
+    # comm_graph.LinkAnalyze(threshold=2)
 
     # # 物理链路回溯
     # for failslow_edge in comm_graph.failslow_edge:
@@ -712,7 +741,7 @@ if __name__ == '__main__':
     # 利用检测的失速路径初始化链路故障概率
     # print("before pagerank")
     # mesh.pagerank_summary()
-    mesh.link_prob_init()
-    mesh.pagerank()
+    # mesh.link_prob_init()
+    # mesh.pagerank()
     # print("after pagerank")
-    mesh.pagerank_summary()
+    # mesh.pagerank_summary()
