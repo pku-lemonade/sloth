@@ -23,7 +23,7 @@ class NoCTomography:
         self.factor = factor
 
         # 路由器初始化
-        self.router_num = mesh_x * mesh_y
+        self.router_num = 0
         self.router_name = [f"router_{i}" for i in range(self.router_num)]
         
         # 链路初始化
@@ -104,8 +104,11 @@ class NoCTomography:
             X[id, src] = 0
         return X, y
     
-    def train(self, paths, model_type = 'lasso', alpha = 0.1):
+    def train(self, paths, model_type = 'lasso', alpha = 0.1, save_file = 'paras'):
         X, y = self.build_feature_matrix(paths)
+
+        output_file = save_file + '.csv'
+        np.savetxt(output_file, np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')
 
         if X.shape[0] == 0:
             print("No communication exist.")
@@ -130,9 +133,11 @@ class NoCTomography:
         estimated_bandwidth = {}
         estimated_router_delay = {}
         coeffs = self.model.coef_ if hasattr(self.model, 'coef_') else [0.0] * self.feature_num
+    
+        print(f"{len(coeffs)}-{len(self.links)}")
 
         for id, link in enumerate(self.links):
-            estimated_bandwidth[link] = self.factor/coeffs[self.router_num+id] if self.router_num+id < len(coeffs) else 0.0
+            estimated_bandwidth[link] = coeffs[self.router_num+id] if self.router_num+id < len(coeffs) else 0.0
         
         for id in range(self.router_num):
             estimated_router_delay[id] = coeffs[id] if id < len(coeffs) else 0.0

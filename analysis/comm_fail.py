@@ -640,8 +640,12 @@ def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
     # print(f"average flops: {average_flops}")
     return average_flops, start_time, end_time
 
+# cycle = data-size / bandwidth1 + data-size / bandwidth2 + ...
+# normalized = cycle * factor / data-size = factor / bandwidth1 + factor / bandwidth12 + ...
+# result = factor / normalized
+
 def link_failslow_detection():
-    factor = 10000
+    factor = 100
     arch_configs = config_analyzer("arch/gemini4_4.json")
     baseline_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
     detection_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
@@ -649,22 +653,62 @@ def link_failslow_detection():
     # 建立基准
     baseline = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor)
     baseline_paths = []
+    baseline_paths_time_mp = {}
+    baseline_paths_num_mp = {}
+
     for inst_trace in baseline_trace.trace:
         if inst_trace.instruction_type == TaskType.RECV:
             exe_time = inst_trace.end_time - inst_trace.start_time
-            baseline_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
-    baseline_bandwidth = baseline.train(baseline_paths)
+            # baseline_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
+            if (inst_trace.src_id, inst_trace.dst_id) in baseline_paths_time_mp:
+                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time/inst_trace.data_size*factor
+            else:
+                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time/inst_trace.data_size*factor
+            if (inst_trace.src_id, inst_trace.dst_id) in baseline_paths_num_mp:
+                baseline_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] += 1
+            else:
+                baseline_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] = 1
+
+    for key in baseline_paths_time_mp.keys():
+        baseline_paths.append((key[0], key[1], baseline_paths_time_mp[key]/baseline_paths_num_mp[key]))
+
+    baseline_bandwidth = baseline.train(paths=baseline_paths, model_type='linear', save_file='paras')
     
     detection = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor)
     detection_paths = []
+    detection_paths_time_mp = {}
+    detection_paths_num_mp = {}
+
     for inst_trace in detection_trace.trace:
         if inst_trace.instruction_type == TaskType.RECV:
             exe_time = inst_trace.end_time - inst_trace.start_time
-            detection_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
-    detection_bandwidth = detection.train(detection_paths)
+            # detection_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
+            if (inst_trace.src_id, inst_trace.dst_id) in detection_paths_time_mp:
+                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time/inst_trace.data_size*factor
+            else:
+                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time/inst_trace.data_size*factor
+            if (inst_trace.src_id, inst_trace.dst_id) in detection_paths_num_mp:
+                detection_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] += 1
+            else:
+                detection_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] = 1
+    
+    for key in detection_paths_time_mp.keys():
+        detection_paths.append((key[0], key[1], detection_paths_time_mp[key]/detection_paths_num_mp[key]))
+
+    detection_bandwidth = detection.train(paths=detection_paths, model_type='linear', save_file='fail_paras')
+
+    threshold = 10
 
     for link in baseline_bandwidth.keys():
-        print(f"Link_{link[0]}_{link[1]}: baseline: {baseline_bandwidth[link]} B/cycle, detection: {detection_bandwidth[link]} B/cycle.")
+        # 该链路未被使用
+        if baseline_bandwidth[link] == 0 or detection_bandwidth[link] == 0:
+            continue
+        bandwidth1 = factor/baseline_bandwidth[link]
+        bandwidth2 = factor/detection_bandwidth[link]
+        print(f"Link_{link[0]}_{link[1]}: baseline: {bandwidth1} B/cycle, detection: {bandwidth2} B/cycle.")
+        
+        if bandwidth1 / bandwidth2 > threshold:
+            print(f"    This link has a {bandwidth1/bandwidth2} times fail-slow.")
 
 if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
