@@ -6,7 +6,7 @@ import numpy as np
 from typing import List
 from scipy.stats import norm
 # from scipy.special import softmax
-from trace_format import CommTrace, CommInst, CompInst
+from trace_format import *
 from pydantic import ValidationError, BaseModel
 from comp_fail import get_id, comp_analyzer
 from src.sim_type import TaskType
@@ -640,6 +640,24 @@ def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
     # print(f"average flops: {average_flops}")
     return average_flops, start_time, end_time
 
+def link_analyzer(filename: str) -> LinksData:
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        try:
+            fail = LinksData.model_validate(data)
+            return fail
+        except ValidationError as e:
+            print(e.json())
+
+def layer_group_analyzer(filename: str) -> LayerGroupsInfo:
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        try:
+            fail = LayerGroupsInfo.model_validate(data)
+            return fail
+        except ValidationError as e:
+            print(e.json())
+
 # cycle = data-size / bandwidth1 + data-size / bandwidth2 + ...
 # normalized = cycle * factor / data-size = factor / bandwidth1 + factor / bandwidth12 + ...
 # result = factor / normalized
@@ -715,13 +733,27 @@ if __name__ == '__main__':
     arch_configs = config_analyzer("arch/gemini4_4.json")
     comm_trace = comm_analyzer("data/darknet19/router/comm_trace.json")
     comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
+    
+    layer_group_info = layer_group_analyzer("data/darknet19/normal/layer_info.json")
 
     core_num = arch_configs.core.x * arch_configs.core.y
     layer_mapping = [[] for _ in range(len(net.layers))]
+    layer_group_start_time = {}
+    layer_group_end_time = {}
 
     # 获取层组划分情况
     cur_layer_id = 0
     for id, layer in enumerate(net.layers):
+        if layer.layer_group_id not in layer_group_start_time:
+            layer_group_start_time[layer.layer_group_id] = layer_group_info.info[id].start
+        else:
+            layer_group_start_time[layer.layer_group_id] = min(layer_group_start_time[layer.layer_group_id], layer_group_info.info[id].start)
+        
+        if layer.layer_group_id not in layer_group_end_time:
+            layer_group_end_time[layer.layer_group_id] = layer_group_info.info[id].end
+        else:
+            layer_group_end_time[layer.layer_group_id] = max(layer_group_end_time[layer.layer_group_id], layer_group_info.info[id].end)
+
         if layer.layer_group_id != net.layers[cur_layer_id].layer_group_id:
             group_layers = []
             for ind in range(cur_layer_id, id):
@@ -765,6 +797,40 @@ if __name__ == '__main__':
     comm_graph = CommGraph(comm_trace.trace, mesh)
     print(f"Finish building comm_graph, there are {len(comm_graph.nodes)} nodes and {len(comm_graph.edges)} edges in the graph.")
     
+    real_bandwidth_data = link_analyzer("data/darknet19/normal/layer_link_data.json")
+    sorted_bandwidth_data = sorted(real_bandwidth_data.data, key = lambda x: x.layer_id)
+
+    cur_layer_group = sorted_bandwidth_data[0].layer_id
+    layer_link_data = {}
+
+    for link_bandwidth_data in sorted_bandwidth_data:
+        layer_group = layer2group[link_bandwidth_data.layer_id]
+        if layer_group == cur_layer_group:
+            tag = (link_bandwidth_data.src_id, link_bandwidth_data.dst_id)
+
+            if tag not in layer_link_data:
+                layer_link_data[tag] = link_bandwidth_data.data_size
+            else:
+                layer_link_data[tag] += link_bandwidth_data.data_size
+        else:
+            print(f"Layer Group {cur_layer_group}:")
+            for key in layer_link_data.keys():
+                src_core_id = key[0]
+                dst_core_id = key[1]
+                bandwidth = layer_link_data[key] / (layer_group_end_time[cur_layer_group]-layer_group_start_time[cur_layer_group])
+                
+                print(f"Link_{src_core_id}_{dst_core_id}: ground_truth: {bandwidth} B/cycle.")
+            
+            cur_layer_group = layer_group
+            layer_link_data.clear()
+            
+            tag = (link_bandwidth_data.src_id, link_bandwidth_data.dst_id)
+
+            if tag not in layer_link_data:
+                layer_link_data[tag] = link_bandwidth_data.data_size
+            else:
+                layer_link_data[tag] += link_bandwidth_data.data_size
+
     link_failslow_detection()
 
     # comm_graph.debug()

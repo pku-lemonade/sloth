@@ -35,3 +35,19 @@ class CommInst(InstTrace):
 
 class CommTrace(BaseModel):
     trace: List[CommInst]
+
+class LinkData(BaseModel):
+    src_id: int
+    dst_id: int
+    layer_id: int
+    data_size: int
+
+class LinksData(BaseModel):
+    data: List[LinkData]
+
+class LayerGroupInfo(BaseModel):
+    start: int
+    end: int
+
+class LayerGroupsInfo(BaseModel):
+    info: List[LayerGroupInfo]

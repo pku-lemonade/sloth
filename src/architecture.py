@@ -113,6 +113,7 @@ class Arch:
         print("Constructing hardware architecture.")
         self.env = simpy.Environment()
         self.stage = stage
+        self.arch = arch
         
         self.noc = self.build_noc(arch.noc)
         #print(len(self.noc.r2r_links))
@@ -337,6 +338,9 @@ class Arch:
             for id, inst in enumerate(pe):
                 print(pos, inst.index, inst.inst_type, inst.hot)
 
+    def get_id(self, x: int, y: int):
+        return x * self.arch.noc.y + y
+
     def output_data(self, net: str, fail: str):
         print("Writing performance data...")
 
@@ -442,11 +446,67 @@ class Arch:
             comp_json = comm_trace.model_dump_json(indent=4)
             print(comp_json, file=file)
 
-        layer_file = os.path.join(file_path, "layer_info.txt") 
+        layer_file = os.path.join(file_path, "layer_info.json") 
         with open(layer_file, "w") as file:
+            layer_info = []
             for id, time in enumerate(self.layer_start):
-                print(f"Layer{id} start at {time}.", file=file)
-                print(f"Layer{id} end at {self.layer_end[id]}.", file=file)
+                layer_info.append(
+                    LayerGroupInfo(
+                        start = time,
+                        end = self.layer_end[id]
+                    )
+                )
+            
+            layer_info = LayerGroupsInfo(info=layer_info)
+            layer_info = layer_info.model_dump_json(indent=4)
+            print(layer_info, file=file)
+
+        link_data = os.path.join(file_path, "link_data.txt")
+        with open(link_data, "w") as file:
+            link_output = {}
+            for link in self.noc.r2r_links:
+                src_core_id = self.get_id(link.corefrom[0], link.corefrom[1])
+                dst_core_id = self.get_id(link.coreto[0], link.coreto[1])
+
+                if src_core_id > dst_core_id:
+                    src_core_id, dst_core_id = dst_core_id, src_core_id
+
+                bandwidth = link.tot_size / self.end_time
+                tag = (src_core_id, dst_core_id)
+                if tag not in link_output:
+                    link_output[tag] = bandwidth
+                else:
+                    link_output[tag] += bandwidth
+
+            print("Global Link Bandwidth:", file=file)
+            for key in link_output.keys():
+                src_core_id = key[0]
+                dst_core_id = key[1]
+                bandwidth = link_output[key]
+                print(f"Link_{src_core_id}_{dst_core_id}: ground_truth: {bandwidth} B/cycle.", file=file)
+
+        layer_link_data_file = os.path.join(file_path, "layer_link_data.json")
+        layer_link_data = []
+        for link in self.noc.r2r_links:
+            src_core_id = self.get_id(link.corefrom[0], link.corefrom[1])
+            dst_core_id = self.get_id(link.coreto[0], link.coreto[1])
+
+            for id, size in link.layer_size.items():
+                layer_link_data.append(
+                    LinkData(
+                        src_id = src_core_id,
+                        dst_id = dst_core_id,
+                        layer_id = id,
+                        data_size = size
+                    )
+                )
+
+        layer_link_data = LinksData(data=layer_link_data)
+
+        with open(layer_link_data_file, "w") as file:
+            layer_link_data_json = layer_link_data.model_dump_json(indent=4)
+            print(layer_link_data_json, file=file)
+
 
         print("Finished.")
 

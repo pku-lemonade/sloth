@@ -38,6 +38,9 @@ class Link:
         self.linkentry = MonitoredResource(env,capacity=1)
         self.tag = False
 
+        self.tot_size = 0
+        self.layer_size = {}
+
     def bind(self, idx1, idx2, tag):
         self.corefrom = idx1
         self.coreto = idx2
@@ -49,6 +52,13 @@ class Link:
         transmission_time = ceil(slice.size(), self.width)
         latency = self.delay + transmission_time
         latency = latency * self.delay_factor
+
+        # 统计链路传输量
+        self.tot_size += slice.size()
+        if msg.ins.layer_id not in self.layer_size:
+            self.layer_size[msg.ins.layer_id] = slice.size()
+        else:
+            self.layer_size[msg.ins.layer_id] += slice.size()
 
         self.hop += slice.size()/64
         # 对于数据包,记录了路由路径中每个link的ready_run_time
