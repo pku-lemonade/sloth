@@ -493,6 +493,9 @@ class TableScheduler:
                             pur_sche.tag[tri_task_id] = False
 
                             if tri_core_id != self.id:
+                                # 为了支持packet routing
+                                ins = self.program[task_id]
+                                ins.index = self.program[task_id].trigger_index[id]
                                 self.cores[tri_core_id].data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
                             else:
                                 self.data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
@@ -781,24 +784,12 @@ class Core:
                     msg = heapq.heappop(self.recv_queue)
 
                     # task_id转换回index
-                    msg.data.index = self.scheduler.taskid2index[msg.data.index]
-                    logger.debug(f"PE{self.id} pop data{msg.data.index} from recv_queue")
+                    msg.data.index = self.scheduler.taskid2index[msg.ins.index]
+                    logger.debug(f"PE{self.id} pop data{msg.ins.index} from recv_queue")
 
                     yield self.env.process(self.receive_data(msg))
                 else:
                     break
-
-            # while self.data_in.len() > 0:
-            #     # 防止一个数据不断被取出放回
-            #     if self.scheduler.index2taskid[self.data_in.store.items[0].data.index] not in range(self.scheduler.start, self.scheduler.end):
-            #         break
-
-            #     msg = yield self.data_in.get()
-
-            #     logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-            #     logger.info(f"received data is {msg.data}")
-                
-            #     self.env.process(self.receive_data(msg))
 
             task_ready = self.scheduler.schedule()
             if task_ready:
@@ -835,11 +826,11 @@ class Core:
                 if msg_arrive.triggered:
                     msg = msg_arrive.value
 
-                    # if msg.data.index == 3969:
+                    # if msg.ins.index == 3969:
                     #     print(f"task3969 is triggered")
 
                     # 记录数据到达的时间（可能未及时接收）
-                    task_id = self.scheduler.index2taskid[msg.data.index]
+                    task_id = self.scheduler.index2taskid[msg.ins.index]
 
                     # RECV 或者包装后的 READ
                     self.program[task_id].record.ready_run_time.append(self.env.now)
@@ -848,16 +839,16 @@ class Core:
                     # 暂时没用到
                     if self.stage == "post_analysis":
                         src = msg.src
-                        inst = ind2ins[src][msg.data.index]
+                        inst = ind2ins[src][msg.ins.index]
                         assert inst in self.arch.cores[src].running_send
                         self.arch.cores[src].running_send.remove(inst)
 
                     # 记录数据接收信息
                     if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
-                        self.flow_in.append((msg.data.index, self.program[self.scheduler.index2taskid[msg.data.index]].inst_type, "recv", self.env.now))
+                        self.flow_in.append((msg.ins.index, self.program[self.scheduler.index2taskid[msg.ins.index]].inst_type, "recv", self.env.now))
 
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                    logger.debug(f"received data is {msg.data}")
+                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.ins.index}")
+                    # logger.debug(f"received data is {msg.ins}")
 
                     logger.debug(f"function call: receive_data()")
                     yield self.env.process(self.receive_data(msg))
@@ -870,8 +861,8 @@ class Core:
                     while self.data_in.len() > 0:
                         msg = yield self.data_in.get()
 
-                        logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.data.index}")
-                        logger.info(f"received data is {msg.data}")
+                        logger.info(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.ins.index}")
+                        logger.info(f"received data is {msg.ins}")
                         
                         logger.debug(f"function call: receive_data()")
                         yield self.env.process(self.receive_data(msg))

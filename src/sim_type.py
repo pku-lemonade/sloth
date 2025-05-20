@@ -244,6 +244,15 @@ class Message(BaseModel):
     def __lt__(self, other: "Message") -> bool:
         return self.data < other.data
 
+# data_size 固定
+class Packet(BaseModel):
+    ins: Instruction
+    src: int
+    dst: int
+    # 首尾 packet 标记
+    start: bool = False
+    end: bool = False
+
 class Operation(BaseModel):
     operation: str
     layer_id: int
@@ -344,6 +353,27 @@ class Send(CommunicationTask):
         # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         ins.record.exe_start_time.append(core.env.now)
         yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
+        ins.record.exe_end_time.append(core.env.now)
+
+    def run_hop(self, core, ins):
+        ins.record.pe_id = core.id
+        ins.record.ready_run_time.append(core.env.now)
+        ins.record.exe_start_time.append(core.env.now)
+        # 计算冗余信息
+        # packet 大小 16b
+        startup_time = 5
+        yield self.env.timeout(startup_time)
+        
+        # 把SEND指令解释为若干packet
+        packet_num = ceil(Slice(tensor_slice=self.tensor_slice).size(), 16)
+        for index in range(packet_num):
+            if index == 0:
+                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst, start=True))
+            elif index == packet_num-1:
+                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst, end=True))
+            else:
+                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst))
+
         ins.record.exe_end_time.append(core.env.now)
 
     def input_size(self):
