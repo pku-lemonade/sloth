@@ -25,6 +25,7 @@ parser.add_argument("--arch", type=str, default="arch/gemini4_4.json")
 parser.add_argument("--fail", type=str, default="failslow/normal.json")
 parser.add_argument("--log", type=str, default="logging/simulation.log")
 parser.add_argument("--level", type=str, default="info")
+parser.add_argument("--model", type=str, default="basic")
 
 args = parser.parse_args()
 cfg = CFG(args)

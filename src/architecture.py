@@ -109,19 +109,19 @@ monitor1 = partial(monitor1, data)
 monitor2 = partial(monitor2, data)
 
 class Arch:
-    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, stage=None):
+    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, model: str, stage=None):
         print("Constructing hardware architecture.")
         self.env = simpy.Environment()
         self.stage = stage
         self.arch = arch
         
-        self.noc = self.build_noc(arch.noc)
+        self.noc = self.build_noc(arch.noc, model)
         #print(len(self.noc.r2r_links))
         if stage == "pre_analysis":
             init_graph(program)
         self.program = program
 
-        self.cores = self.build_cores(arch.core, program)
+        self.cores = self.build_cores(arch.core, program, model)
 
         self.layer_start = [-1 for _ in range(101)]
         self.layer_end = [-1 for _ in range(101)]
@@ -202,12 +202,12 @@ class Arch:
         for tpu_fail in self.fail_slow.tpu:
             self.env.process(self.tpu_fail(tpu_fail))
 
-    def build_cores(self, config: CoreConfig, program: List[List[Instruction]]) -> List[Core]:
+    def build_cores(self, config: CoreConfig, program: List[List[Instruction]], model: str) -> List[Core]:
         cores = []
         for id in range(config.x * config.y):
             link1 = Link(self.env, LinkConfig(width=128, delay=1))
             link2 = Link(self.env, LinkConfig(width=128, delay=1))
-            core = Core(self.env, config, program[id], id, self, link1, link2, self.stage)
+            core = Core(self.env, config, program[id], id, self, link1, link2, model, self.stage)
 
             self.noc.routers[id].bound_with_core(link1, link2)
             cores.append(core)
@@ -220,9 +220,9 @@ class Arch:
 
         return cores
 
-    def build_noc(self, config: NoCConfig) -> NoC:
+    def build_noc(self, config: NoCConfig, model: str) -> NoC:
         print("Building NoC architecture.")
-        return NoC(self.env, config).build_connection()
+        return NoC(self.env, config, model).build_connection()
 
 
     # 输出可视化文件

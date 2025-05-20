@@ -238,17 +238,14 @@ class Instruction(BaseModel):
 class Message(BaseModel):
     ins: Instruction
     src: int
-    data: Data
+    data: Data = Data()
     dst: int
 
     def __lt__(self, other: "Message") -> bool:
         return self.data < other.data
 
 # data_size 固定
-class Packet(BaseModel):
-    ins: Instruction
-    src: int
-    dst: int
+class Packet(Message):
     # 首尾 packet 标记
     start: bool = False
     end: bool = False
@@ -362,17 +359,17 @@ class Send(CommunicationTask):
         # 计算冗余信息
         # packet 大小 16b
         startup_time = 5
-        yield self.env.timeout(startup_time)
+        yield core.env.timeout(startup_time)
         
         # 把SEND指令解释为若干packet
         packet_num = ceil(Slice(tensor_slice=self.tensor_slice).size(), 16)
         for index in range(packet_num):
             if index == 0:
-                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst, start=True))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, start=True))
             elif index == packet_num-1:
-                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst, end=True))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, end=True))
             else:
-                yield core.data_out.put_hop(Packet(ins=ins, src=core.id, dst=self.dst))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst))
 
         ins.record.exe_end_time.append(core.env.now)
 

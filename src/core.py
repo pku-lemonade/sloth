@@ -1,3 +1,4 @@
+import copy
 import heapq
 import simpy
 import logging
@@ -183,7 +184,7 @@ class GraphScheduler:
                             return FC(flops=inst.size, layer_id=inst.layer_id)
 
 class TableScheduler:
-    def __init__(self, program, spm, block_size, id, env, arch, data_in, stage):
+    def __init__(self, program, spm, block_size, id, env, arch, data_in, model, stage):
         self.program = program
         self.spm = spm
 
@@ -211,6 +212,7 @@ class TableScheduler:
 
         self.stage = stage
         self.arch = arch
+        self.model = model
 
         self.tasks = []
 
@@ -494,11 +496,19 @@ class TableScheduler:
 
                             if tri_core_id != self.id:
                                 # 为了支持packet routing
-                                ins = self.program[task_id]
+                                ins = copy.deepcopy(self.program[task_id])
                                 ins.index = self.program[task_id].trigger_index[id]
-                                self.cores[tri_core_id].data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                if self.model == "basic":
+                                    self.cores[tri_core_id].data_in.put(Message(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                elif self.model == "packet":
+                                    self.cores[tri_core_id].data_in.put_hop(Packet(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
                             else:
-                                self.data_in.put(Message(ins=self.program[task_id], data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                ins = copy.deepcopy(self.program[task_id])
+                                ins.index = self.program[task_id].trigger_index[id]
+                                if self.model == "basic":
+                                    self.data_in.put(Message(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                elif self.model == "packet":
+                                    self.data_in.put_hop(Packet(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
                             # logger.debug(f"PE{pur_sche.id} insert {tri_task_id} into waiting_queue")
                             # pur_sche.tag[tri_task_id] = False
                             # pur_sche.waiting_queue.put(tri_task_id)
@@ -702,7 +712,7 @@ def print_event_queue(env):
 
 
 class Core:
-    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int, arch, link1, link2, stage=None):
+    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int, arch, link1, link2, model, stage=None):
         self.env = env
         self.type = config.type
         self.program = program
@@ -711,6 +721,7 @@ class Core:
         self.flow_out = []
         self.flow_in = []
         self.stage = stage
+        self.model = model
 
         self.bound_with_router(link2, link1)
 
@@ -722,7 +733,7 @@ class Core:
         self.end_time = 0
 
         # self.scheduler = GraphScheduler(self.program, self.spm_manager)
-        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id, self.env, arch, self.data_in, stage)
+        self.scheduler = TableScheduler(self.program, self.spm_manager, config.blk_size, self.id, self.env, arch, self.data_in, model, stage)
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
@@ -753,6 +764,10 @@ class Core:
 
     def receive_data(self, msg):
         logger.debug(f"in function receive_data()")
+
+        if self.model == "packet":
+            msg = Message(ins=msg.ins, src=msg.src, dst=msg.dst, data=msg.data)
+
         task_id = self.scheduler.index2taskid[msg.data.index]
         # 接收到的数据在block内才进行更新，否则放回data_in
         if task_id in range(self.scheduler.start, self.scheduler.end):
@@ -778,13 +793,14 @@ class Core:
         self.event2task = {}
 
         while True:
+            # print(f"PE{self.id}, time:{self.env.now}")
             while self.recv_queue:
                 top = self.recv_queue[0]
                 if top.data.index in range(self.scheduler.start, self.scheduler.end):      
                     msg = heapq.heappop(self.recv_queue)
 
                     # task_id转换回index
-                    msg.data.index = self.scheduler.taskid2index[msg.ins.index]
+                    msg.data.index = self.scheduler.taskid2index[msg.data.index]
                     logger.debug(f"PE{self.id} pop data{msg.ins.index} from recv_queue")
 
                     yield self.env.process(self.receive_data(msg))
@@ -799,11 +815,21 @@ class Core:
                     #     print(f"task3969 is triggered")
 
                     instruction = self.program[self.scheduler.index2taskid[task.index]]
-                    task_event = self.env.process(task.run(self, instruction))
+                    task_event = None
+
+                    if task.opcode == "Send":
+                        if self.model == "basic":
+                            task_event = self.env.process(task.run(self, instruction))
+                        elif self.model == "packet":
+                            task_event = self.env.process(task.run_hop(self, instruction))
+                    else:
+                        task_event = self.env.process(task.run(self, instruction))
                     
                     logger.info(f"Time {self.env.now:.2f}: PE{self.id} add a {type(task)} task(id:{task.index}, layer:{self.scheduler.program[self.scheduler.index2taskid[task.index]].layer_id}) into running queue.")
-                    self.running_event.append(task_event)
-                    self.event2task[task_event] = task
+                    
+                    if task_event:
+                        self.running_event.append(task_event)
+                        self.event2task[task_event] = task
 
             if self.id == 12:
                 logger.debug(f"Before AnyOf yield")
@@ -830,6 +856,9 @@ class Core:
                     #     print(f"task3969 is triggered")
 
                     # 记录数据到达的时间（可能未及时接收）
+                    # if msg.ins.index != msg.data.index:
+                    #     print(f"{msg.ins.index} vs {msg.data.index}")
+
                     task_id = self.scheduler.index2taskid[msg.ins.index]
 
                     # RECV 或者包装后的 READ
@@ -851,7 +880,12 @@ class Core:
                     # logger.debug(f"received data is {msg.ins}")
 
                     logger.debug(f"function call: receive_data()")
-                    yield self.env.process(self.receive_data(msg))
+
+                    if self.model == "basic":
+                        yield self.env.process(self.receive_data(msg))
+                    elif self.model == "packet":
+                        if msg.end:
+                            yield self.env.process(self.receive_data(msg))
 
                     if self.data_in.len() > 0:
                         if self.scheduler.index2taskid[self.data_in.store.items[0].data.index] not in range(self.scheduler.start, self.scheduler.end):
@@ -865,7 +899,11 @@ class Core:
                         logger.info(f"received data is {msg.ins}")
                         
                         logger.debug(f"function call: receive_data()")
-                        yield self.env.process(self.receive_data(msg))
+                        if self.model == "basic":
+                            yield self.env.process(self.receive_data(msg))
+                        elif self.model == "packet":
+                            if msg.end:
+                                yield self.env.process(self.receive_data(msg))
 
                 #注意，单纯put的msg一定是send，这里还有msg是其它的
                 for event in self.running_event:

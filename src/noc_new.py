@@ -76,7 +76,7 @@ class Link:
     # packet routing 需要记录哪些信息？
     def calc_latency_hop(self, packet):
         # 记录每个hop的数据量太大了
-        yield self.linkentry.execute("SEND"+str(packet.ins.index), ceil(16*self.per_word_transfer_time), packet.ins, attributes=packet.dst)
+        yield self.linkentry.execute("SEND"+str(packet.ins.index), 16*self.per_word_transfer_time, packet.ins, attributes=packet.dst)
         self.store.put(packet)
     
     def put_hop(self, packet):
@@ -99,7 +99,7 @@ class Link:
         self.delay_factor /= times
 
 class Router:
-    def __init__(self, env, config: RouterConfig, id: int, x: int, y:int):
+    def __init__(self, env, config: RouterConfig, id: int, x: int, y:int, model: str):
         self.env = env
         self.x = x
         self.y = y
@@ -110,6 +110,7 @@ class Router:
 
         # node latency
         self.per_hop_time = 1
+        self.model = model
 
         self.core_in, self.core_out = None, None
         self.north_in, self.north_out = None, None
@@ -239,8 +240,10 @@ class Router:
                     
                     if event.triggered:
                         msg = event.value
-                        self.env.process(self.routing(msg))
-                        # self.env.process(self.routing_hop(msg))
+                        if self.model == "basic":
+                            self.env.process(self.routing(msg))
+                        elif self.model == "packet":
+                            self.env.process(self.routing_hop(msg))
                         
                         channel = None
                         match all_channels[id][1]:
@@ -252,8 +255,10 @@ class Router:
                         
                         while channel.len() > 0:
                             msg = yield channel.get()
-                            self.env.process(self.routing(msg))
-                            # self.env.process(self.routing_hop(msg))
+                            if self.model == "basic":
+                                self.env.process(self.routing(msg))
+                            elif self.model == "packet":
+                                self.env.process(self.routing_hop(msg))
 
     #模拟其它流量造成的网络拥堵
     def trans(self,start_time,link,flow):
@@ -307,7 +312,7 @@ class Router:
 
 
 class NoC:
-    def __init__(self, env, config: NoCConfig):
+    def __init__(self, env, config: NoCConfig, model: str):
         self.env = env
         self.x = config.x
         self.y = config.y
@@ -316,11 +321,13 @@ class NoC:
         self.r2r_links = []
         self.routers = []
 
+        self.model = model
+
     # connections between routers
     def build_connection(self):
         for id in range(self.x * self.y):
             self.id = id
-            self.routers.append(Router(self.env, self.router_config, id, self.x, self.y))
+            self.routers.append(Router(self.env, self.router_config, id, self.x, self.y, self.model))
 
         for row in range(self.x):
             for col in range(self.y):

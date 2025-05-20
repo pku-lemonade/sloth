@@ -68,7 +68,8 @@ def main():
     print("Finished.")
 
     stage = None
-    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow, workload.name, args.fail, stage)
+    noc_model = args.model
+    arch = Arch(arch_config, [pe.insts for pe in workload.pes], fail_slow, workload.name, args.fail, noc_model, stage)
 
     start_time = time.time()
     result = arch.run()
