@@ -169,6 +169,7 @@ class ComputeTask(Task):
         self.calc_flops()
         ins.record.ready_run_time.append(core.env.now)
         ins.record.pe_id = core.id
+        ins.record.flops = self.flops
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, self.index)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
@@ -181,6 +182,7 @@ class Record(BaseModel):
     mulins: List[int] = []
     # 记录指令执行的PE
     pe_id: int = -1
+    flops: int = 0
 
 class CommunicationTask(Task):
     dst: int
