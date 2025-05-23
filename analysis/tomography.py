@@ -45,6 +45,7 @@ class NoCTomography:
                         end = max(cur_router, neighbor_id)
                         self.links.append((start, end))
                         self.link_to_id[(start, end)] = len(self.links) - 1
+                        # self.link_to_id[(end, start)] = len(self.links) - 1
                         self.link_name.append(f"link_{start}_{end}")
         
         self.link_num = len(self.links)
@@ -143,3 +144,30 @@ class NoCTomography:
             estimated_router_delay[id] = coeffs[id] if id < len(coeffs) else 0.0
 
         return estimated_bandwidth
+    
+    def get_link2_id(self):
+        output_file = 'map.csv'
+        with open(output_file, "w") as file:
+            for key, value in self.link_to_id.items():
+                print(f"{key} {value}", file=file)
+    
+    def get_adjacent_matrix(self):
+        router_num = self.mesh_x * self.mesh_y
+        adj_mat = np.zeros((router_num, router_num))
+
+        for i in range(router_num):
+            for j in range(i):
+                ix, iy = get_pos(i, self.mesh_y)
+                jx, jy = get_pos(j, self.mesh_y)
+
+                if abs(ix-jx) + abs(iy-jy) == 1:
+                    adj_mat[i, j] = 1
+                    adj_mat[j, i] = 1
+
+        output_file= 'adj_mat.csv'
+        np.savetxt(output_file, adj_mat, delimiter=',', fmt='%d')
+    
+    def get_SR_and_EED(self, paths):
+        X, y = self.build_feature_matrix(paths)
+        output_file = 'path.csv'
+        np.savetxt(output_file, np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')

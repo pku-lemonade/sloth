@@ -715,6 +715,10 @@ def link_failslow_detection():
 
     detection_bandwidth = detection.train(paths=detection_paths, model_type='linear', save_file='fail_paras')
 
+    detection.get_adjacent_matrix()
+    detection.get_SR_and_EED(detection_paths)
+    detection.get_link2_id()
+
     threshold = 10
 
     for link in baseline_bandwidth.keys():
