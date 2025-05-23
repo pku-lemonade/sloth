@@ -679,9 +679,9 @@ def link_failslow_detection():
             exe_time = inst_trace.end_time - inst_trace.start_time
             # baseline_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
             if (inst_trace.src_id, inst_trace.dst_id) in baseline_paths_time_mp:
-                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time/inst_trace.data_size*factor
+                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time
             else:
-                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time/inst_trace.data_size*factor
+                baseline_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time
             if (inst_trace.src_id, inst_trace.dst_id) in baseline_paths_num_mp:
                 baseline_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] += 1
             else:
@@ -702,9 +702,9 @@ def link_failslow_detection():
             exe_time = inst_trace.end_time - inst_trace.start_time
             # detection_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
             if (inst_trace.src_id, inst_trace.dst_id) in detection_paths_time_mp:
-                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time/inst_trace.data_size*factor
+                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] += exe_time
             else:
-                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time/inst_trace.data_size*factor
+                detection_paths_time_mp[(inst_trace.src_id, inst_trace.dst_id)] = exe_time
             if (inst_trace.src_id, inst_trace.dst_id) in detection_paths_num_mp:
                 detection_paths_num_mp[(inst_trace.src_id, inst_trace.dst_id)] += 1
             else:

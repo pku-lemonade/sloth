@@ -43,6 +43,9 @@ class NoCTomography:
                         neighbor_id = get_id(nx, ny, mesh_y)
                         start = min(cur_router, neighbor_id)
                         end = max(cur_router, neighbor_id)
+
+                        if ((start, end) in self.link_to_id):
+                            continue
                         self.links.append((start, end))
                         self.link_to_id[(start, end)] = len(self.links) - 1
                         # self.link_to_id[(end, start)] = len(self.links) - 1
