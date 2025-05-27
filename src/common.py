@@ -26,6 +26,7 @@ parser.add_argument("--fail", type=str, default="failslow/normal.json")
 parser.add_argument("--log", type=str, default="logging/simulation.log")
 parser.add_argument("--level", type=str, default="info")
 parser.add_argument("--model", type=str, default="basic")
+parser.add_argument("--times", type=int, default=1)
 
 args = parser.parse_args()
 cfg = CFG(args)

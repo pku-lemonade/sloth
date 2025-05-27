@@ -115,6 +115,8 @@ class Task(BaseModel):
     num_operands: int
     feat_num: int = 0
     para_num: int = 0
+    inference_time: int
+    inference_end: bool = False
     feat: List[Data] = []
     para: List[Data] = []
     inst: "Instruction" = None

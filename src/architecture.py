@@ -109,11 +109,12 @@ monitor1 = partial(monitor1, data)
 monitor2 = partial(monitor2, data)
 
 class Arch:
-    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, model: str, stage=None):
+    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, model: str, inference_time: int, stage=None):
         print("Constructing hardware architecture.")
         self.env = simpy.Environment()
         self.stage = stage
         self.arch = arch
+        self.inference_time = inference_time
         
         self.noc = self.build_noc(arch.noc, model)
         #print(len(self.noc.r2r_links))
@@ -121,7 +122,7 @@ class Arch:
             init_graph(program)
         self.program = program
 
-        self.cores = self.build_cores(arch.core, program, model)
+        self.cores = self.build_cores(arch.core, program, model, inference_time)
 
         self.layer_start = [-1 for _ in range(101)]
         self.layer_end = [-1 for _ in range(101)]
@@ -202,12 +203,12 @@ class Arch:
         for tpu_fail in self.fail_slow.tpu:
             self.env.process(self.tpu_fail(tpu_fail))
 
-    def build_cores(self, config: CoreConfig, program: List[List[Instruction]], model: str) -> List[Core]:
+    def build_cores(self, config: CoreConfig, program: List[List[Instruction]], model: str, inference_time: int) -> List[Core]:
         cores = []
         for id in range(config.x * config.y):
             link1 = Link(self.env, LinkConfig(width=128, delay=1))
             link2 = Link(self.env, LinkConfig(width=128, delay=1))
-            core = Core(self.env, config, program[id], id, self, link1, link2, model, self.stage)
+            core = Core(self.env, config, program[id], id, self, link1, link2, model, inference_time, self.stage)
 
             self.noc.routers[id].bound_with_core(link1, link2)
             cores.append(core)
@@ -217,6 +218,7 @@ class Arch:
 
         for id in range(config.x * config.y):
             cores[id].scheduler.bound_cores(cores)
+            cores[id].core_bound_cores(cores)
 
         return cores
 
@@ -374,9 +376,9 @@ class Arch:
                         print(f"Instruction{inst.index} not executed.", file=file)
                     
                     if inst.inst_type in compute_task:
-                        assert len(inst.record.ready_run_time) > 0
-                        assert len(inst.record.exe_end_time) == 1
-                        assert len(inst.record.exe_start_time) == 1
+                        # assert len(inst.record.ready_run_time) > 0
+                        # assert len(inst.record.exe_end_time) == 1
+                        # assert len(inst.record.exe_start_time) == 1
                         print(f"Instruction{inst.index}: type {inst.inst_type}, layer_id {inst.layer_id}, pe_id {inst.record.pe_id}", file=file)
                         print(f"    ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}, end_time {inst.record.exe_start_time[0]}", file=file)
                         print(f"    operands_time: {inst.record.mulins}", file=file)
@@ -518,7 +520,7 @@ class Arch:
         self.env.run()
 
         for id in range(len(self.cores)):
-            self.end_time = max(self.end_time, self.cores[id].end_time)
+            self.end_time = max(self.end_time, self.cores[id].end_time[0])
             print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
             print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
 
