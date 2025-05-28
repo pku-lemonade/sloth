@@ -209,7 +209,7 @@ class TableScheduler:
         self.id = id
         self.tag = [True for _ in range(len(self.program)*inference_time)]
         self.finish = False
-        self.inst_counter = 0
+        self.task_counter = 0
 
         self.stage = stage
         self.arch = arch
@@ -304,43 +304,39 @@ class TableScheduler:
         self.block_counter = 0
         self.block_ptr += 1
         
-        # tasks包含多次推理的task，取模得到该task对应的原始task_id(即对应program下标)
+        # tasks包含多次推理的task，这里得到的下标是重复后的下标
         self.start = self.block_ptr * self.block_size
-        self.end = min((self.block_ptr + 1) * self.block_size, len(self.program))
+        self.end = min((self.block_ptr + 1) * self.block_size, len(self.tasks))
 
-        for id, inst in enumerate(self.program[self.start:self.end], start=self.start):
-            # 当前指令的等待时间
-            if inst.start_time != -1:
-                delta_time = self.env.now-inst.start_time
+        # 改为使用tasks来进行块更新
+        for id, task in enumerate(self.tasks[self.start:self.end], start=self.start):
+            # 获取当前task对应的指令id
+            inst_id = id % len(self.program)
+            # 当前指令的等待时间（目前没啥用）
+            if self.program[inst_id].start_time != -1:
+                delta_time = self.env.now-self.program[inst_id].start_time
                 self.back_add(delta_time)
 
-            # print("-"*30)
-            # print(f"inst_id is {id}, type is {inst.inst_type}")
             logger.debug("-"*30)
-            logger.debug(f"inst_id is {id}, index is {inst.index}, type is {inst.inst_type}")
-            match inst.inst_type:
+            logger.debug(f"inst_id is {id}, index is {self.program[inst_id].index}, type is {self.program[inst_id].inst_type}")
+            
+            match self.program[inst_id].inst_type:
                 case TaskType.SEND:
-                    if self.tasks[id].feat:
-                        # print(f"insert {id} into waiting queue")
+                    if task.feat:
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
                 case TaskType.WRITE:
-                    if self.tasks[id].feat:
-                        # print(f"insert {id} into waiting queue")
+                    if task.feat:
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
                             self.waiting_queue.put(id)
                 # 只有当前block的RECV才会接收，应该不需要这里的逻辑
                 case TaskType.RECV:
-                    if self.tasks[id].feat:
-                        # if self.tag[id]:
-                        #     self.tag[id] = False
-                        #     logger.debug(f"self.counter += 1")
-                        #     self.block_counter += 1
-                        logger.debug(f"data{inst.index} has already arrived")
+                    if task.feat:
+                        logger.debug(f"data{self.program[inst_id].index} has already arrived")
                 case TaskType.STAY:
                     if self.tag[id]:
                         self.tag[id] = False
@@ -357,11 +353,11 @@ class TableScheduler:
                     #         self.tag[id] = False
                     #         logger.debug(f"insert {id} into waiting queue")
                     #         self.waiting_queue.put(id)
-                    para = len(self.tasks[id].para)
-                    feat = len(self.tasks[id].feat)
-                    logger.debug(f"para is {para}/{self.tasks[id].para_num}, feat is {feat}/{self.tasks[id].feat_num}")
+                    para = len(task.para)
+                    feat = len(task.feat)
+                    logger.debug(f"para is {para}/{task.para_num}, feat is {feat}/{task.feat_num}")
                     # 输入特征可能分多次，需要全部读进才能计算
-                    if para == self.tasks[id].para_num and feat == self.tasks[id].feat_num:
+                    if para == task.para_num and feat == task.feat_num:
                         if self.tag[id]:
                             self.tag[id] = False
                             logger.debug(f"insert {id} into waiting queue")
@@ -371,17 +367,21 @@ class TableScheduler:
             self.task_block_update()
 
     # 利用接收到的数据更新（RECV指令）
+    # 多次推理场景下data的index是映射后的
     def data_update(self, data):
         logger.debug(f"updating data{data.index}")
         # 将数据的id转换成core内部task id
-        self.inst_counter += 1
+        self.task_counter += 1
         task_id = self.index2taskid[data.index]
 
         logger.debug(f"current block_ptr is {self.block_ptr}")
         logger.debug(f"task block_ptr is {task_id//self.block_size}")
 
+        # 下面的记录针对单次推理，尚不支持多次推理记录
         # 记录每层开始时间
-        layer_id = self.program[task_id].layer_id
+        inst_id = task_id % len(self.program)
+        layer_id = self.program[inst_id].layer_id
+
         if self.arch.layer_start[layer_id] == -1:
             self.arch.layer_start[layer_id] = self.env.now
         # 记录每层结束时间
@@ -397,16 +397,20 @@ class TableScheduler:
 
         # 记录RECV指令的执行信息
         self.tasks[task_id].feat.append(data)
-        self.program[task_id].record.exe_end_time.append(self.env.now)
+        self.program[inst_id].record.exe_end_time.append(self.env.now)
 
         # 更新被触发的指令
-        for idx in range(len(self.program[task_id].trigger_index)):
-            logger.debug(f"data{data.index} triggered {self.program[task_id].trigger_index[idx]}")
-            tri_task_id = self.index2taskid[self.program[task_id].trigger_index[idx]]
+        for idx in range(len(self.program[inst_id].trigger_index)):
+            inference_time = task_id // len(self.program)
+            true_trigger_index = self.program[inst_id].trigger_index[idx] + inference_time * 100000
+
+            logger.debug(f"data{data.index} triggered {true_trigger_index}")
+            tri_task_id = self.index2taskid[true_trigger_index]
+            tri_inst_id = tri_task_id % len(self.program)
 
             # 更新被触发指令的操作数信息
-            self.program[tri_task_id].record.mulins.append(self.env.now)
-            if self.program[task_id].data_type == DataType.FEAT:
+            self.program[tri_inst_id].record.mulins.append(self.env.now)
+            if self.program[inst_id].data_type == DataType.FEAT:
                 self.tasks[tri_task_id].feat.append(data)
             else:
                 self.tasks[tri_task_id].para.append(data)
@@ -428,14 +432,14 @@ class TableScheduler:
                         self.waiting_queue.put(tri_task_id)
                         # 暂时没用到
                         if self.stage=="pre_analysis":
-                            self.program[task_id].next.append(self.program[tri_task_id])
+                            self.program[inst_id].next.append(self.program[tri_inst_id])
                 
                 # 暂时没用到
                 if self.stage == "post_analysis":
                     assert self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len >= 0
                     if self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len == 1:
                         # 关键路径
-                        self.program[tri_task_id].waitinglast = True
+                        self.program[tri_inst_id].waitinglast = True
 
             # block间指令更新
             else:
@@ -443,19 +447,23 @@ class TableScheduler:
                 feat_len = len(self.tasks[tri_task_id].feat)
                 # block外的指令不会放入waiting_queue，但需要记录就绪时间
                 if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
-                    self.program[tri_task_id].start_time = self.env.now
+                    self.program[tri_inst_id].start_time = self.env.now
 
-    def task_update(self, inst_index):
+    # 输入改为task
+    def task_update(self, task):
+        inst_index = task.index + task.inference_time * 100000
         logger.debug(f"updating task{inst_index}")
         # 将指令的index转换成core内部task id
-        self.inst_counter += 1
+        self.task_counter += 1
         task_id = self.index2taskid[inst_index]
 
         logger.debug(f"current block_ptr is {self.block_ptr}")
         logger.debug(f"task block_ptr is {task_id//self.block_size}")
 
         # 记录每层开始时间
-        layer_id = self.program[task_id].layer_id
+        inst_id = task_id % len(self.program)
+        layer_id = self.program[inst_id].layer_id
+
         if self.arch.layer_start[layer_id] == -1:
             self.arch.layer_start[layer_id] = self.env.now
 
@@ -468,26 +476,28 @@ class TableScheduler:
             self.task_block_update()
 
         # 处理WRITE指令
-        if self.program[task_id].inst_type == TaskType.WRITE:
+        if self.program[inst_id].inst_type == TaskType.WRITE:
             # WRITE指令存在触发关系
-            if len(self.program[task_id].trigger_index) != 0:
-                for id in range(len(self.program[task_id].trigger_index)):
+            if len(self.program[inst_id].trigger_index) != 0:
+                for id in range(len(self.program[inst_id].trigger_index)):
+                    true_trigger_index = self.program[inst_id].trigger_index[id] + task.inference_time * 100000
 
-                    tri_core_id = self.program[task_id].trigger_core_id[id]
+                    tri_core_id = self.program[inst_id].trigger_core_id[id]
                     pur_sche = self.cores[tri_core_id].scheduler if tri_core_id != self.id else self
-                    tri_task_id = pur_sche.index2taskid[self.program[task_id].trigger_index[id]]
+                    tri_task_id = pur_sche.index2taskid[true_trigger_index]
 
-                    logger.debug(f"task{inst_index}[core{self.id}] triggered task{self.program[task_id].trigger_index[id]}[core{tri_core_id}]")
+                    logger.debug(f"task{inst_index}[core{self.id}] triggered task{true_trigger_index}[core{tri_core_id}]")
 
                     # WRITE只会触发READ，操作数占位即可
-                    match self.program[task_id].data_type:
+                    match self.program[inst_id].data_type:
                         case DataType.PARA:
                             pur_sche.tasks[tri_task_id].para.append(Data())
                         case DataType.FEAT:
                             pur_sche.tasks[tri_task_id].feat.append(Data())
                     
+                    tri_inst_id = tri_task_id % len(pur_sche.program)
                     # 维护跨核心更新的record
-                    pur_sche.program[tri_task_id].record.mulins.append(self.env.now)
+                    pur_sche.program[tri_inst_id].record.mulins.append(self.env.now)
                     
                     # 不在当前block没有影响
                     if tri_task_id // pur_sche.block_size != pur_sche.block_ptr:
@@ -507,37 +517,41 @@ class TableScheduler:
 
                             if tri_core_id != self.id:
                                 # 为了支持packet routing
-                                ins = copy.deepcopy(self.program[task_id])
-                                ins.index = self.program[task_id].trigger_index[id]
+                                ins = copy.deepcopy(self.program[inst_id])
+                                ins.index = true_trigger_index
                                 if self.model == "basic":
-                                    self.cores[tri_core_id].data_in.put(Message(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                    self.cores[tri_core_id].data_in.put(Message(ins=ins, data=Data(index=true_trigger_index, tensor_slice=self.program[inst_id].tensor_slice), dst=tri_core_id, src=self.id))
                                 elif self.model == "packet":
-                                    self.cores[tri_core_id].data_in.put_hop(Packet(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
+                                    self.cores[tri_core_id].data_in.put_hop(Packet(ins=ins, data=Data(index=true_trigger_index, tensor_slice=self.program[inst_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
                             else:
-                                ins = copy.deepcopy(self.program[task_id])
-                                ins.index = self.program[task_id].trigger_index[id]
+                                ins = copy.deepcopy(self.program[inst_id])
+                                ins.index = true_trigger_index
                                 if self.model == "basic":
-                                    self.data_in.put(Message(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id))
+                                    self.data_in.put(Message(ins=ins, data=Data(index=true_trigger_index, tensor_slice=self.program[inst_id].tensor_slice), dst=tri_core_id, src=self.id))
                                 elif self.model == "packet":
-                                    self.data_in.put_hop(Packet(ins=ins, data=Data(index=self.program[task_id].trigger_index[id], tensor_slice=self.program[task_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
+                                    self.data_in.put_hop(Packet(ins=ins, data=Data(index=true_trigger_index, tensor_slice=self.program[inst_id].tensor_slice), dst=tri_core_id, src=self.id, end=True))
                             # logger.debug(f"PE{pur_sche.id} insert {tri_task_id} into waiting_queue")
                             # pur_sche.tag[tri_task_id] = False
                             # pur_sche.waiting_queue.put(tri_task_id)
 
         # 处理其他指令
         else:
-            for idx in range(len(self.program[task_id].trigger_index)):
-                logger.debug(f"task{inst_index} triggered {self.program[task_id].trigger_index[idx]}")
-                tri_task_id = self.index2taskid[self.program[task_id].trigger_index[idx]]
+            for idx in range(len(self.program[inst_id].trigger_index)):
+                true_trigger_index = self.program[inst_id].trigger_index[idx] + task.inference_time * 100000
+
+                logger.debug(f"task{inst_index} triggered {true_trigger_index}")
+                tri_task_id = self.index2taskid[true_trigger_index]
+
+                tri_inst_id = tri_task_id % len(self.program)
                 # 记录触发指令的一个触发时间
-                self.program[tri_task_id].record.mulins.append(self.env.now)
+                self.program[tri_inst_id].record.mulins.append(self.env.now)
 
                 # 计算flops时需要slice
-                match self.program[task_id].data_type:
+                match self.program[inst_id].data_type:
                     case DataType.PARA:
-                        self.tasks[tri_task_id].para.append(Data(tensor_slice=self.program[task_id].tensor_slice))
+                        self.tasks[tri_task_id].para.append(Data(tensor_slice=self.program[inst_id].tensor_slice))
                     case DataType.FEAT:
-                        self.tasks[tri_task_id].feat.append(Data(tensor_slice=self.program[task_id].tensor_slice))
+                        self.tasks[tri_task_id].feat.append(Data(tensor_slice=self.program[inst_id].tensor_slice))
 
                 # 更新被触发的指令
                 logger.debug(f"triggered block_ptr is {tri_task_id//self.block_size}")
@@ -556,14 +570,14 @@ class TableScheduler:
                             self.waiting_queue.put(tri_task_id)
                             # 暂时没用到
                             if self.stage=="pre_analysis":
-                                self.program[task_id].next.append(self.program[tri_task_id])
+                                self.program[inst_id].next.append(self.program[tri_inst_id])
                     
                     # 暂时没用到
                     if self.stage == "post_analysis":
                         assert self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len >= 0
                         if self.tasks[tri_task_id].feat_num+self.tasks[tri_task_id].para_num-para_len-feat_len == 1:
                             # 关键路径
-                            self.program[tri_task_id].waitinglast = True
+                            self.program[tri_inst_id].waitinglast = True
 
                 # block间指令更新
                 else:
@@ -571,11 +585,11 @@ class TableScheduler:
                     feat_len = len(self.tasks[tri_task_id].feat)
                     # block外的指令不会放入waiting_queue，但需要记录就绪时间
                     if feat_len == self.tasks[tri_task_id].feat_num and para_len == self.tasks[tri_task_id].para_num:
-                        self.program[tri_task_id].start_time = self.env.now
+                        self.program[tri_inst_id].start_time = self.env.now
     
     # 原来的二合一update，已弃用
     def update(self, data):
-        self.inst_counter += 1
+        self.task_counter += 1
         task_id = self.index2taskid[data.index]
         logger.debug(f"updating {data.index}")
         logger.debug(f"{task_id} // {self.block_size} == {self.block_ptr}")
@@ -791,15 +805,17 @@ class Core:
             msg = Message(ins=msg.ins, src=msg.src, dst=msg.dst, data=msg.data)
 
         task_id = self.scheduler.index2taskid[msg.data.index]
+        inst_id = task_id % len(self.program)
+
         # 接收到的数据在block内才进行更新，否则放回data_in
         if task_id in range(self.scheduler.start, self.scheduler.end):
             slice = Slice(tensor_slice=msg.data.tensor_slice)
 
-            self.program[task_id].record.exe_start_time.append(self.env.now)
+            self.program[inst_id].record.exe_start_time.append(self.env.now)
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
             # RECV完成
-            self.program[task_id].record.exe_end_time.append(self.env.now)
+            self.program[inst_id].record.exe_end_time.append(self.env.now)
             self.scheduler.data_update(msg.data)
         else:
             logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
@@ -882,10 +898,12 @@ class Core:
                     #     print(f"{msg.ins.index} vs {msg.data.index}")
 
                     task_id = self.scheduler.index2taskid[msg.ins.index]
+                    inst_id = task_id % len(self.program)
 
                     # RECV 或者包装后的 READ
-                    self.program[task_id].record.ready_run_time.append(self.env.now)
-                    self.program[task_id].record.pe_id = self.id
+                    self.program[inst_id].record.ready_run_time.append(self.env.now)
+                    # 多次推理每条指令执行的core也不会变
+                    self.program[inst_id].record.pe_id = self.id
 
                     # 暂时没用到
                     if self.stage == "post_analysis":
@@ -896,7 +914,7 @@ class Core:
 
                     # 记录数据接收信息
                     if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
-                        self.flow_in.append((msg.ins.index, self.program[self.scheduler.index2taskid[msg.ins.index]].inst_type, "recv", self.env.now))
+                        self.flow_in.append((msg.ins.index, self.program[inst_id].inst_type, "recv", self.env.now))
 
                     logger.debug(f"Time {self.env.now:.2f}: PE{self.id} receive data{msg.ins.index}")
                     # logger.debug(f"received data is {msg.ins}")
@@ -932,6 +950,9 @@ class Core:
                     if event.triggered:
                         # updated = True
                         task = self.event2task[event]
+                        true_inst_index = task.index + task.inference_time * 100000
+                        task_id = self.scheduler.index2taskid[true_inst_index]
+                        inst_id = task_id % len(self.program)
 
                         # print(f"PE{self.id} free: {task.input_size()}, [{self.spm_manager.capacity}/{self.spm_manager.size}]")
 
@@ -939,10 +960,10 @@ class Core:
                         # 这个也不可能是RECV，我需要找到其中的SEND
                         # print(self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type)
                         if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
-                            if self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type == TaskType.SEND:
-                                self.flow_out.append((self.event2task[event].index, self.program[self.scheduler.index2taskid[self.event2task[event].index]].inst_type,"send",self.env.now))
+                            if self.program[inst_id].inst_type == TaskType.SEND:
+                                self.flow_out.append((self.event2task[event].index, self.program[inst.id].inst_type,"send",self.env.now))
                         # 所有更新都经过update
-                        self.scheduler.task_update(self.event2task[event].index)
+                        self.scheduler.task_update(self.event2task[event])
                         
                         # 这个是仿真时间的瓶颈,大致用这个估算规模
                         if self.stage == "post_analysis":
@@ -952,22 +973,12 @@ class Core:
                         self.running_event.remove(event)
 
             # 在多次 inference 场景下，该条件表示单次 inference 完成
-            if self.scheduler.inst_counter == len(self.program):
+            if self.scheduler.task_counter == len(self.scheduler.tasks):
                 # 记录当次 inference 的结束时间
                 self.end_time.append(self.env.now)
                 self.cur_inference_time += 1
                 
-                if self.cur_inference_time < self.inference_time:
-                    assert(self.running_event==[])
-                    assert(self.running_send==[])
-                    self.event2task.clear()
-                    # 重新初始化TableScheduler，开始下一次 inference
-                    self.scheduler = TableScheduler(self.program, self.spm_manager, self.config.blk_size, self.id, self.env, self.arch, self.data_in, self.model, self.cur_inference_time, self.stage)
-                    self.scheduler.bound_cores(self.cores)
-                    print(f"Time {self.env.now:.2f}: PE{self.id} finished processing the instructions of {self.cur_inference_time} times inference.")
-                    logger.info(f"Time {self.env.now:.2f}: PE{self.id} start processing {self.cur_inference_time+1} times inference.")
-                else:
-                    print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
+                print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
 
 
 #maybe concurrent 

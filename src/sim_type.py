@@ -351,7 +351,9 @@ class Send(CommunicationTask):
         ins.record.ready_run_time.append(core.env.now)
         # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         ins.record.exe_start_time.append(core.env.now)
-        yield core.data_out.put(Message(data=Data(index=self.index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
+
+        true_index = self.index + self.inference_time * 100000
+        yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
         ins.record.exe_end_time.append(core.env.now)
 
     def run_hop(self, core, ins):
@@ -365,13 +367,14 @@ class Send(CommunicationTask):
         
         # 把SEND指令解释为若干packet
         packet_num = ceil(Slice(tensor_slice=self.tensor_slice).size(), 16)
+        true_index = self.index + self.inference_time * 100000
         for index in range(packet_num):
             if index == 0:
-                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, start=True))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, start=True))
             elif index == packet_num-1:
-                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, end=True))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, end=True))
             else:
-                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=self.index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst))
+                yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst))
 
         ins.record.exe_end_time.append(core.env.now)
 

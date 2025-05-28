@@ -521,7 +521,7 @@ class Arch:
 
         for id in range(len(self.cores)):
             self.end_time = max(self.end_time, self.cores[id].end_time[0])
-            print(f"PE{id} processed [{self.cores[id].scheduler.inst_counter}/{len(self.cores[id].program)}] instructions.")
+            print(f"PE{id} processed [{self.cores[id].scheduler.task_counter}/{len(self.cores[id].scheduler.tasks)}] instructions.")
             print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
 
         print("Simulation finished.")
