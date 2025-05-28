@@ -662,11 +662,51 @@ def layer_group_analyzer(filename: str) -> LayerGroupsInfo:
 # normalized = cycle * factor / data-size = factor / bandwidth1 + factor / bandwidth12 + ...
 # result = factor / normalized
 
+def get_inference_data(inference_time):
+    origin_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
+    
+    origin_paths = [[] for _ in range(inference_time)]
+    origin_paths_time_mp = [{} for _ in range(inference_time)]
+    origin_paths_num_mp = [{} for _ in range(inference_time)]
+
+    for inst_trace in origin_trace.trace:
+        if inst_trace.instruction_type == TaskType.RECV:
+            exe_time = inst_trace.end_time - inst_trace.start_time
+            # origin_paths.append((inst_trace.src_id, inst_trace.dst_id, exe_time/inst_trace.data_size*factor))
+            if (inst_trace.src_id, inst_trace.dst_id) in origin_paths_time_mp:
+                origin_paths_time_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] += exe_time
+            else:
+                origin_paths_time_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] = exe_time
+            if (inst_trace.src_id, inst_trace.dst_id) in origin_paths_num_mp:
+                origin_paths_num_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] += 1
+            else:
+                origin_paths_num_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] = 1
+
+    inference_path = None
+
+    for time in range(inference_time):
+        model = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor=1)
+
+        for key in origin_paths_time_mp[time].keys():
+            origin_paths[time].append((key[0], key[1], origin_paths_time_mp[time][key]/origin_paths_num_mp[time][key]))
+
+        X, y = model.build_feature_matrix(origin_paths[time])
+        cur_path = np.concatenate([X, y.reshape(-1, 1), ], axis=1)
+        time_tag = np.full((cur_path.shape[0], 1), time)
+        cur_path = np.concatenate([time_tag, cur_path], axis=1)
+
+        if inference_path is None:
+            inference_path = cur_path
+        else:
+            inference_path = np.concatenate([inference_path, cur_path], axis=0)
+
+    np.savetxt("inference.csv", inference_path, delimiter=',', fmt='%f')
+
 def link_failslow_detection():
     factor = 100
     arch_configs = config_analyzer("arch/gemini4_4.json")
     baseline_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
-    detection_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
+    detection_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
     
     # 建立基准
     baseline = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor)
@@ -735,8 +775,8 @@ def link_failslow_detection():
 if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
-    comm_trace = comm_analyzer("data/darknet19/router/comm_trace.json")
-    comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
+    comm_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
+    comp_trace = comp_analyzer("data/darknet19/normal/comp_trace.json")
     
     layer_group_info = layer_group_analyzer("data/darknet19/normal/layer_info.json")
 
@@ -836,6 +876,8 @@ if __name__ == '__main__':
                 layer_link_data[tag] += link_bandwidth_data.data_size
 
     link_failslow_detection()
+
+    get_inference_data(2)
 
     # comm_graph.debug()
 

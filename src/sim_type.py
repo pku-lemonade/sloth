@@ -126,9 +126,9 @@ class Task(BaseModel):
 
 class Nop(Task):
     def run(self, core, ins):
-        ins.record.exe_start_time.append(core.env.now)
+        ins.record.exe_start_time.append((core.env.now, self.inference_time))
         yield core.env.timeout(0, self.index)
-        ins.record.exe_end_time.append(core.env.now)
+        ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
 class IOTask(Task):
     num_operands: int = 0
@@ -140,10 +140,10 @@ class IOTask(Task):
         raise NotImplementedError(f"{self.opcode} 类未实现 output_size 方法")
 
     def run(self, core, ins):
-        ins.record.ready_run_time.append(core.env.now)
+        ins.record.ready_run_time.append((core.env.now, self.inference_time))
         ins.record.pe_id = core.id
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins, self.index)
+        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
 
 class ComputeTask(Task):
@@ -169,19 +169,20 @@ class ComputeTask(Task):
     
     def run(self, core, ins):
         self.calc_flops()
-        ins.record.ready_run_time.append(core.env.now)
+        ins.record.ready_run_time.append((core.env.now, self.inference_time))
         ins.record.pe_id = core.id
         ins.record.flops = self.flops
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, self.index)
+        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
     
 class Record(BaseModel):
-    exe_start_time: List[int] = []
-    exe_end_time: List[int] = []
-    ready_run_time: List[int] = []
+    # 记录的格式是 (时间，推理次数)
+    exe_start_time: List[tuple[int, int]] = []
+    exe_end_time: List[tuple[int, int]] = []
+    ready_run_time: List[tuple[int, int]] = []
     # 记录多个指令的唤醒
-    mulins: List[int] = []
+    mulins: List[tuple[int, int]] = []
     # 记录指令执行的PE
     pe_id: int = -1
     flops: int = 0
@@ -348,18 +349,18 @@ class Send(CommunicationTask):
     def run(self, core, ins):
         # 分析时send/recv合并处理，因为index一致
         ins.record.pe_id = core.id
-        ins.record.ready_run_time.append(core.env.now)
+        ins.record.ready_run_time.append((core.env.now, self.inference_time))
         # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        ins.record.exe_start_time.append(core.env.now)
+        ins.record.exe_start_time.append((core.env.now, self.inference_time))
 
         true_index = self.index + self.inference_time * 100000
         yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
-        ins.record.exe_end_time.append(core.env.now)
+        ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
     def run_hop(self, core, ins):
         ins.record.pe_id = core.id
-        ins.record.ready_run_time.append(core.env.now)
-        ins.record.exe_start_time.append(core.env.now)
+        ins.record.ready_run_time.append((core.env.now, self.inference_time))
+        ins.record.exe_start_time.append((core.env.now, self.inference_time))
         # 计算冗余信息
         # packet 大小 16b
         startup_time = 5
@@ -376,7 +377,7 @@ class Send(CommunicationTask):
             else:
                 yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst))
 
-        ins.record.exe_end_time.append(core.env.now)
+        ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
     def input_size(self):
         return 0
@@ -390,7 +391,7 @@ class Recv(CommunicationTask):
     src: int = -1
     def run(self, core, ins):
         ins.record.pe_id = core.id
-        # ins.record.exe_end_time.append(core.env.now)
+        # ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
     def input_size(self):
         return 0

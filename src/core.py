@@ -373,6 +373,7 @@ class TableScheduler:
         # 将数据的id转换成core内部task id
         self.task_counter += 1
         task_id = self.index2taskid[data.index]
+        inference_time = task_id // len(self.program)
 
         logger.debug(f"current block_ptr is {self.block_ptr}")
         logger.debug(f"task block_ptr is {task_id//self.block_size}")
@@ -397,11 +398,10 @@ class TableScheduler:
 
         # 记录RECV指令的执行信息
         self.tasks[task_id].feat.append(data)
-        self.program[inst_id].record.exe_end_time.append(self.env.now)
+        self.program[inst_id].record.exe_end_time.append((self.env.now, inference_time))
 
         # 更新被触发的指令
         for idx in range(len(self.program[inst_id].trigger_index)):
-            inference_time = task_id // len(self.program)
             true_trigger_index = self.program[inst_id].trigger_index[idx] + inference_time * 100000
 
             logger.debug(f"data{data.index} triggered {true_trigger_index}")
@@ -409,7 +409,7 @@ class TableScheduler:
             tri_inst_id = tri_task_id % len(self.program)
 
             # 更新被触发指令的操作数信息
-            self.program[tri_inst_id].record.mulins.append(self.env.now)
+            self.program[tri_inst_id].record.mulins.append((self.env.now, inference_time))
             if self.program[inst_id].data_type == DataType.FEAT:
                 self.tasks[tri_task_id].feat.append(data)
             else:
@@ -456,6 +456,7 @@ class TableScheduler:
         # 将指令的index转换成core内部task id
         self.task_counter += 1
         task_id = self.index2taskid[inst_index]
+        inference_time = task_id // len(self.program)
 
         logger.debug(f"current block_ptr is {self.block_ptr}")
         logger.debug(f"task block_ptr is {task_id//self.block_size}")
@@ -497,7 +498,7 @@ class TableScheduler:
                     
                     tri_inst_id = tri_task_id % len(pur_sche.program)
                     # 维护跨核心更新的record
-                    pur_sche.program[tri_inst_id].record.mulins.append(self.env.now)
+                    pur_sche.program[tri_inst_id].record.mulins.append((self.env.now, inference_time))
                     
                     # 不在当前block没有影响
                     if tri_task_id // pur_sche.block_size != pur_sche.block_ptr:
@@ -544,7 +545,7 @@ class TableScheduler:
 
                 tri_inst_id = tri_task_id % len(self.program)
                 # 记录触发指令的一个触发时间
-                self.program[tri_inst_id].record.mulins.append(self.env.now)
+                self.program[tri_inst_id].record.mulins.append((self.env.now, inference_time))
 
                 # 计算flops时需要slice
                 match self.program[inst_id].data_type:
@@ -806,16 +807,17 @@ class Core:
 
         task_id = self.scheduler.index2taskid[msg.data.index]
         inst_id = task_id % len(self.program)
+        inference_time = task_id // len(self.program)
 
         # 接收到的数据在block内才进行更新，否则放回data_in
         if task_id in range(self.scheduler.start, self.scheduler.end):
             slice = Slice(tensor_slice=msg.data.tensor_slice)
 
-            self.program[inst_id].record.exe_start_time.append(self.env.now)
+            self.program[inst_id].record.exe_start_time.append((self.env.now, inference_time))
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
             # RECV完成
-            self.program[inst_id].record.exe_end_time.append(self.env.now)
+            self.program[inst_id].record.exe_end_time.append((self.env.now, inference_time))
             self.scheduler.data_update(msg.data)
         else:
             logger.debug(f"PE{self.id} insert data{msg.data.index} into recv_queue")
@@ -899,9 +901,10 @@ class Core:
 
                     task_id = self.scheduler.index2taskid[msg.ins.index]
                     inst_id = task_id % len(self.program)
+                    inference_time = task_id // len(self.program)
 
                     # RECV 或者包装后的 READ
-                    self.program[inst_id].record.ready_run_time.append(self.env.now)
+                    self.program[inst_id].record.ready_run_time.append((self.env.now, inference_time))
                     # 多次推理每条指令执行的core也不会变
                     self.program[inst_id].record.pe_id = self.id
 

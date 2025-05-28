@@ -18,6 +18,7 @@ class InstTrace(BaseModel):
     # 32bit
     end_time: int
     # 如果存执行时间只需20bit
+    inference_time: int
 
 class CompInst(InstTrace):
     flops: int

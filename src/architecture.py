@@ -371,7 +371,7 @@ class Arch:
             for id, insts in enumerate(self.program):
                 # 每个PE的指令
                 for inst in insts:
-                    # 没有被执行的指令
+                    # 没有被执行的指令（正常应该没有）
                     if inst.record.exe_start_time == []:
                         print(f"Instruction{inst.index} not executed.", file=file)
                     
@@ -379,39 +379,45 @@ class Arch:
                         # assert len(inst.record.ready_run_time) > 0
                         # assert len(inst.record.exe_end_time) == 1
                         # assert len(inst.record.exe_start_time) == 1
-                        print(f"Instruction{inst.index}: type {inst.inst_type}, layer_id {inst.layer_id}, pe_id {inst.record.pe_id}", file=file)
-                        print(f"    ready_time {inst.record.ready_run_time[0]}, exe_time {inst.record.exe_end_time[0]-inst.record.exe_start_time[0]}, end_time {inst.record.exe_start_time[0]}", file=file)
-                        print(f"    operands_time: {inst.record.mulins}", file=file)
                         
-                        compute_trace.append(
-                            CompInst(
-                                instruction_id = inst.index,
-                                instruction_type = inst.inst_type,
-                                layer_id = inst.layer_id,
-                                pe_id = inst.record.pe_id,
-                                start_time = inst.record.exe_start_time[0],
-                                end_time = inst.record.exe_end_time[0],
-                                flops = inst.record.flops
+                        for time in range(self.inference_time):
+                            print(f"Instruction{inst.index}: type {inst.inst_type}, layer_id {inst.layer_id}, pe_id {inst.record.pe_id}", file=file)
+                            print(f"    ready_time {inst.record.ready_run_time[time][0]}, exe_time {inst.record.exe_end_time[time][0]-inst.record.exe_start_time[time][0]}, end_time {inst.record.exe_start_time[time][0]}", file=file)
+                            print(f"    operands_time: {inst.record.mulins}", file=file)
+                            
+                            compute_trace.append(
+                                CompInst(
+                                    instruction_id = inst.index,
+                                    instruction_type = inst.inst_type,
+                                    layer_id = inst.layer_id,
+                                    pe_id = inst.record.pe_id,
+                                    start_time = inst.record.exe_start_time[time][0],
+                                    end_time = inst.record.exe_end_time[time][0],
+                                    flops = inst.record.flops,
+                                    inference_time = time
+                                )
                             )
-                        )
                     elif inst.inst_type in io_task:
                         if len(inst.record.exe_start_time) == 0:
                             print(f"exe_start error:: {inst.index} on PE{id}")
 
-                        comm_trace.append(
-                            CommInst(
-                                instruction_id = inst.index,
-                                instruction_type = inst.inst_type,
-                                # 当前层的id
-                                layer_id = inst.layer_id,
-                                pe_id = inst.record.pe_id,
-                                start_time = inst.record.exe_start_time[0],
-                                end_time = inst.record.exe_end_time[0],
-                                data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                        for time in range(self.inference_time):
+                            comm_trace.append(
+                                CommInst(
+                                    instruction_id = inst.index,
+                                    instruction_type = inst.inst_type,
+                                    # 当前层的id
+                                    layer_id = inst.layer_id,
+                                    pe_id = inst.record.pe_id,
+                                    start_time = inst.record.exe_start_time[time][0],
+                                    end_time = inst.record.exe_end_time[time][0],
+                                    data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                                    inference_time = time
+                                )
                             )
-                        )
                     else:
                         # 按pe遍历指令，可能存在某条RECV在SEND之前被访问到，所以先只处理SEND
+                        # record里的数据是按推理次数排序的, 下标和推理次数一致
                         if inst.inst_type == TaskType.SEND:
                             comm_record[inst.index] = inst.record
                         else:
@@ -419,22 +425,24 @@ class Arch:
             
             # comm_record是send指令信息
             for recv_inst in recv_insts:
-                comm_trace.append(
-                    CommInst(
-                        instruction_id = recv_inst.index,
-                        instruction_type = recv_inst.inst_type,
-                        # 当前层的id
-                        layer_id = recv_inst.layer_id,
-                        pe_id = recv_inst.record.pe_id,
-                        # send完成时间为数据包在noc中开始传输的时间
-                        start_time = comm_record[recv_inst.index].exe_end_time[0],
-                        # recv就绪时间为数据包完成noc传输的时间
-                        end_time = recv_inst.record.ready_run_time[0],
-                        data_size = Slice(tensor_slice=inst.tensor_slice).size(),
-                        src_id = comm_record[recv_inst.index].pe_id,
-                        dst_id = recv_inst.record.pe_id
+                for time in range(self.inference_time):
+                    comm_trace.append(
+                        CommInst(
+                            instruction_id = recv_inst.index,
+                            instruction_type = recv_inst.inst_type,
+                            # 当前层的id
+                            layer_id = recv_inst.layer_id,
+                            pe_id = recv_inst.record.pe_id,
+                            # send完成时间为数据包在noc中开始传输的时间
+                            start_time = comm_record[recv_inst.index].exe_end_time[time][0],
+                            # recv就绪时间为数据包完成noc传输的时间
+                            end_time = recv_inst.record.ready_run_time[time][0],
+                            data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                            src_id = comm_record[recv_inst.index].pe_id,
+                            dst_id = recv_inst.record.pe_id,
+                            inference_time = time
+                        )
                     )
-                )
 
         compute_trace = CompTrace(trace=compute_trace)
         comp_json_file = os.path.join(file_path, "comp_trace.json")
