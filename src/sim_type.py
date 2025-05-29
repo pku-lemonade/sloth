@@ -353,6 +353,10 @@ class Send(CommunicationTask):
         # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         ins.record.exe_start_time.append((core.env.now, self.inference_time))
 
+        # startup time
+        startup_time = 10
+        yield core.env.timeout(startup_time)
+
         true_index = self.index + self.inference_time * 100000
         yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
         ins.record.exe_end_time.append((core.env.now, self.inference_time))

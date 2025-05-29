@@ -32,10 +32,10 @@ class Link:
         self.width = config.width
         self.delay = config.delay
         # 按数据的index排序，需要Message的lt方法
-        self.store = simpy.PriorityStore(env)
+        self.store = simpy.Store(env)
         self.delay_factor = 1
         self.hop = 0
-        self.linkentry = MonitoredResource(env,capacity=1)
+        self.linkentry = MonitoredResource(env)
         self.tag = False
 
         # 用于 packet routing 模型，但用 cycle 数是否合适？
@@ -53,6 +53,7 @@ class Link:
     def calc_latency(self, msg):
         #calc latency:
         slice = Slice(tensor_slice=msg.data.tensor_slice)
+        # transfer time
         transmission_time = ceil(slice.size(), self.width)
         latency = self.delay + transmission_time
         latency = latency * self.delay_factor
@@ -66,8 +67,16 @@ class Link:
 
         self.hop += slice.size()/64
         # 对于数据包,记录了路由路径中每个link的ready_run_time
-        msg.ins.record.ready_run_time.append(self.env.now)
+        # msg.ins.record.ready_run_time.append(self.env.now)
+        # if msg.ins.index == 39875:
+        #     print("-"*30)
+        #     print(f"start time is {self.env.now:.2f}")
+        #     print(f"transmission time is {slice.size()} / {self.width} = {transmission_time}")
+        
         yield self.linkentry.execute("SEND"+str(msg.data.index),latency,msg.ins,attributes=msg.dst)
+        
+        # if msg.ins.index == 39875:
+        #     print(f"end time is {self.env.now:.2f}")
         self.store.put(msg)
     
     def put(self, msg):
@@ -188,6 +197,8 @@ class Router:
             logger.info(f"Time {self.env.now:.2f}: Routing data{msg.data.index} to router{self.id}.")
             yield self.env.process(self.route_core(msg))
         else:
+            # node latency
+            yield self.env.timeout(self.per_hop_time)
             next_dir, next_router = self.calculate_next_router(msg.dst)
             logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
             yield self.env.process(self.route(msg, next_dir, next_router))

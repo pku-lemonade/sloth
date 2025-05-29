@@ -437,7 +437,7 @@ class Arch:
                             start_time = comm_record[recv_inst.index].exe_end_time[time][0],
                             # recv就绪时间为数据包完成noc传输的时间
                             end_time = recv_inst.record.ready_run_time[time][0],
-                            data_size = Slice(tensor_slice=inst.tensor_slice).size(),
+                            data_size = Slice(tensor_slice=recv_inst.tensor_slice).size(),
                             src_id = comm_record[recv_inst.index].pe_id,
                             dst_id = recv_inst.record.pe_id,
                             inference_time = time

@@ -25,6 +25,10 @@ class NoCTomography:
         # 路由器初始化
         self.router_num = 0
         self.router_name = [f"router_{i}" for i in range(self.router_num)]
+
+        self.node_latency_num = 1
+        self.startup_time_num = 1
+        self.c2r_link_num = 1
         
         # 链路初始化
         self.links = []
@@ -52,13 +56,14 @@ class NoCTomography:
                         self.link_name.append(f"link_{start}_{end}")
         
         self.link_num = len(self.links)
-        # 先router 后link
-        self.feature_num = self.router_num + self.link_num
+        # 未知数： link + node_latency + startup_time + c2r_link
+        self.feature_num = self.link_num + self.node_latency_num + self.startup_time_num + self.c2r_link_num
 
         self.model = None
     
     # paths: List[(src, dst, cycle)]
     def build_feature_matrix(self, paths):
+        # print(f"build matrix")
         num_paths = len(paths)
         if num_paths == 0:
             return np.array([]).reshape(0, self.feature_num), np.array([])
@@ -105,8 +110,88 @@ class NoCTomography:
                     X[id, self.router_num + self.link_to_id[(start_id, end_id)]] = 1
                     src_y -= 1
 
-            X[id, src] = 0
         return X, y
+    
+    # 格式为 (data_size, exe_time, src, dst)
+    # 未知数： link + node_latency + startup_time + c2r_link
+    def build_feature_matrix_new(self, paths):
+        num_paths = len(paths)
+        if num_paths == 0:
+            return np.array([]).reshape(0, self.feature_num), np.array([])
+
+        X = np.zeros((num_paths, self.feature_num))
+        y = np.zeros(num_paths)
+
+        for id, (data_size, time, src, dst) in enumerate(paths):
+            y[id] = time
+            src_x, src_y = get_pos(src, self.mesh_y)
+            dst_x, dst_y = get_pos(dst, self.mesh_y)
+
+            # 该路径经过的 link 数
+            link_count = 0
+            # startup_time 的系数 
+            X[id, self.link_num + 1] = 1
+
+            while src_x != dst_x:
+                link_count += 1
+                if src_x < dst_x:
+                    start_id = get_id(src_x, src_y, self.mesh_y)
+                    end_id = get_id(src_x+1, src_y, self.mesh_y)
+                    if start_id > end_id:
+                        start_id, end_id = end_id, start_id
+                    X[id, self.link_to_id[(start_id, end_id)]] = data_size
+                    src_x += 1
+                else:
+                    start_id = get_id(src_x, src_y, self.mesh_y)
+                    end_id = get_id(src_x-1, src_y, self.mesh_y)
+                    if start_id > end_id:
+                        start_id, end_id = end_id, start_id
+                    X[id, self.link_to_id[(start_id, end_id)]] = data_size
+                    src_x -= 1
+
+            while src_y != dst_y:
+                link_count += 1
+                if src_y < dst_y:
+                    start_id = get_id(src_x, src_y, self.mesh_y)
+                    end_id = get_id(src_x, src_y+1, self.mesh_y)
+                    if start_id > end_id:
+                        start_id, end_id = end_id, start_id
+                    X[id, self.link_to_id[(start_id, end_id)]] = data_size
+                    src_y += 1
+                else:
+                    start_id = get_id(src_x, src_y, self.mesh_y)
+                    end_id = get_id(src_x, src_y-1, self.mesh_y)
+                    if start_id > end_id:
+                        start_id, end_id = end_id, start_id
+                    X[id, self.link_to_id[(start_id, end_id)]] = data_size
+                    src_y -= 1
+
+            # node_latency 的系数
+            X[id, self.link_num] = link_count
+            # c2r_link 的系数
+            X[id, self.link_num + 2] = data_size
+        return X, y
+    
+    def solve(self, para_matrix, value_matrix):
+        self.model = LinearRegression(positive=True, fit_intercept=False)
+        # self.model = Lasso(alpha=0.1, positive=True, fit_intercept=False)
+        self.model.fit(para_matrix, value_matrix)
+
+        estimated_link = {}
+        estimated_node_latency = None
+        estimated_startup_time = None
+        estimated_c2r_link = None
+        # 未知数： link + node_latency + startup_time + c2r_link
+        coeffs = self.model.coef_ if hasattr(self.model, 'coef_') else [0.0] * self.feature_num
+    
+        for id, link in enumerate(self.links):
+            estimated_link[link] = coeffs[id] if id < len(coeffs) else 0.0
+        
+        estimated_node_latency = coeffs[self.link_num]
+        estimated_startup_time = coeffs[self.link_num + 1]
+        estimated_c2r_link = coeffs[self.link_num + 2]
+
+        return estimated_link, estimated_c2r_link, estimated_node_latency, estimated_startup_time
     
     def train(self, paths, model_type = 'lasso', alpha = 0.1, save_file = 'paras'):
         X, y = self.build_feature_matrix(paths)
@@ -171,6 +256,7 @@ class NoCTomography:
         np.savetxt(output_file, adj_mat, delimiter=',', fmt='%d')
     
     def get_SR_and_EED(self, paths):
+        print("inside")
         X, y = self.build_feature_matrix(paths)
         output_file = 'path.csv'
         np.savetxt(output_file, np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')

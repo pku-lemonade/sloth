@@ -662,6 +662,82 @@ def layer_group_analyzer(filename: str) -> LayerGroupsInfo:
 # normalized = cycle * factor / data-size = factor / bandwidth1 + factor / bandwidth12 + ...
 # result = factor / normalized
 
+def detection_new(inference_time, file_path):
+    detection_trace = comm_analyzer(file_path)
+
+    # 格式为 (data_size, exe_time, src, dst)
+    inference_paths = [[] for _ in range(inference_time)]
+
+    # 将 trace 按照推理次数分组
+    for inst_trace in detection_trace.trace:
+        if inst_trace.instruction_type == TaskType.RECV:
+            exe_time = inst_trace.end_time - inst_trace.start_time
+            inference_paths[inst_trace.inference_time].append(
+                (inst_trace.data_size, exe_time, inst_trace.src_id, inst_trace.dst_id)
+            )
+
+    # inference_paths = [[] for _ in range(inference_time)]
+    # inference_paths_time_mp = [{} for _ in range(inference_time)]
+    # inference_paths_num_mp = [{} for _ in range(inference_time)]
+    # inference_paths_size_mp = [{} for _ in range(inference_time)]
+
+    # for inst_trace in detection_trace.trace:
+    #     if inst_trace.instruction_type == TaskType.RECV:
+    #         exe_time = inst_trace.end_time - inst_trace.start_time
+    #         if (inst_trace.src_id, inst_trace.dst_id) in inference_paths_time_mp:
+    #             inference_paths_time_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] += exe_time
+    #         else:
+    #             inference_paths_time_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] = exe_time
+    #         if (inst_trace.src_id, inst_trace.dst_id) in inference_paths_num_mp:
+    #             inference_paths_num_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] += 1
+    #         else:
+    #             inference_paths_num_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] = 1
+    #         if (inst_trace.src_id, inst_trace.dst_id) in inference_paths_size_mp:
+    #             inference_paths_size_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] += inst_trace.data_size
+    #         else:
+    #             inference_paths_size_mp[inst_trace.inference_time][(inst_trace.src_id, inst_trace.dst_id)] = inst_trace.data_size
+
+    # for time in range(inference_time):
+    #     for key in inference_paths_time_mp[time].keys():
+    #         inference_paths[time].append(
+    #             (inference_paths_size_mp[time][key]/inference_paths_num_mp[time][key], inference_paths_time_mp[time][key]/inference_paths_num_mp[time][key], key[0], key[1])
+    #         )
+
+    bw = {}
+
+    # 按不同次推理进行检测
+    for time in range(inference_time):
+        # 新方程组不需要 factor 
+        model = NoCTomography(arch_configs.core.x, arch_configs.core.y, factor=1)
+
+        X, y = model.build_feature_matrix_new(inference_paths[time])
+        np.savetxt("new_data.csv", np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')
+        # 回归得到的是带宽的倒数
+        bandwidth, c2rbandwidth, node_latency, startup_time = model.solve(X, y)
+
+        print(f"Inference time: {time}")
+        for link in bandwidth.keys():
+            # 数据中该链路未使用
+            if bandwidth[link] == 0:
+                continue
+
+            true_bandwidth = 1 / bandwidth[link]
+            print(f"Link_{link[0]}_{link[1]}: {true_bandwidth} B/cycle.")
+            if time == 0:
+                bw[(link[0], link[1])] = true_bandwidth
+            else:
+                variance = bw[(link[0], link[1])] / true_bandwidth
+                if variance > 5:
+                    print(f"bandwidth variance is {variance*100:.2f}%, failslow detected.")
+
+        if c2rbandwidth != 0:
+            print(f"c2r bandwidth: {1 / c2rbandwidth} B/cycle.")
+        else:
+            print(f"c2r bandwidth: inf B/cycle.")
+
+        print(f"node_latency: {node_latency} cycles.")
+        print(f"startup_time: {startup_time} cycles.")
+
 def get_inference_data(inference_time):
     origin_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
     
@@ -691,7 +767,7 @@ def get_inference_data(inference_time):
             origin_paths[time].append((key[0], key[1], origin_paths_time_mp[time][key]/origin_paths_num_mp[time][key]))
 
         X, y = model.build_feature_matrix(origin_paths[time])
-        cur_path = np.concatenate([X, y.reshape(-1, 1), ], axis=1)
+        cur_path = np.concatenate([X, y.reshape(-1, 1)], axis=1)
         time_tag = np.full((cur_path.shape[0], 1), time)
         cur_path = np.concatenate([time_tag, cur_path], axis=1)
 
@@ -875,9 +951,11 @@ if __name__ == '__main__':
             else:
                 layer_link_data[tag] += link_bandwidth_data.data_size
 
-    link_failslow_detection()
+    # link_failslow_detection()
 
-    get_inference_data(2)
+    # get_inference_data(2)
+
+    detection_new(inference_time=2, file_path="data/darknet19/link/comm_trace.json")
 
     # comm_graph.debug()
 
