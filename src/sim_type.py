@@ -173,7 +173,8 @@ class ComputeTask(Task):
         ins.record.pe_id = core.id
         ins.record.flops = self.flops
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, core.tpu_flops), ins, v=self.inference_time)
+        true_tpu_flops = core.core_dist.generate()
+        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
     
 class Record(BaseModel):

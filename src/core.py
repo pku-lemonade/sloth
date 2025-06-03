@@ -8,6 +8,7 @@ from src.arch_config import CoreConfig, ScratchpadConfig
 from src.noc_new import Link, Router
 from src.sim_type import *
 from typing import List
+from analysis.distribution import CoreDist
 
 logger = logging.getLogger("PE")
 waitready = []
@@ -751,6 +752,11 @@ class Core:
         self.inference_time = inference_time
         self.cur_inference_time = 0
         self.config = config
+
+        # 模拟核心性能波动
+        self.mu = self.config.tpu.flops
+        self.sigma = self.mu * 0.1 / 1.645
+        self.core_dist = CoreDist(mu=self.mu, sigma=self.sigma)
 
         self.bound_with_router(link2, link1)
 
