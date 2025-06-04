@@ -12,6 +12,7 @@ from comp_fail import get_id, comp_analyzer
 from src.sim_type import TaskType
 from distribution import CoreDist
 from tomography import NoCTomography
+from dist_prediction import EM_Model
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
@@ -705,6 +706,8 @@ def detection_new(inference_time, file_path):
 
     bw = {}
 
+    my_EM_Model = None
+
     # 按不同次推理进行检测
     for time in range(inference_time):
         # 新方程组不需要 factor 
@@ -712,6 +715,12 @@ def detection_new(inference_time, file_path):
 
         X, y = model.build_feature_matrix_new(inference_paths[time])
         np.savetxt("new_data.csv", np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')
+
+        # 基于 EM 算法的分布估计
+        my_EM_Model = EM_Model(link_name=model.link_name)
+        samples = my_EM_Model.load_samples_from_csv("new_data.csv")
+        my_EM_Model.fit(samples)
+
         # 回归得到的是带宽的倒数
         bandwidth, c2rbandwidth, node_latency, startup_time = model.solve(X, y)
 
@@ -737,6 +746,9 @@ def detection_new(inference_time, file_path):
 
         print(f"node_latency: {node_latency} cycles.")
         print(f"startup_time: {startup_time} cycles.")
+
+    print("="*40)
+    my_EM_Model.output()
 
 def get_inference_data(inference_time):
     origin_trace = comm_analyzer("data/darknet19/normal/comm_trace.json")
