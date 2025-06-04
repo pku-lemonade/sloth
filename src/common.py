@@ -25,6 +25,8 @@ parser.add_argument("--arch", type=str, default="arch/gemini4_4.json")
 parser.add_argument("--fail", type=str, default="failslow/normal.json")
 parser.add_argument("--log", type=str, default="logging/simulation.log")
 parser.add_argument("--level", type=str, default="info")
+parser.add_argument("--model", type=str, default="basic")
+parser.add_argument("--times", type=int, default=1)
 
 args = parser.parse_args()
 cfg = CFG(args)
@@ -48,7 +50,8 @@ class MonitoredResource(simpy.Resource):
     def exe(self, task, delay, ins, v=None, attributes=None):
         req = super().request()
         yield req
-        ins.record.exe_start_time.append(self._env.now)
+        if v is not None:
+            ins.record.exe_start_time.append((self._env.now, v))
         if self.checkneed():
             if attributes is None:
                 self.data.append((task, self._env.now, len(self.queue), "req", "B"))
@@ -63,7 +66,8 @@ class MonitoredResource(simpy.Resource):
                 self.data.append((task, self._env.now, len(self.queue), "req", "E"))
             else:
                 self.data.append((task, self._env.now, len(self.queue), "req", "E", attributes))
-        ins.record.exe_end_time.append(self._env.now)
+        if v is not None:
+            ins.record.exe_end_time.append((self._env.now, v))
         super().release(req)
 
     def execute(self, task, delay, ins, v=None, attributes=None):

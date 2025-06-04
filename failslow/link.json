@@ -2,10 +2,10 @@
     "router" : [],
     "link" : [
         {
-            "start_time" : 0,
-            "end_time" : 100000000,
+            "start_time" : 35000000,
+            "end_time" : 1000000000,
             "router_id" : 10,
-            "direction" : 1,
+            "direction" : 3,
             "times" : 10
         }
     ],

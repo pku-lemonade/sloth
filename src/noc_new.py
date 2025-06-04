@@ -3,7 +3,7 @@ import logging
 import contextlib
 from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
-from src.sim_type import Data, Message, ceil, Slice, Direction
+from src.sim_type import Data, Message, Packet, ceil, Slice, Direction
 from src.common import MonitoredResource
 
 logger = logging.getLogger("NoC")
@@ -32,11 +32,15 @@ class Link:
         self.width = config.width
         self.delay = config.delay
         # 按数据的index排序，需要Message的lt方法
-        self.store = simpy.PriorityStore(env)
+        self.store = simpy.Store(env)
         self.delay_factor = 1
         self.hop = 0
-        self.linkentry = MonitoredResource(env,capacity=1)
+        self.linkentry = MonitoredResource(env)
         self.tag = False
+
+        # 用于 packet routing 模型，但用 cycle 数是否合适？
+        # bandwidth 的倒数
+        self.per_word_transfer_time = 1 / self.width
 
         self.tot_size = 0
         self.layer_size = {}
@@ -49,6 +53,7 @@ class Link:
     def calc_latency(self, msg):
         #calc latency:
         slice = Slice(tensor_slice=msg.data.tensor_slice)
+        # transfer time
         transmission_time = ceil(slice.size(), self.width)
         latency = self.delay + transmission_time
         latency = latency * self.delay_factor
@@ -62,12 +67,29 @@ class Link:
 
         self.hop += slice.size()/64
         # 对于数据包,记录了路由路径中每个link的ready_run_time
-        msg.ins.record.ready_run_time.append(self.env.now)
+        # msg.ins.record.ready_run_time.append(self.env.now)
+        # if msg.ins.index == 39875:
+        #     print("-"*30)
+        #     print(f"start time is {self.env.now:.2f}")
+        #     print(f"transmission time is {slice.size()} / {self.width} = {transmission_time}")
+        
         yield self.linkentry.execute("SEND"+str(msg.data.index),latency,msg.ins,attributes=msg.dst)
+        
+        # if msg.ins.index == 39875:
+        #     print(f"end time is {self.env.now:.2f}")
         self.store.put(msg)
     
     def put(self, msg):
         return self.env.process(self.calc_latency(msg))
+    
+    # packet routing 需要记录哪些信息？
+    def calc_latency_hop(self, packet):
+        # 记录每个hop的数据量太大了
+        yield self.linkentry.execute("SEND"+str(packet.ins.index), 16*self.per_word_transfer_time, packet.ins, attributes=packet.dst)
+        self.store.put(packet)
+    
+    def put_hop(self, packet):
+        return self.env.process(self.calc_latency_hop(packet))
     
     # 不带延迟的插入，处理block外的数据包时使用
     def insert(self, msg):
@@ -86,7 +108,7 @@ class Link:
         self.delay_factor /= times
 
 class Router:
-    def __init__(self, env, config: RouterConfig, id: int, x: int, y:int):
+    def __init__(self, env, config: RouterConfig, id: int, x: int, y:int, model: str):
         self.env = env
         self.x = x
         self.y = y
@@ -94,6 +116,10 @@ class Router:
 
         self.type = config.type
         self.vc = config.vc
+
+        # node latency
+        self.per_hop_time = 1
+        self.model = model
 
         self.core_in, self.core_out = None, None
         self.north_in, self.north_out = None, None
@@ -165,7 +191,47 @@ class Router:
     def route_core(self, msg):
         yield self.core_out.put(msg)
         logger.info(f"Time {self.env.now:.2f}: Finish putting data{msg.data.index} to PE{self.id}")
- 
+
+    def routing(self, msg):
+        if msg.dst == self.id:
+            logger.info(f"Time {self.env.now:.2f}: Routing data{msg.data.index} to router{self.id}.")
+            yield self.env.process(self.route_core(msg))
+        else:
+            # node latency
+            yield self.env.timeout(self.per_hop_time)
+            next_dir, next_router = self.calculate_next_router(msg.dst)
+            logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
+            yield self.env.process(self.route(msg, next_dir, next_router))
+
+    def route_hop(self, packet: Packet, next_dir, next_router):
+        match next_dir:
+            case Direction.NORTH:
+                yield self.north_out.put_hop(packet)
+            case Direction.SOUTH:
+                yield self.south_out.put_hop(packet)
+            case Direction.EAST:
+                yield self.east_out.put_hop(packet)
+            case Direction.WEST:
+                yield self.west_out.put_hop(packet)
+
+        # logger.info(f"Time {self.env.now:.2f}: Router{self.id} finish sending data{packet.data.index} to router{next_router}(dst:{packet.dst}).")
+
+    def route_core_hop(self, packet):
+        yield self.core_out.put_hop(packet)
+        # logger.info(f"Time {self.env.now:.2f}: Finish putting data{packet.data.index} to PE{self.id}")
+
+    def routing_hop(self, packet):
+        # 决定路由目的地
+        yield self.env.timeout(self.per_hop_time)
+        
+        if packet.dst == self.id:
+            # logger.info(f"Time {self.env.now:.2f}: Routing data{packet.ins.index} to router{self.id}.")
+            yield self.env.process(self.route_core_hop(packet))
+        else:
+            next_dir, next_router = self.calculate_next_router(packet.dst)
+            # logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{packet.data.index} to router{next_router}(dst:{msg.dst}).")
+            yield self.env.process(self.route_hop(packet, next_dir, next_router))
+
     def run(self):
         while True:
             all_possible_channels = [(self.north_in, 0), (self.south_in, 1), (self.east_in, 2), (self.west_in, 3), (self.core_in, 4)]
@@ -185,14 +251,10 @@ class Router:
                     
                     if event.triggered:
                         msg = event.value
-
-                        if msg.dst == self.id:
-                            logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
-                            self.env.process(self.route_core(msg))
-                        else:
-                            next_dir, next_router = self.calculate_next_router(msg.dst)
-                            logger.info(f"Time {self.env.now:.2f}: Router{self.id} start sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
-                            self.env.process(self.route(msg, next_dir, next_router))
+                        if self.model == "basic":
+                            self.env.process(self.routing(msg))
+                        elif self.model == "packet":
+                            self.env.process(self.routing_hop(msg))
                         
                         channel = None
                         match all_channels[id][1]:
@@ -204,14 +266,10 @@ class Router:
                         
                         while channel.len() > 0:
                             msg = yield channel.get()
-
-                            if msg.dst == self.id:
-                                logger.info(f"Time {self.env.now:.2f}: Finish routing data{msg.data.index} to router{self.id}.")
-                                self.env.process(self.route_core(msg))
-                            else:
-                                next_dir, next_router = self.calculate_next_router(msg.dst)
-                                logger.info(f"Time {self.env.now:.2f}: Router{self.id} finished sending data{msg.data.index} to router{next_router}(dst:{msg.dst}).")
-                                self.env.process(self.route(msg, next_dir, next_router))
+                            if self.model == "basic":
+                                self.env.process(self.routing(msg))
+                            elif self.model == "packet":
+                                self.env.process(self.routing_hop(msg))
 
     #模拟其它流量造成的网络拥堵
     def trans(self,start_time,link,flow):
@@ -265,7 +323,7 @@ class Router:
 
 
 class NoC:
-    def __init__(self, env, config: NoCConfig):
+    def __init__(self, env, config: NoCConfig, model: str):
         self.env = env
         self.x = config.x
         self.y = config.y
@@ -274,11 +332,13 @@ class NoC:
         self.r2r_links = []
         self.routers = []
 
+        self.model = model
+
     # connections between routers
     def build_connection(self):
         for id in range(self.x * self.y):
             self.id = id
-            self.routers.append(Router(self.env, self.router_config, id, self.x, self.y))
+            self.routers.append(Router(self.env, self.router_config, id, self.x, self.y, self.model))
 
         for row in range(self.x):
             for col in range(self.y):
