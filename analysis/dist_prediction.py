@@ -96,9 +96,9 @@ class EM_Model:
             self.mu_start -= self.lr * g_start
             self.mu_node -= self.lr * g_node
             self.mu_bw_inv -= self.lr * g_bw
-            print(f"minus: {self.lr * g_start}, {self.lr * g_node}, {self.lr * g_bw}")
+            # print(f"minus: {self.lr * g_start}, {self.lr * g_node}, {self.lr * g_bw}")
 
-            print(f"Iter {iteration}: Loss = {loss:.4f}")
+            # print(f"Iter {iteration}: Loss = {loss:.4f}")
             
             # 收敛检查
             if abs(self.prev_loss - loss) < self.tol:
@@ -107,7 +107,7 @@ class EM_Model:
             self.prev_loss = loss
 
     def output(self):
-        print("Estimated Parameters:")
+        print("Estimated Parameters(EM algorithm):")
         print(f"mu_start: {self.mu_start:.4f}, sigma_start: {self.sigma_start:.4f}")
         print(f"mu_node: {self.mu_node:.4f}, sigma_node: {self.sigma_node:.4f}")
         for name, mu_inv, sigma_inv in zip(self.link_name, self.mu_bw_inv, self.sigma_bw_inv):
