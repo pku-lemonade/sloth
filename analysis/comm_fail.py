@@ -218,7 +218,7 @@ class Mesh:
         self.time_range = [(0, 0) for _ in range(self.N)]
         self.link_time_range = {}
 
-        self.core_dist = CoreDist()
+        self.core_dist = CoreDist(mu=1024, sigma=100)
         
         # [(node_id, [failslow list])]
         self.edges = [[] for _ in range(self.N)]
@@ -393,12 +393,16 @@ class Mesh:
                 # print(f"{self.link_size_count[i][j]} / {path_num} = {self.link_size_count[i][j] / path_num}")
                 # print(1.0/self.N)
                 self.transition_matrix[i][j] = (self.link_size_count[i][j] / path_num)
-                self.link_failslow_prob[i][j] = self.link_count[i][j] / max_fail_count
+                if max_fail_count != 0:
+                    self.link_failslow_prob[i][j] = self.link_count[i][j] / max_fail_count
+                else:
+                    self.link_failslow_prob[i][j] = 0 
 
     def core_prob_init(self, layer_group, pe_id, flops, start_time, end_time):
         core_id = (layer_group-1) * self.num + pe_id
         # 初始化结点故障概率
         self.core_failslow_prob[core_id] = self.core_dist.failslow_prob(flops)# + (1 / (self.N))
+        # print(f"core:{core_id}, flops:{flops} prob:{self.core_failslow_prob[core_id]}")
         self.time_range[core_id] = (start_time, end_time)
 
     # 参考GrootRank进行根因定位
@@ -437,7 +441,7 @@ class Mesh:
                 self.count[curNode][nextNode[0]] += 1
             self.backtracking(curNode=nextNode[0], father=curNode, failslow=failslow, step=step+1, limit=limit)
 
-    def pagerank_summary(self, k=30, threshold=0.2):
+    def pagerank_summary(self, k=30, threshold=0.5):
         # output_file = 'output.csv'
         # np.savetxt(output_file, self.transition_matrix, delimiter=',', fmt='%f')
 
@@ -447,9 +451,9 @@ class Mesh:
             start_id = group_id * self.num
             end_id = start_id + self.num
 
-            # print("="*40)
+            # print(f"==========group_id:{group_id}==========")
             # print(self.core_failslow_prob[start_id:end_id])
-            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=15000)
+            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=50000)
             # print(group_prob)
 
             for id in range(self.num):
@@ -462,7 +466,11 @@ class Mesh:
             self.link_failslow_prob[:] = 0
             for j in range(start_id, end_id):
                 for i in range(self.N):
-                    self.link_failslow_prob[i][j] = self.link_count[i][j] / self.link_count.max() * 10
+                    if self.link_count.max() != 0:
+                        self.link_failslow_prob[i][j] = self.link_count[i][j] / self.link_count.max() * 10
+                    else:
+                        self.link_failslow_prob[i][j] = 0
+
                     src_core_id = i % self.num
                     dst_core_id = j % self.num
                     if (src_core_id > dst_core_id):
@@ -690,6 +698,8 @@ def calc_pe_flops(trace: List[CompInst], layer_mapping: List[int]):
 
     for id, inst_trace in enumerate(trace):
         # 指令flops需求 / 执行时间 得到 单周期flops
+        # if inst_trace.instruction_id == 38785:
+        #     print(f"time{inst_trace.end_time} flops:{inst_trace.flops / (inst_trace.end_time - inst_trace.start_time)}")
         tot_flops[inst_trace.pe_id] += inst_trace.flops / (inst_trace.end_time - inst_trace.start_time)
         inst_num[inst_trace.pe_id] += 1
         if inst_trace.pe_id in start_time:
@@ -971,9 +981,9 @@ if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
     comm_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
-    comp_trace = comp_analyzer("data/darknet19/link/comp_trace.json")
+    comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
     
-    layer_group_info = layer_group_analyzer("data/darknet19/link/layer_info.json")
+    layer_group_info = layer_group_analyzer("data/darknet19/tpu/layer_info.json")
 
     core_num = arch_configs.core.x * arch_configs.core.y
     layer_mapping = [[] for _ in range(len(net.layers))]
@@ -1033,8 +1043,9 @@ if __name__ == '__main__':
         failslow_period.add(link[0])
 
     # 枚举失速区间
-    for period in failslow_period:
+    for period in range(2):
         # 处理comp指令数据
+        # 取出当前period的指令
         comp_trace_layer = [[] for _ in range(len(net.layers))]
 
         for inst_trace in comp_trace.trace:
@@ -1064,6 +1075,7 @@ if __name__ == '__main__':
         for layer_trace in comp_trace_layer:
             layer_id = layer_trace[0].layer_id
             average_flops, start_time, end_time = calc_pe_flops(layer_trace, layer_mapping[layer_id])
+            # print(average_flops, start_time, end_time)
             # 为当前层的每个pe进行初始化
             for id, pe_id in enumerate(layer_mapping[layer_id]):
                 mesh.core_prob_init(layer_group=layer2group[layer_id], pe_id=pe_id, flops=average_flops[id],

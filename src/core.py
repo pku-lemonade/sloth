@@ -793,9 +793,11 @@ class Core:
     
     def tpu_fail(self, times):
         self.tpu_flops /= times
+        self.core_dist = CoreDist(mu=self.tpu_flops, sigma=self.tpu_flops*0.1/1.645)
 
     def tpu_recover(self, times):
         self.tpu_flops *= times
+        self.core_dist = CoreDist(mu=self.tpu_flops, sigma=self.tpu_flops*0.1/1.645)
 
     def core_bound_cores(self, cores):
         self.cores = []

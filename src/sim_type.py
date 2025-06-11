@@ -174,6 +174,8 @@ class ComputeTask(Task):
         ins.record.flops = self.flops
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         true_tpu_flops = core.core_dist.generate()
+        if true_tpu_flops < 500:
+            print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
         yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
     
