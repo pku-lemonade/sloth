@@ -5,6 +5,7 @@ from enum import IntEnum
 from src.arch_config import LinkConfig, RouterConfig, NoCConfig
 from src.sim_type import Data, Message, Packet, ceil, Slice, Direction
 from src.common import MonitoredResource
+from analysis.distribution import NoCDist
 
 logger = logging.getLogger("NoC")
 
@@ -38,6 +39,11 @@ class Link:
         self.linkentry = MonitoredResource(env)
         self.tag = False
 
+        # 性能参数随机波动分布
+        self.rate = 0.5
+        self.shape = self.width * self.rate
+        self.para_dist = NoCDist(shape=self.shape, rate=self.rate)
+
         # 用于 packet routing 模型，但用 cycle 数是否合适？
         # bandwidth 的倒数
         self.per_word_transfer_time = 1 / self.width
@@ -53,8 +59,11 @@ class Link:
     def calc_latency(self, msg):
         #calc latency:
         slice = Slice(tensor_slice=msg.data.tensor_slice)
-        # transfer time
-        transmission_time = ceil(slice.size(), self.width)
+
+        # 模拟随机性能波动
+        true_width = self.para_dist.generate()
+        transmission_time = ceil(slice.size(), true_width)
+
         latency = self.delay + transmission_time
         latency = latency * self.delay_factor
 
