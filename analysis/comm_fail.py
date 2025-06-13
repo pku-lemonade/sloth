@@ -5,14 +5,18 @@ import math
 import numpy as np
 from typing import List
 from scipy.stats import norm
-# from scipy.special import softmax
-from trace_format import *
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from analysis.trace_format import *
 from pydantic import ValidationError, BaseModel
-from comp_fail import get_id, comp_analyzer
+from analysis.comp_fail import get_id, comp_analyzer
 from src.sim_type import TaskType
-from distribution import CoreDist
-from tomography import NoCTomography
-from dist_prediction import EM_Model
+from analysis.distribution import CoreDist
+from analysis.tomography import NoCTomography
+from analysis.dist_prediction import EM_Model
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:

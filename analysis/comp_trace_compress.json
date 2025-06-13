@@ -1,0 +1,1924 @@
+{
+    "trace": [
+        {
+            "pe_id": 0,
+            "layer_id": 0,
+            "start_time": 33822204,
+            "end_time": 33955644,
+            "inference_time": 1,
+            "flops": 1009.0449754440859
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 1,
+            "start_time": 36180622,
+            "end_time": 36784091,
+            "inference_time": 1,
+            "flops": 1007.0254978270327
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 2,
+            "start_time": 37726519,
+            "end_time": 39125563,
+            "inference_time": 1,
+            "flops": 1023.824645757932
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 3,
+            "start_time": 39355886,
+            "end_time": 39631459,
+            "inference_time": 1,
+            "flops": 1020.9712868389566
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 4,
+            "start_time": 39899811,
+            "end_time": 41421829,
+            "inference_time": 1,
+            "flops": 1026.2463064336994
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 7,
+            "start_time": 42784680,
+            "end_time": 43645054,
+            "inference_time": 1,
+            "flops": 986.6323543123539
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 8,
+            "start_time": 44493559,
+            "end_time": 48871927,
+            "inference_time": 1,
+            "flops": 1015.2770957299441
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 14,
+            "start_time": 14749730,
+            "end_time": 18857770,
+            "inference_time": 0,
+            "flops": 1028.7986091612759
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 14,
+            "start_time": 49861250,
+            "end_time": 53985752,
+            "inference_time": 1,
+            "flops": 1021.9482647813076
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 18,
+            "start_time": 20153239,
+            "end_time": 21020803,
+            "inference_time": 0,
+            "flops": 1011.6284681696077
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 18,
+            "start_time": 55293103,
+            "end_time": 56155960,
+            "inference_time": 1,
+            "flops": 1049.5427257091994
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 19,
+            "start_time": 21836357,
+            "end_time": 26296518,
+            "inference_time": 0,
+            "flops": 1015.2375426313304
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 19,
+            "start_time": 56967575,
+            "end_time": 61429087,
+            "inference_time": 1,
+            "flops": 1013.2557856760124
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 22,
+            "start_time": 27318212,
+            "end_time": 32933112,
+            "inference_time": 0,
+            "flops": 1034.2767348752177
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 22,
+            "start_time": 62435389,
+            "end_time": 67961155,
+            "inference_time": 1,
+            "flops": 1017.9312525848851
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 0,
+            "start_time": 33806426,
+            "end_time": 33946740,
+            "inference_time": 1,
+            "flops": 1112.656838076369
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 1,
+            "start_time": 36179921,
+            "end_time": 36805237,
+            "inference_time": 1,
+            "flops": 1014.4257486502848
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 2,
+            "start_time": 37747613,
+            "end_time": 39122142,
+            "inference_time": 1,
+            "flops": 1018.7867137951008
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 3,
+            "start_time": 39359398,
+            "end_time": 39730669,
+            "inference_time": 1,
+            "flops": 996.6526168075151
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 5,
+            "start_time": 40114809,
+            "end_time": 42157126,
+            "inference_time": 1,
+            "flops": 1030.5165390661623
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 7,
+            "start_time": 43380210,
+            "end_time": 43694493,
+            "inference_time": 1,
+            "flops": 1013.6279880877165
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 8,
+            "start_time": 44467376,
+            "end_time": 48865607,
+            "inference_time": 1,
+            "flops": 1029.1957809441844
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 14,
+            "start_time": 14773289,
+            "end_time": 18936682,
+            "inference_time": 0,
+            "flops": 1006.6966031217765
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 14,
+            "start_time": 49862290,
+            "end_time": 53988014,
+            "inference_time": 1,
+            "flops": 1024.6847032107466
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 18,
+            "start_time": 20227131,
+            "end_time": 21094597,
+            "inference_time": 0,
+            "flops": 1031.5287618923762
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 18,
+            "start_time": 55276748,
+            "end_time": 56137506,
+            "inference_time": 1,
+            "flops": 1029.9683452608608
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 19,
+            "start_time": 21903053,
+            "end_time": 26358565,
+            "inference_time": 0,
+            "flops": 1022.2808229056436
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 19,
+            "start_time": 56949255,
+            "end_time": 61406254,
+            "inference_time": 1,
+            "flops": 1019.7830247405773
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 22,
+            "start_time": 27467584,
+            "end_time": 32968486,
+            "inference_time": 0,
+            "flops": 1041.6391921537274
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 22,
+            "start_time": 62430825,
+            "end_time": 68036095,
+            "inference_time": 1,
+            "flops": 1039.9746079795839
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 0,
+            "start_time": 35921807,
+            "end_time": 36022667,
+            "inference_time": 1,
+            "flops": 962.3858174778346
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 1,
+            "start_time": 36173682,
+            "end_time": 36723761,
+            "inference_time": 1,
+            "flops": 1003.1630282445662
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 2,
+            "start_time": 37674076,
+            "end_time": 39033432,
+            "inference_time": 1,
+            "flops": 1014.1917888579262
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 3,
+            "start_time": 39357219,
+            "end_time": 39728685,
+            "inference_time": 1,
+            "flops": 1018.3889247309966
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 4,
+            "start_time": 39999402,
+            "end_time": 41529469,
+            "inference_time": 1,
+            "flops": 1019.195670526887
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 7,
+            "start_time": 42790359,
+            "end_time": 43696673,
+            "inference_time": 1,
+            "flops": 1013.3020417229538
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 8,
+            "start_time": 44470481,
+            "end_time": 48922596,
+            "inference_time": 1,
+            "flops": 1022.2941923510186
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 16,
+            "start_time": 15079683,
+            "end_time": 20247178,
+            "inference_time": 0,
+            "flops": 1007.0140555957547
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 16,
+            "start_time": 49983114,
+            "end_time": 54102051,
+            "inference_time": 1,
+            "flops": 1017.2241810520005
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 18,
+            "start_time": 21548413,
+            "end_time": 22422798,
+            "inference_time": 0,
+            "flops": 1035.9787803781305
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 18,
+            "start_time": 55399608,
+            "end_time": 56282261,
+            "inference_time": 1,
+            "flops": 1000.1587078677533
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 20,
+            "start_time": 23278036,
+            "end_time": 28395924,
+            "inference_time": 0,
+            "flops": 1011.1260083617532
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 20,
+            "start_time": 57110051,
+            "end_time": 62195378,
+            "inference_time": 1,
+            "flops": 1015.7121020720067
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 22,
+            "start_time": 29402011,
+            "end_time": 34922516,
+            "inference_time": 0,
+            "flops": 1025.467385157832
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 22,
+            "start_time": 63197262,
+            "end_time": 68721414,
+            "inference_time": 1,
+            "flops": 1031.5624215994806
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 0,
+            "start_time": 34677458,
+            "end_time": 34812794,
+            "inference_time": 1,
+            "flops": 1087.4200161033596
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 1,
+            "start_time": 36176870,
+            "end_time": 36708055,
+            "inference_time": 1,
+            "flops": 1015.9830496535827
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 2,
+            "start_time": 37674750,
+            "end_time": 39061737,
+            "inference_time": 1,
+            "flops": 989.8199563239475
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 3,
+            "start_time": 39354327,
+            "end_time": 39631509,
+            "inference_time": 1,
+            "flops": 1002.8705588956041
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 4,
+            "start_time": 39865632,
+            "end_time": 41191058,
+            "inference_time": 1,
+            "flops": 1024.3861445147893
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 7,
+            "start_time": 42784864,
+            "end_time": 43644918,
+            "inference_time": 1,
+            "flops": 982.5268065268062
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 8,
+            "start_time": 44313495,
+            "end_time": 48151369,
+            "inference_time": 1,
+            "flops": 1017.6580444073292
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 16,
+            "start_time": 14926431,
+            "end_time": 19064063,
+            "inference_time": 0,
+            "flops": 1032.0945386467217
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 16,
+            "start_time": 50159390,
+            "end_time": 55274434,
+            "inference_time": 1,
+            "flops": 1020.7758521558969
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 18,
+            "start_time": 20375706,
+            "end_time": 21250924,
+            "inference_time": 0,
+            "flops": 1017.5572331757243
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 18,
+            "start_time": 56606739,
+            "end_time": 57473179,
+            "inference_time": 1,
+            "flops": 1016.9088456974478
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 20,
+            "start_time": 22079839,
+            "end_time": 27153235,
+            "inference_time": 0,
+            "flops": 1031.89233534467
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 20,
+            "start_time": 58391730,
+            "end_time": 63500658,
+            "inference_time": 1,
+            "flops": 1023.858980969966
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 22,
+            "start_time": 28156694,
+            "end_time": 33709991,
+            "inference_time": 0,
+            "flops": 1011.5554689014139
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 22,
+            "start_time": 64502505,
+            "end_time": 70014885,
+            "inference_time": 1,
+            "flops": 1029.052836584427
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 0,
+            "start_time": 36061035,
+            "end_time": 36194509,
+            "inference_time": 1,
+            "flops": 1044.1000484687258
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 1,
+            "start_time": 36376990,
+            "end_time": 36980342,
+            "inference_time": 1,
+            "flops": 1035.8422705595735
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 2,
+            "start_time": 37926216,
+            "end_time": 39316825,
+            "inference_time": 1,
+            "flops": 1036.3373423615878
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 3,
+            "start_time": 39392256,
+            "end_time": 39667853,
+            "inference_time": 1,
+            "flops": 996.6644842090706
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 4,
+            "start_time": 39894061,
+            "end_time": 41229184,
+            "inference_time": 1,
+            "flops": 1019.7346275393038
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 7,
+            "start_time": 42784417,
+            "end_time": 43645586,
+            "inference_time": 1,
+            "flops": 991.2237158919507
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 10,
+            "start_time": 44573202,
+            "end_time": 49016099,
+            "inference_time": 1,
+            "flops": 1038.346563779311
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 14,
+            "start_time": 14699231,
+            "end_time": 18813295,
+            "inference_time": 0,
+            "flops": 1031.049499940935
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 14,
+            "start_time": 49863930,
+            "end_time": 54001722,
+            "inference_time": 1,
+            "flops": 1021.6112132991268
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 18,
+            "start_time": 20094982,
+            "end_time": 20976106,
+            "inference_time": 0,
+            "flops": 1017.1606327900652
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 20,
+            "start_time": 22006191,
+            "end_time": 27124775,
+            "inference_time": 0,
+            "flops": 1007.8745790686072
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 20,
+            "start_time": 57157462,
+            "end_time": 62261095,
+            "inference_time": 1,
+            "flops": 1021.9526641556382
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 23,
+            "start_time": 29613011,
+            "end_time": 35150916,
+            "inference_time": 0,
+            "flops": 1020.5087736764604
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 23,
+            "start_time": 64739065,
+            "end_time": 70278518,
+            "inference_time": 1,
+            "flops": 1021.3443380194439
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 0,
+            "start_time": 36007427,
+            "end_time": 36147934,
+            "inference_time": 1,
+            "flops": 1114.909114829215
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 1,
+            "start_time": 36330538,
+            "end_time": 36955792,
+            "inference_time": 1,
+            "flops": 1020.6365131337278
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 2,
+            "start_time": 37900935,
+            "end_time": 39273473,
+            "inference_time": 1,
+            "flops": 1027.731797225754
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 3,
+            "start_time": 39364636,
+            "end_time": 39735854,
+            "inference_time": 1,
+            "flops": 1028.573844768324
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 4,
+            "start_time": 39980901,
+            "end_time": 41304932,
+            "inference_time": 1,
+            "flops": 1030.3968017924494
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 7,
+            "start_time": 42784522,
+            "end_time": 43696521,
+            "inference_time": 1,
+            "flops": 996.7599260023505
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 9,
+            "start_time": 44547694,
+            "end_time": 48953039,
+            "inference_time": 1,
+            "flops": 1022.898456435939
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 14,
+            "start_time": 14764798,
+            "end_time": 18892668,
+            "inference_time": 0,
+            "flops": 1023.9511133986741
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 14,
+            "start_time": 49871822,
+            "end_time": 53981296,
+            "inference_time": 1,
+            "flops": 1021.0974928832732
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 18,
+            "start_time": 20193694,
+            "end_time": 21065897,
+            "inference_time": 0,
+            "flops": 1016.9968693445519
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 18,
+            "start_time": 55265089,
+            "end_time": 56128157,
+            "inference_time": 1,
+            "flops": 1024.4411233008273
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 20,
+            "start_time": 22048528,
+            "end_time": 27133358,
+            "inference_time": 0,
+            "flops": 1025.5898561433328
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 20,
+            "start_time": 57162631,
+            "end_time": 62258321,
+            "inference_time": 1,
+            "flops": 1029.2633715983202
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 23,
+            "start_time": 29637019,
+            "end_time": 35170739,
+            "inference_time": 0,
+            "flops": 1015.5361489694745
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 23,
+            "start_time": 64765331,
+            "end_time": 70303624,
+            "inference_time": 1,
+            "flops": 1038.2549464182953
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 0,
+            "start_time": 36070961,
+            "end_time": 36204466,
+            "inference_time": 1,
+            "flops": 1055.680594135669
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 1,
+            "start_time": 36374397,
+            "end_time": 36912031,
+            "inference_time": 1,
+            "flops": 1009.1876213409867
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 2,
+            "start_time": 37854101,
+            "end_time": 39246029,
+            "inference_time": 1,
+            "flops": 1035.7472066064022
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 3,
+            "start_time": 39359295,
+            "end_time": 39726720,
+            "inference_time": 1,
+            "flops": 1020.5107462318658
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 5,
+            "start_time": 40218838,
+            "end_time": 42402105,
+            "inference_time": 1,
+            "flops": 1021.3023197930814
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 7,
+            "start_time": 43617232,
+            "end_time": 43755844,
+            "inference_time": 1,
+            "flops": 1003.6378560578232
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 10,
+            "start_time": 44612585,
+            "end_time": 48986305,
+            "inference_time": 1,
+            "flops": 1017.7621386801375
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 15,
+            "start_time": 14871504,
+            "end_time": 18997171,
+            "inference_time": 0,
+            "flops": 1036.1223465329642
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 15,
+            "start_time": 49933996,
+            "end_time": 54028010,
+            "inference_time": 1,
+            "flops": 1023.0338720826769
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 18,
+            "start_time": 20293900,
+            "end_time": 21178331,
+            "inference_time": 0,
+            "flops": 1008.6790212376301
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 18,
+            "start_time": 55327646,
+            "end_time": 56197483,
+            "inference_time": 1,
+            "flops": 1008.023486483984
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 20,
+            "start_time": 22043151,
+            "end_time": 27143506,
+            "inference_time": 0,
+            "flops": 1030.2253679049127
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 20,
+            "start_time": 57161065,
+            "end_time": 62260097,
+            "inference_time": 1,
+            "flops": 1029.9733796531127
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 23,
+            "start_time": 29613025,
+            "end_time": 35155068,
+            "inference_time": 0,
+            "flops": 1015.5305107032749
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 23,
+            "start_time": 64739727,
+            "end_time": 70284601,
+            "inference_time": 1,
+            "flops": 1014.3282154767164
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 0,
+            "start_time": 36177908,
+            "end_time": 36277482,
+            "inference_time": 1,
+            "flops": 1006.0564835266999
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 1,
+            "start_time": 36428603,
+            "end_time": 36978622,
+            "inference_time": 1,
+            "flops": 1014.8465788901431
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 2,
+            "start_time": 37927665,
+            "end_time": 39274102,
+            "inference_time": 1,
+            "flops": 1034.282990920771
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 3,
+            "start_time": 39354418,
+            "end_time": 39633037,
+            "inference_time": 1,
+            "flops": 990.8859565859652
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 4,
+            "start_time": 39895276,
+            "end_time": 41414656,
+            "inference_time": 1,
+            "flops": 1030.133987512215
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 7,
+            "start_time": 42784453,
+            "end_time": 43696266,
+            "inference_time": 1,
+            "flops": 1007.7448976038246
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 8,
+            "start_time": 44368736,
+            "end_time": 48200855,
+            "inference_time": 1,
+            "flops": 1043.067377560631
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 16,
+            "start_time": 15071680,
+            "end_time": 20211564,
+            "inference_time": 0,
+            "flops": 1013.8015647982561
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 16,
+            "start_time": 50214354,
+            "end_time": 55346075,
+            "inference_time": 1,
+            "flops": 1018.5107333356323
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 18,
+            "start_time": 21500534,
+            "end_time": 22362119,
+            "inference_time": 0,
+            "flops": 1026.8214285623606
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 18,
+            "start_time": 56638402,
+            "end_time": 57514238,
+            "inference_time": 1,
+            "flops": 1008.9248044928746
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 20,
+            "start_time": 23281830,
+            "end_time": 28386066,
+            "inference_time": 0,
+            "flops": 1025.202893751504
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 20,
+            "start_time": 58433171,
+            "end_time": 63510241,
+            "inference_time": 1,
+            "flops": 1025.312750046609
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 24,
+            "start_time": 29655629,
+            "end_time": 35172105,
+            "inference_time": 0,
+            "flops": 890.9090909090908
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 24,
+            "start_time": 64781180,
+            "end_time": 70304793,
+            "inference_time": 1,
+            "flops": 860.6060606060604
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 0,
+            "start_time": 34608359,
+            "end_time": 34748977,
+            "inference_time": 1,
+            "flops": 1074.227723715531
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 1,
+            "start_time": 36297352,
+            "end_time": 36853591,
+            "inference_time": 1,
+            "flops": 1026.7485874125737
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 2,
+            "start_time": 37862280,
+            "end_time": 39240423,
+            "inference_time": 1,
+            "flops": 1011.9807656483441
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 3,
+            "start_time": 39355978,
+            "end_time": 39634402,
+            "inference_time": 1,
+            "flops": 1018.2265596657782
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 4,
+            "start_time": 39875481,
+            "end_time": 41203687,
+            "inference_time": 1,
+            "flops": 1023.1958680720038
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 7,
+            "start_time": 43241656,
+            "end_time": 43696276,
+            "inference_time": 1,
+            "flops": 1006.4492797765113
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 8,
+            "start_time": 44508680,
+            "end_time": 48906497,
+            "inference_time": 1,
+            "flops": 1028.434880726823
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 13,
+            "start_time": 14650258,
+            "end_time": 18734687,
+            "inference_time": 0,
+            "flops": 1027.6805543485286
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 13,
+            "start_time": 49778955,
+            "end_time": 53882099,
+            "inference_time": 1,
+            "flops": 1030.2367945470073
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 18,
+            "start_time": 20031630,
+            "end_time": 20893755,
+            "inference_time": 0,
+            "flops": 1028.4606160479175
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 18,
+            "start_time": 55162839,
+            "end_time": 56017846,
+            "inference_time": 1,
+            "flops": 1052.9434646394682
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 20,
+            "start_time": 22117858,
+            "end_time": 27274031,
+            "inference_time": 0,
+            "flops": 1029.562583822088
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 20,
+            "start_time": 57174600,
+            "end_time": 62213162,
+            "inference_time": 1,
+            "flops": 1034.6250333082867
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 22,
+            "start_time": 28278550,
+            "end_time": 33771029,
+            "inference_time": 0,
+            "flops": 1046.4936522945397
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 22,
+            "start_time": 63209023,
+            "end_time": 68817466,
+            "inference_time": 1,
+            "flops": 1043.4242716421825
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 0,
+            "start_time": 35941181,
+            "end_time": 35994531,
+            "inference_time": 1,
+            "flops": 1019.8085001428805
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 1,
+            "start_time": 36291342,
+            "end_time": 36847631,
+            "inference_time": 1,
+            "flops": 1020.8224103262107
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 2,
+            "start_time": 37808332,
+            "end_time": 39173683,
+            "inference_time": 1,
+            "flops": 1014.8227706340384
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 3,
+            "start_time": 39361323,
+            "end_time": 39732695,
+            "inference_time": 1,
+            "flops": 1006.0901020078018
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 4,
+            "start_time": 39978968,
+            "end_time": 41296122,
+            "inference_time": 1,
+            "flops": 1020.9468814066252
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 7,
+            "start_time": 43019499,
+            "end_time": 43694818,
+            "inference_time": 1,
+            "flops": 1004.8647298238286
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 10,
+            "start_time": 44648429,
+            "end_time": 48991901,
+            "inference_time": 1,
+            "flops": 1024.8332263436923
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 12,
+            "start_time": 14563598,
+            "end_time": 18663629,
+            "inference_time": 0,
+            "flops": 1025.6927431731242
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 12,
+            "start_time": 49671509,
+            "end_time": 53752393,
+            "inference_time": 1,
+            "flops": 1037.477698849524
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 18,
+            "start_time": 19968117,
+            "end_time": 20843997,
+            "inference_time": 0,
+            "flops": 1032.078620416297
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 18,
+            "start_time": 55047477,
+            "end_time": 55921547,
+            "inference_time": 1,
+            "flops": 1034.8833350007778
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 21,
+            "start_time": 23376634,
+            "end_time": 28449076,
+            "inference_time": 0,
+            "flops": 1022.0578562920027
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 21,
+            "start_time": 58505129,
+            "end_time": 63575890,
+            "inference_time": 1,
+            "flops": 1009.637382621074
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 22,
+            "start_time": 29455157,
+            "end_time": 34981449,
+            "inference_time": 0,
+            "flops": 1008.111648755396
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 22,
+            "start_time": 64576865,
+            "end_time": 70085924,
+            "inference_time": 1,
+            "flops": 1032.9623695536307
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 0,
+            "start_time": 35898573,
+            "end_time": 35952887,
+            "inference_time": 1,
+            "flops": 981.6972087913124
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 1,
+            "start_time": 36247273,
+            "end_time": 36732363,
+            "inference_time": 1,
+            "flops": 1025.8339374074844
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 2,
+            "start_time": 37689289,
+            "end_time": 39061549,
+            "inference_time": 1,
+            "flops": 1005.3666149499369
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 3,
+            "start_time": 39357361,
+            "end_time": 39635895,
+            "inference_time": 1,
+            "flops": 1017.3516965475815
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 4,
+            "start_time": 39915952,
+            "end_time": 41411526,
+            "inference_time": 1,
+            "flops": 1033.2905787089087
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 7,
+            "start_time": 42784788,
+            "end_time": 43694485,
+            "inference_time": 1,
+            "flops": 1001.3504746299568
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 11,
+            "start_time": 9536856,
+            "end_time": 13888648,
+            "inference_time": 0,
+            "flops": 1010.2597985974124
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 11,
+            "start_time": 44686342,
+            "end_time": 49057260,
+            "inference_time": 1,
+            "flops": 1007.1185517432243
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 16,
+            "start_time": 15118070,
+            "end_time": 20240870,
+            "inference_time": 0,
+            "flops": 1021.7742821107116
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 16,
+            "start_time": 50258947,
+            "end_time": 55395788,
+            "inference_time": 1,
+            "flops": 1016.3674376531714
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 18,
+            "start_time": 21540065,
+            "end_time": 22418886,
+            "inference_time": 0,
+            "flops": 999.98252429145
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 18,
+            "start_time": 56691185,
+            "end_time": 57559964,
+            "inference_time": 1,
+            "flops": 1027.1991396662488
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 20,
+            "start_time": 23328274,
+            "end_time": 28406916,
+            "inference_time": 0,
+            "flops": 1026.1419617075971
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 20,
+            "start_time": 58479730,
+            "end_time": 63546797,
+            "inference_time": 1,
+            "flops": 1033.7163521714178
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 22,
+            "start_time": 29407993,
+            "end_time": 34936617,
+            "inference_time": 0,
+            "flops": 1018.3590023368014
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 22,
+            "start_time": 64549860,
+            "end_time": 70061970,
+            "inference_time": 1,
+            "flops": 1033.8864181626695
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 0,
+            "start_time": 36059296,
+            "end_time": 36196531,
+            "inference_time": 1,
+            "flops": 1004.2888230608891
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 1,
+            "start_time": 36347462,
+            "end_time": 36813790,
+            "inference_time": 1,
+            "flops": 1020.639777783818
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 2,
+            "start_time": 37786644,
+            "end_time": 39162897,
+            "inference_time": 1,
+            "flops": 1016.6880649833585
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 3,
+            "start_time": 39357180,
+            "end_time": 39726713,
+            "inference_time": 1,
+            "flops": 1015.4531418298433
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 4,
+            "start_time": 39955104,
+            "end_time": 41284967,
+            "inference_time": 1,
+            "flops": 1021.6433298881956
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 7,
+            "start_time": 42784420,
+            "end_time": 43694412,
+            "inference_time": 1,
+            "flops": 1004.2891839771816
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 10,
+            "start_time": 44583914,
+            "end_time": 49054765,
+            "inference_time": 1,
+            "flops": 1033.9801629895262
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 17,
+            "start_time": 15180545,
+            "end_time": 20252371,
+            "inference_time": 0,
+            "flops": 1010.3151652738298
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 17,
+            "start_time": 50315867,
+            "end_time": 55396968,
+            "inference_time": 1,
+            "flops": 1016.1367612826723
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 18,
+            "start_time": 21561290,
+            "end_time": 22415722,
+            "inference_time": 0,
+            "flops": 1065.0102669610808
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 18,
+            "start_time": 56698523,
+            "end_time": 57584663,
+            "inference_time": 1,
+            "flops": 991.1640103358693
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 20,
+            "start_time": 23332644,
+            "end_time": 28418780,
+            "inference_time": 0,
+            "flops": 1020.4837405595335
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 20,
+            "start_time": 58407960,
+            "end_time": 63489345,
+            "inference_time": 1,
+            "flops": 1027.0348725297843
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 24,
+            "start_time": 29657116,
+            "end_time": 35172267,
+            "inference_time": 0,
+            "flops": 903.0303030303029
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 24,
+            "start_time": 64781627,
+            "end_time": 70305285,
+            "inference_time": 1,
+            "flops": 878.7878787878784
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 0,
+            "start_time": 34624768,
+            "end_time": 34679195,
+            "inference_time": 1,
+            "flops": 982.0410114085593
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 1,
+            "start_time": 36291100,
+            "end_time": 36847402,
+            "inference_time": 1,
+            "flops": 1023.9484225374081
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 2,
+            "start_time": 37904694,
+            "end_time": 39274059,
+            "inference_time": 1,
+            "flops": 1009.5232031238079
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 3,
+            "start_time": 39357381,
+            "end_time": 39635893,
+            "inference_time": 1,
+            "flops": 1007.8373200978673
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 4,
+            "start_time": 39878798,
+            "end_time": 41195006,
+            "inference_time": 1,
+            "flops": 1018.9311166348109
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 7,
+            "start_time": 43464608,
+            "end_time": 43645212,
+            "inference_time": 1,
+            "flops": 988.0729466611816
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 8,
+            "start_time": 44385761,
+            "end_time": 48150989,
+            "inference_time": 1,
+            "flops": 1038.566542096129
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 12,
+            "start_time": 13710873,
+            "end_time": 17844298,
+            "inference_time": 0,
+            "flops": 1023.5461733599499
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 12,
+            "start_time": 48846542,
+            "end_time": 52940710,
+            "inference_time": 1,
+            "flops": 1024.9926562781723
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 18,
+            "start_time": 19136910,
+            "end_time": 20728801,
+            "inference_time": 0,
+            "flops": 1004.3561930193895
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 18,
+            "start_time": 54234754,
+            "end_time": 55869470,
+            "inference_time": 1,
+            "flops": 1015.5909563735606
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 20,
+            "start_time": 22062851,
+            "end_time": 27145186,
+            "inference_time": 0,
+            "flops": 1021.2859493364383
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 20,
+            "start_time": 57117384,
+            "end_time": 62195101,
+            "inference_time": 1,
+            "flops": 1030.5357024701107
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 22,
+            "start_time": 28144166,
+            "end_time": 33662795,
+            "inference_time": 0,
+            "flops": 1030.13681894928
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 22,
+            "start_time": 63200434,
+            "end_time": 68710724,
+            "inference_time": 1,
+            "flops": 1026.8417486217452
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 0,
+            "start_time": 34674749,
+            "end_time": 34773640,
+            "inference_time": 1,
+            "flops": 1032.2467787994349
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 1,
+            "start_time": 36278852,
+            "end_time": 36828872,
+            "inference_time": 1,
+            "flops": 1014.3941483669679
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 2,
+            "start_time": 37833396,
+            "end_time": 39187341,
+            "inference_time": 1,
+            "flops": 1018.9550683722535
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 3,
+            "start_time": 39357543,
+            "end_time": 39729047,
+            "inference_time": 1,
+            "flops": 1012.2475287321469
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 4,
+            "start_time": 39969933,
+            "end_time": 41283753,
+            "inference_time": 1,
+            "flops": 1018.363370865561
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 7,
+            "start_time": 43217323,
+            "end_time": 43695945,
+            "inference_time": 1,
+            "flops": 1010.3100512400412
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 10,
+            "start_time": 44619466,
+            "end_time": 48990439,
+            "inference_time": 1,
+            "flops": 1016.0452762329319
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 12,
+            "start_time": 14589637,
+            "end_time": 18669791,
+            "inference_time": 0,
+            "flops": 1032.3025313044614
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 12,
+            "start_time": 49713811,
+            "end_time": 53852255,
+            "inference_time": 1,
+            "flops": 1022.3029225724651
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 18,
+            "start_time": 19961023,
+            "end_time": 20828269,
+            "inference_time": 0,
+            "flops": 1054.9384428195767
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 18,
+            "start_time": 55187509,
+            "end_time": 56054839,
+            "inference_time": 1,
+            "flops": 1041.4470461231656
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 20,
+            "start_time": 22009595,
+            "end_time": 27103117,
+            "inference_time": 0,
+            "flops": 1032.8182094349525
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 20,
+            "start_time": 57098115,
+            "end_time": 62189824,
+            "inference_time": 1,
+            "flops": 1020.7419898925438
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 22,
+            "start_time": 28115771,
+            "end_time": 33676797,
+            "inference_time": 0,
+            "flops": 1041.7475998104471
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 22,
+            "start_time": 63198220,
+            "end_time": 68805790,
+            "inference_time": 1,
+            "flops": 1015.4048807127984
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 0,
+            "start_time": 35933320,
+            "end_time": 35987266,
+            "inference_time": 1,
+            "flops": 1061.0036140532186
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 1,
+            "start_time": 36247025,
+            "end_time": 36732124,
+            "inference_time": 1,
+            "flops": 1027.9157317074391
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 2,
+            "start_time": 37728659,
+            "end_time": 39082107,
+            "inference_time": 1,
+            "flops": 1034.0644847828428
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 3,
+            "start_time": 39471616,
+            "end_time": 39732650,
+            "inference_time": 1,
+            "flops": 1019.5949310023539
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 4,
+            "start_time": 39977313,
+            "end_time": 41279448,
+            "inference_time": 1,
+            "flops": 1029.602539657945
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 7,
+            "start_time": 42825978,
+            "end_time": 43694380,
+            "inference_time": 1,
+            "flops": 995.1430993144604
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 10,
+            "start_time": 44652828,
+            "end_time": 48991285,
+            "inference_time": 1,
+            "flops": 1025.4038604245318
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 12,
+            "start_time": 14564845,
+            "end_time": 18702139,
+            "inference_time": 0,
+            "flops": 1018.734080414992
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 12,
+            "start_time": 49682811,
+            "end_time": 53793991,
+            "inference_time": 1,
+            "flops": 1024.589373009381
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 18,
+            "start_time": 20003622,
+            "end_time": 20884543,
+            "inference_time": 0,
+            "flops": 1018.782871782406
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 18,
+            "start_time": 55088239,
+            "end_time": 55947559,
+            "inference_time": 1,
+            "flops": 1076.8519633297165
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 21,
+            "start_time": 23377487,
+            "end_time": 28449067,
+            "inference_time": 0,
+            "flops": 1016.4406451753229
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 21,
+            "start_time": 58507286,
+            "end_time": 63577288,
+            "inference_time": 1,
+            "flops": 992.619835981439
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 22,
+            "start_time": 29457597,
+            "end_time": 34970842,
+            "inference_time": 0,
+            "flops": 1029.0405859412683
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 22,
+            "start_time": 64582234,
+            "end_time": 70086199,
+            "inference_time": 1,
+            "flops": 1034.7673210846688
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 0,
+            "start_time": 35885999,
+            "end_time": 36026714,
+            "inference_time": 1,
+            "flops": 1075.1686016408
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 1,
+            "start_time": 36252957,
+            "end_time": 36738100,
+            "inference_time": 1,
+            "flops": 1014.3080412608315
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 2,
+            "start_time": 37685457,
+            "end_time": 39048673,
+            "inference_time": 1,
+            "flops": 1042.4685142569151
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 3,
+            "start_time": 39355841,
+            "end_time": 39634279,
+            "inference_time": 1,
+            "flops": 1011.0274165814909
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 4,
+            "start_time": 39879972,
+            "end_time": 41217144,
+            "inference_time": 1,
+            "flops": 1019.2394352476971
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 7,
+            "start_time": 42784495,
+            "end_time": 43696063,
+            "inference_time": 1,
+            "flops": 1014.5557488317162
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 10,
+            "start_time": 44578189,
+            "end_time": 48995834,
+            "inference_time": 1,
+            "flops": 1026.2769234581094
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 17,
+            "start_time": 15179858,
+            "end_time": 20252037,
+            "inference_time": 0,
+            "flops": 1006.3218644787355
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 17,
+            "start_time": 50316150,
+            "end_time": 55397240,
+            "inference_time": 1,
+            "flops": 1022.3667347442671
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 18,
+            "start_time": 21548275,
+            "end_time": 22424566,
+            "inference_time": 0,
+            "flops": 1007.6231488350015
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 18,
+            "start_time": 56703105,
+            "end_time": 57576305,
+            "inference_time": 1,
+            "flops": 997.209487327147
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 21,
+            "start_time": 23378503,
+            "end_time": 28471266,
+            "inference_time": 0,
+            "flops": 1031.403533490313
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 21,
+            "start_time": 58507151,
+            "end_time": 63599913,
+            "inference_time": 1,
+            "flops": 1025.369769339857
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 22,
+            "start_time": 29530991,
+            "end_time": 35046432,
+            "inference_time": 0,
+            "flops": 1018.0773446721012
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 22,
+            "start_time": 64576809,
+            "end_time": 70201420,
+            "inference_time": 1,
+            "flops": 1024.0114440367124
+        }
+    ]
+}

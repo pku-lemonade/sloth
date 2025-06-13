@@ -9,6 +9,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+from analysis.comm_fail import comm_analyzer
+from analysis.comp_fail import comp_analyzer
 from analysis.trace_format import InstTrace, CommInst, CompInst
 from src.sim_type import TaskType
 import hashlib
@@ -48,10 +50,10 @@ class CompressedComm(CompressedSummary):
     src_id: int
     dst_id: int
 
-class CompSummary(CompressedComp):
+class CompSummary(BaseModel):
     trace: List[CompressedComp]
 
-class CommSummary(CompressedComm):
+class CommSummary(BaseModel):
     trace: List[CompressedComm]
 
 compute_inst = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
@@ -60,9 +62,10 @@ io_inst = [TaskType.READ, TaskType.WRITE]
 
 # 从原始指令数据中提取 key，并去除冗余数据
 def trace_to_key_attr(trace):
+    key, attr = None, None
     if trace.instruction_type in compute_inst:
         # 计算指令
-        key = f"pe{trace.pe_id}-flops{trace.flops}"
+        key = f"pe{trace.pe_id}-flops{trace.flops}-layer{trace.layer_id}-inf{trace.inference_time}"
         attr = CompressedTrace(
             layer_id = trace.layer_id,
             pe_id = trace.pe_id,
@@ -73,7 +76,7 @@ def trace_to_key_attr(trace):
         )
     elif trace.instruction_type in communication_inst:
         # 通信指令
-        key = f"src{trace.src_id}-dst{trace.dst_id}-ds{trace.data_size}"
+        key = f"src{trace.src_id}-dst{trace.dst_id}-ds{trace.data_size}-inf{trace.inference_time}"
         attr = CompressedTrace(
             layer_id = trace.layer_id,
             pe_id = trace.pe_id,
@@ -137,6 +140,8 @@ class BurstPattern:
         # 记录总属性
         self.merged_attr = attr
         self.merged_attr.duration = attr.end_time - attr.start_time
+        if attr.flops != -1:
+            self.merged_attr.flops = attr.flops / self.merged_attr.duration
 
     def update(self, start_time: int, end_time: int, attr: dict):
         # 更新失速指令集合
@@ -144,12 +149,15 @@ class BurstPattern:
         self.start_time = min(self.start_time, start_time)
         self.end_time = max(self.end_time, end_time)
         # 维护各属性变化
+        # if self.merged_attr.flops != -1:
+        #     print(f"{self.merged_attr.flops} -- {self.count}")
         self.merged_attr.merge(attr)
 
     # 以 Summary 格式返回
     def summary(self):
         # 返回压缩信息（平均后）
         if self.merged_attr.flops != -1:
+            # print(f"{self.merged_attr.flops} / {self.count}")
             return CompressedComp(
                 pe_id = self.merged_attr.pe_id,
                 layer_id = self.merged_attr.layer_id,
@@ -229,4 +237,21 @@ class BurstSketchLikeCompressor:
         with open(comm_json_file, "w") as file:
             print(comm_json, file=file)
 
-BurstSketchLikeCompressor()
+ds = BurstSketchLikeCompressor(num_hashes=5, num_buckets=1024, stage2_size=512)
+comm_file = "data/darknet19/link/comm_trace.json"
+comp_file = "data/darknet19/link/comp_trace.json"
+
+comm_data = comm_analyzer(comm_file)
+comp_data = comp_analyzer(comp_file)
+
+for trace in comm_data.trace:
+    if trace.instruction_type not in io_inst:
+        key, attr = trace_to_key_attr(trace)
+        ds.insert(key, attr.start_time, attr.end_time, attr)
+
+for trace in comp_data.trace:
+    if trace.instruction_type not in io_inst:
+        key, attr = trace_to_key_attr(trace)
+        ds.insert(key, attr.start_time, attr.end_time, attr)
+
+ds.summaries(file_path="analysis")
