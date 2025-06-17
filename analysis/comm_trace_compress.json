@@ -3,17 +3,6 @@
         {
             "pe_id": 0,
             "layer_id": 14,
-            "start_time": 14675880,
-            "end_time": 18744610,
-            "inference_time": 0,
-            "avg_time": 7479.381818181818,
-            "data_size": 50176,
-            "src_id": 8,
-            "dst_id": 0
-        },
-        {
-            "pe_id": 0,
-            "layer_id": 14,
             "start_time": 49803900,
             "end_time": 53888577,
             "inference_time": 1,
@@ -102,17 +91,6 @@
         {
             "pe_id": 1,
             "layer_id": 14,
-            "start_time": 14676268,
-            "end_time": 18749402,
-            "inference_time": 0,
-            "avg_time": 14962.290909090909,
-            "data_size": 50176,
-            "src_id": 8,
-            "dst_id": 1
-        },
-        {
-            "pe_id": 1,
-            "layer_id": 14,
             "start_time": 49804246,
             "end_time": 53899144,
             "inference_time": 1,
@@ -120,17 +98,6 @@
             "data_size": 50176,
             "src_id": 8,
             "dst_id": 1
-        },
-        {
-            "pe_id": 2,
-            "layer_id": 16,
-            "start_time": 14896836,
-            "end_time": 19001379,
-            "inference_time": 0,
-            "avg_time": 3979.2,
-            "data_size": 50176,
-            "src_id": 6,
-            "dst_id": 2
         },
         {
             "pe_id": 2,
@@ -186,17 +153,6 @@
             "data_size": 12544,
             "src_id": 1,
             "dst_id": 2
-        },
-        {
-            "pe_id": 3,
-            "layer_id": 16,
-            "start_time": 14897234,
-            "end_time": 19008324,
-            "inference_time": 0,
-            "avg_time": 10717.781818181818,
-            "data_size": 50176,
-            "src_id": 6,
-            "dst_id": 3
         },
         {
             "pe_id": 3,
@@ -262,17 +218,6 @@
             "avg_time": 1647.7454545454545,
             "data_size": 21504,
             "src_id": 5,
-            "dst_id": 4
-        },
-        {
-            "pe_id": 4,
-            "layer_id": 14,
-            "start_time": 14676693,
-            "end_time": 18745053,
-            "inference_time": 0,
-            "avg_time": 9889.345454545455,
-            "data_size": 50176,
-            "src_id": 8,
             "dst_id": 4
         },
         {
@@ -647,17 +592,6 @@
             "avg_time": 6305.509090909091,
             "data_size": 28672,
             "src_id": 12,
-            "dst_id": 5
-        },
-        {
-            "pe_id": 5,
-            "layer_id": 14,
-            "start_time": 14677097,
-            "end_time": 18754780,
-            "inference_time": 0,
-            "avg_time": 17004.6,
-            "data_size": 50176,
-            "src_id": 8,
             "dst_id": 5
         },
         {
@@ -1048,34 +982,12 @@
         {
             "pe_id": 6,
             "layer_id": 15,
-            "start_time": 14807593,
-            "end_time": 18863268,
-            "inference_time": 0,
-            "avg_time": 5817.145454545454,
-            "data_size": 25088,
-            "src_id": 0,
-            "dst_id": 6
-        },
-        {
-            "pe_id": 6,
-            "layer_id": 15,
             "start_time": 49914080,
             "end_time": 53990232,
             "inference_time": 1,
             "avg_time": 6043.836363636364,
             "data_size": 25088,
             "src_id": 0,
-            "dst_id": 6
-        },
-        {
-            "pe_id": 6,
-            "layer_id": 15,
-            "start_time": 14756008,
-            "end_time": 18816064,
-            "inference_time": 0,
-            "avg_time": 3984.3636363636365,
-            "data_size": 25088,
-            "src_id": 4,
             "dst_id": 6
         },
         {
@@ -1092,34 +1004,12 @@
         {
             "pe_id": 6,
             "layer_id": 15,
-            "start_time": 14831825,
-            "end_time": 18939736,
-            "inference_time": 0,
-            "avg_time": 4122.272727272727,
-            "data_size": 25088,
-            "src_id": 1,
-            "dst_id": 6
-        },
-        {
-            "pe_id": 6,
-            "layer_id": 15,
             "start_time": 49920292,
             "end_time": 53993218,
             "inference_time": 1,
             "avg_time": 3874.4,
             "data_size": 25088,
             "src_id": 1,
-            "dst_id": 6
-        },
-        {
-            "pe_id": 6,
-            "layer_id": 15,
-            "start_time": 14818736,
-            "end_time": 18895065,
-            "inference_time": 0,
-            "avg_time": 2103.7272727272725,
-            "data_size": 25088,
-            "src_id": 5,
             "dst_id": 6
         },
         {
@@ -1532,34 +1422,12 @@
         {
             "pe_id": 8,
             "layer_id": 13,
-            "start_time": 14623105,
-            "end_time": 18708251,
-            "inference_time": 0,
-            "avg_time": 5831.327272727272,
-            "data_size": 25088,
-            "src_id": 14,
-            "dst_id": 8
-        },
-        {
-            "pe_id": 8,
-            "layer_id": 13,
             "start_time": 49738187,
             "end_time": 53800259,
             "inference_time": 1,
             "avg_time": 5616.909090909091,
             "data_size": 25088,
             "src_id": 14,
-            "dst_id": 8
-        },
-        {
-            "pe_id": 8,
-            "layer_id": 13,
-            "start_time": 14626689,
-            "end_time": 18665342,
-            "inference_time": 0,
-            "avg_time": 1887.1818181818182,
-            "data_size": 25088,
-            "src_id": 9,
             "dst_id": 8
         },
         {
@@ -1576,34 +1444,12 @@
         {
             "pe_id": 8,
             "layer_id": 13,
-            "start_time": 14645731,
-            "end_time": 18672863,
-            "inference_time": 0,
-            "avg_time": 4150.981818181818,
-            "data_size": 25088,
-            "src_id": 13,
-            "dst_id": 8
-        },
-        {
-            "pe_id": 8,
-            "layer_id": 13,
             "start_time": 49770491,
             "end_time": 53857128,
             "inference_time": 1,
             "avg_time": 3760.7818181818184,
             "data_size": 25088,
             "src_id": 13,
-            "dst_id": 8
-        },
-        {
-            "pe_id": 8,
-            "layer_id": 13,
-            "start_time": 13773061,
-            "end_time": 17846047,
-            "inference_time": 0,
-            "avg_time": 1976.0363636363636,
-            "data_size": 25088,
-            "src_id": 12,
             "dst_id": 8
         },
         {
@@ -1939,34 +1785,12 @@
         {
             "pe_id": 10,
             "layer_id": 11,
-            "start_time": 9520967,
-            "end_time": 13880284,
-            "inference_time": 0,
-            "avg_time": 2344.6181818181817,
-            "data_size": 28672,
-            "src_id": 11,
-            "dst_id": 10
-        },
-        {
-            "pe_id": 10,
-            "layer_id": 11,
             "start_time": 44617670,
             "end_time": 49057046,
             "inference_time": 1,
             "avg_time": 2602.690909090909,
             "data_size": 28672,
             "src_id": 11,
-            "dst_id": 10
-        },
-        {
-            "pe_id": 10,
-            "layer_id": 11,
-            "start_time": 9525333,
-            "end_time": 13887829,
-            "inference_time": 0,
-            "avg_time": 4287.454545454545,
-            "data_size": 28672,
-            "src_id": 15,
             "dst_id": 10
         },
         {
@@ -1983,17 +1807,6 @@
         {
             "pe_id": 10,
             "layer_id": 11,
-            "start_time": 9527878,
-            "end_time": 13885488,
-            "inference_time": 0,
-            "avg_time": 2249.4545454545455,
-            "data_size": 28672,
-            "src_id": 14,
-            "dst_id": 10
-        },
-        {
-            "pe_id": 10,
-            "layer_id": 11,
             "start_time": 44684604,
             "end_time": 48993983,
             "inference_time": 1,
@@ -2005,34 +1818,12 @@
         {
             "pe_id": 10,
             "layer_id": 11,
-            "start_time": 9527303,
-            "end_time": 13882977,
-            "inference_time": 0,
-            "avg_time": 2700.6545454545453,
-            "data_size": 28672,
-            "src_id": 9,
-            "dst_id": 10
-        },
-        {
-            "pe_id": 10,
-            "layer_id": 11,
             "start_time": 44677413,
             "end_time": 48997460,
             "inference_time": 1,
             "avg_time": 2680.2363636363634,
             "data_size": 28672,
             "src_id": 9,
-            "dst_id": 10
-        },
-        {
-            "pe_id": 10,
-            "layer_id": 11,
-            "start_time": 9532746,
-            "end_time": 13888453,
-            "inference_time": 0,
-            "avg_time": 4656.236363636363,
-            "data_size": 28672,
-            "src_id": 13,
             "dst_id": 10
         },
         {

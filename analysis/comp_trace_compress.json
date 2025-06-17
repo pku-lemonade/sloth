@@ -3,1922 +3,2074 @@
         {
             "pe_id": 0,
             "layer_id": 0,
-            "start_time": 33822204,
-            "end_time": 33955644,
+            "start_time": 78910968,
+            "end_time": 79043748,
             "inference_time": 1,
-            "flops": 1009.0449754440859
+            "flops": 1096.6264823286153
         },
         {
             "pe_id": 0,
             "layer_id": 1,
-            "start_time": 36180622,
-            "end_time": 36784091,
+            "start_time": 81562445,
+            "end_time": 82165899,
             "inference_time": 1,
-            "flops": 1007.0254978270327
+            "flops": 1016.8064549969309
         },
         {
             "pe_id": 0,
             "layer_id": 2,
-            "start_time": 37726519,
-            "end_time": 39125563,
+            "start_time": 83111585,
+            "end_time": 84514429,
             "inference_time": 1,
-            "flops": 1023.824645757932
+            "flops": 1012.9381022347462
         },
         {
             "pe_id": 0,
             "layer_id": 3,
-            "start_time": 39355886,
-            "end_time": 39631459,
+            "start_time": 84738736,
+            "end_time": 85014319,
             "inference_time": 1,
-            "flops": 1020.9712868389566
+            "flops": 1014.8737554531468
         },
         {
             "pe_id": 0,
             "layer_id": 4,
-            "start_time": 39899811,
-            "end_time": 41421829,
+            "start_time": 85281268,
+            "end_time": 86817774,
             "inference_time": 1,
-            "flops": 1026.2463064336994
+            "flops": 1009.7564200579753
         },
         {
             "pe_id": 0,
             "layer_id": 7,
-            "start_time": 42784680,
-            "end_time": 43645054,
+            "start_time": 88161471,
+            "end_time": 88940713,
             "inference_time": 1,
-            "flops": 986.6323543123539
+            "flops": 997.1552776635126
         },
         {
             "pe_id": 0,
             "layer_id": 8,
-            "start_time": 44493559,
-            "end_time": 48871927,
+            "start_time": 32836715,
+            "end_time": 37232527,
+            "inference_time": 0,
+            "flops": 1034.26830647336
+        },
+        {
+            "pe_id": 0,
+            "layer_id": 8,
+            "start_time": 89795702,
+            "end_time": 94160488,
             "inference_time": 1,
-            "flops": 1015.2770957299441
+            "flops": 1026.07139628848
         },
         {
             "pe_id": 0,
             "layer_id": 14,
-            "start_time": 14749730,
-            "end_time": 18857770,
+            "start_time": 38234738,
+            "end_time": 44280003,
             "inference_time": 0,
-            "flops": 1028.7986091612759
+            "flops": 1028.869043985075
         },
         {
             "pe_id": 0,
             "layer_id": 14,
-            "start_time": 49861250,
-            "end_time": 53985752,
+            "start_time": 95133518,
+            "end_time": 99292612,
             "inference_time": 1,
-            "flops": 1021.9482647813076
+            "flops": 1015.6161938310825
         },
         {
             "pe_id": 0,
             "layer_id": 18,
-            "start_time": 20153239,
-            "end_time": 21020803,
+            "start_time": 63146096,
+            "end_time": 64977477,
             "inference_time": 0,
-            "flops": 1011.6284681696077
+            "flops": 1049.7320972679777
         },
         {
             "pe_id": 0,
             "layer_id": 18,
-            "start_time": 55293103,
-            "end_time": 56155960,
+            "start_time": 100591588,
+            "end_time": 101472241,
             "inference_time": 1,
-            "flops": 1049.5427257091994
+            "flops": 1007.7313960959721
         },
         {
             "pe_id": 0,
             "layer_id": 19,
-            "start_time": 21836357,
-            "end_time": 26296518,
+            "start_time": 66922385,
+            "end_time": 71372806,
             "inference_time": 0,
-            "flops": 1015.2375426313304
+            "flops": 1029.2711944814039
         },
         {
             "pe_id": 0,
             "layer_id": 19,
-            "start_time": 56967575,
-            "end_time": 61429087,
+            "start_time": 102282468,
+            "end_time": 106739479,
             "inference_time": 1,
-            "flops": 1013.2557856760124
+            "flops": 1020.9658779472433
         },
         {
             "pe_id": 0,
             "layer_id": 22,
-            "start_time": 27318212,
-            "end_time": 32933112,
+            "start_time": 72394072,
+            "end_time": 78024403,
             "inference_time": 0,
-            "flops": 1034.2767348752177
+            "flops": 1013.0455743066236
         },
         {
             "pe_id": 0,
             "layer_id": 22,
-            "start_time": 62435389,
-            "end_time": 67961155,
+            "start_time": 107739280,
+            "end_time": 113261718,
             "inference_time": 1,
-            "flops": 1017.9312525848851
+            "flops": 1013.7946384932889
         },
         {
             "pe_id": 1,
             "layer_id": 0,
-            "start_time": 33806426,
-            "end_time": 33946740,
+            "start_time": 78831992,
+            "end_time": 78973486,
             "inference_time": 1,
-            "flops": 1112.656838076369
+            "flops": 1017.9259872478584
         },
         {
             "pe_id": 1,
             "layer_id": 1,
-            "start_time": 36179921,
-            "end_time": 36805237,
+            "start_time": 81563025,
+            "end_time": 82188337,
             "inference_time": 1,
-            "flops": 1014.4257486502848
+            "flops": 1004.9191969843638
         },
         {
             "pe_id": 1,
             "layer_id": 2,
-            "start_time": 37747613,
-            "end_time": 39122142,
+            "start_time": 83138377,
+            "end_time": 84497692,
             "inference_time": 1,
-            "flops": 1018.7867137951008
+            "flops": 1047.7088373706313
         },
         {
             "pe_id": 1,
             "layer_id": 3,
-            "start_time": 39359398,
-            "end_time": 39730669,
+            "start_time": 84741872,
+            "end_time": 85113113,
             "inference_time": 1,
-            "flops": 996.6526168075151
+            "flops": 1018.4477177399838
         },
         {
             "pe_id": 1,
             "layer_id": 5,
-            "start_time": 40114809,
-            "end_time": 42157126,
+            "start_time": 85492424,
+            "end_time": 87541951,
             "inference_time": 1,
-            "flops": 1030.5165390661623
+            "flops": 1019.513536397029
         },
         {
             "pe_id": 1,
             "layer_id": 7,
-            "start_time": 43380210,
-            "end_time": 43694493,
+            "start_time": 88749090,
+            "end_time": 88990255,
             "inference_time": 1,
-            "flops": 1013.6279880877165
+            "flops": 995.0300435659439
         },
         {
             "pe_id": 1,
             "layer_id": 8,
-            "start_time": 44467376,
-            "end_time": 48865607,
+            "start_time": 32866613,
+            "end_time": 37304552,
+            "inference_time": 0,
+            "flops": 1028.2805398770893
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 8,
+            "start_time": 89785341,
+            "end_time": 94193205,
             "inference_time": 1,
-            "flops": 1029.1957809441844
+            "flops": 1024.9099457003547
         },
         {
             "pe_id": 1,
             "layer_id": 14,
-            "start_time": 14773289,
-            "end_time": 18936682,
+            "start_time": 38241748,
+            "end_time": 44317993,
             "inference_time": 0,
-            "flops": 1006.6966031217765
+            "flops": 1024.3047588425165
         },
         {
             "pe_id": 1,
             "layer_id": 14,
-            "start_time": 49862290,
-            "end_time": 53988014,
+            "start_time": 95149705,
+            "end_time": 99287490,
             "inference_time": 1,
-            "flops": 1024.6847032107466
+            "flops": 1024.5728851168358
         },
         {
             "pe_id": 1,
             "layer_id": 18,
-            "start_time": 20227131,
-            "end_time": 21094597,
+            "start_time": 63964397,
+            "end_time": 65747823,
             "inference_time": 0,
-            "flops": 1031.5287618923762
+            "flops": 988.7145219139155
         },
         {
             "pe_id": 1,
             "layer_id": 18,
-            "start_time": 55276748,
-            "end_time": 56137506,
+            "start_time": 100586845,
+            "end_time": 101456136,
             "inference_time": 1,
-            "flops": 1029.9683452608608
-        },
-        {
-            "pe_id": 1,
-            "layer_id": 19,
-            "start_time": 21903053,
-            "end_time": 26358565,
-            "inference_time": 0,
-            "flops": 1022.2808229056436
+            "flops": 1008.7823355066631
         },
         {
             "pe_id": 1,
             "layer_id": 19,
-            "start_time": 56949255,
-            "end_time": 61406254,
+            "start_time": 66924505,
+            "end_time": 71382642,
+            "inference_time": 0,
+            "flops": 1019.4175852123049
+        },
+        {
+            "pe_id": 1,
+            "layer_id": 19,
+            "start_time": 102272065,
+            "end_time": 106727352,
             "inference_time": 1,
-            "flops": 1019.7830247405773
+            "flops": 1021.37999101643
         },
         {
             "pe_id": 1,
             "layer_id": 22,
-            "start_time": 27467584,
-            "end_time": 32968486,
+            "start_time": 72491578,
+            "end_time": 77995362,
             "inference_time": 0,
-            "flops": 1041.6391921537274
+            "flops": 1034.3121038000897
         },
         {
             "pe_id": 1,
             "layer_id": 22,
-            "start_time": 62430825,
-            "end_time": 68036095,
+            "start_time": 107755740,
+            "end_time": 113378061,
             "inference_time": 1,
-            "flops": 1039.9746079795839
+            "flops": 1032.0337956966232
         },
         {
             "pe_id": 2,
             "layer_id": 0,
-            "start_time": 35921807,
-            "end_time": 36022667,
+            "start_time": 79700358,
+            "end_time": 79799812,
             "inference_time": 1,
-            "flops": 962.3858174778346
+            "flops": 1013.1150285030891
         },
         {
             "pe_id": 2,
             "layer_id": 1,
-            "start_time": 36173682,
-            "end_time": 36723761,
+            "start_time": 81541439,
+            "end_time": 82091435,
             "inference_time": 1,
-            "flops": 1003.1630282445662
+            "flops": 1021.0109563269733
         },
         {
             "pe_id": 2,
             "layer_id": 2,
-            "start_time": 37674076,
-            "end_time": 39033432,
+            "start_time": 83050285,
+            "end_time": 84387137,
             "inference_time": 1,
-            "flops": 1014.1917888579262
+            "flops": 1052.9124927220485
         },
         {
             "pe_id": 2,
             "layer_id": 3,
-            "start_time": 39357219,
-            "end_time": 39728685,
+            "start_time": 84740209,
+            "end_time": 85111670,
             "inference_time": 1,
-            "flops": 1018.3889247309966
+            "flops": 1023.813174351647
         },
         {
             "pe_id": 2,
             "layer_id": 4,
-            "start_time": 39999402,
-            "end_time": 41529469,
+            "start_time": 85374888,
+            "end_time": 86890528,
             "inference_time": 1,
-            "flops": 1019.195670526887
+            "flops": 1034.0950151413201
         },
         {
             "pe_id": 2,
             "layer_id": 7,
-            "start_time": 42790359,
-            "end_time": 43696673,
+            "start_time": 88201352,
+            "end_time": 88992164,
             "inference_time": 1,
-            "flops": 1013.3020417229538
+            "flops": 1014.6058820811552
         },
         {
             "pe_id": 2,
             "layer_id": 8,
-            "start_time": 44470481,
-            "end_time": 48922596,
+            "start_time": 32866813,
+            "end_time": 37258150,
+            "inference_time": 0,
+            "flops": 1038.7179367889296
+        },
+        {
+            "pe_id": 2,
+            "layer_id": 8,
+            "start_time": 89769612,
+            "end_time": 94194307,
             "inference_time": 1,
-            "flops": 1022.2941923510186
+            "flops": 1035.1442007720655
         },
         {
             "pe_id": 2,
             "layer_id": 16,
-            "start_time": 15079683,
-            "end_time": 20247178,
+            "start_time": 44187786,
+            "end_time": 49309198,
             "inference_time": 0,
-            "flops": 1007.0140555957547
+            "flops": 1019.7762822131357
         },
         {
             "pe_id": 2,
             "layer_id": 16,
-            "start_time": 49983114,
-            "end_time": 54102051,
+            "start_time": 95275372,
+            "end_time": 99425329,
             "inference_time": 1,
-            "flops": 1017.2241810520005
+            "flops": 1031.0582750765652
         },
         {
             "pe_id": 2,
             "layer_id": 18,
-            "start_time": 21548413,
-            "end_time": 22422798,
+            "start_time": 63141905,
+            "end_time": 64992330,
             "inference_time": 0,
-            "flops": 1035.9787803781305
+            "flops": 1015.2286616865468
         },
         {
             "pe_id": 2,
             "layer_id": 18,
-            "start_time": 55399608,
-            "end_time": 56282261,
+            "start_time": 100752511,
+            "end_time": 101623141,
             "inference_time": 1,
-            "flops": 1000.1587078677533
+            "flops": 1033.0182632279927
         },
         {
             "pe_id": 2,
             "layer_id": 20,
-            "start_time": 23278036,
-            "end_time": 28395924,
+            "start_time": 67063333,
+            "end_time": 72180927,
             "inference_time": 0,
-            "flops": 1011.1260083617532
+            "flops": 1011.9796995159228
         },
         {
             "pe_id": 2,
             "layer_id": 20,
-            "start_time": 57110051,
-            "end_time": 62195378,
+            "start_time": 102458875,
+            "end_time": 107553729,
             "inference_time": 1,
-            "flops": 1015.7121020720067
+            "flops": 1013.2212547457539
         },
         {
             "pe_id": 2,
             "layer_id": 22,
-            "start_time": 29402011,
-            "end_time": 34922516,
+            "start_time": 73176580,
+            "end_time": 78695183,
             "inference_time": 0,
-            "flops": 1025.467385157832
+            "flops": 1016.0284038928318
         },
         {
             "pe_id": 2,
             "layer_id": 22,
-            "start_time": 63197262,
-            "end_time": 68721414,
+            "start_time": 108562929,
+            "end_time": 114094791,
             "inference_time": 1,
-            "flops": 1031.5624215994806
+            "flops": 1033.7075592290128
         },
         {
             "pe_id": 3,
             "layer_id": 0,
-            "start_time": 34677458,
-            "end_time": 34812794,
+            "start_time": 79628901,
+            "end_time": 79766438,
             "inference_time": 1,
-            "flops": 1087.4200161033596
+            "flops": 991.1718848606873
         },
         {
             "pe_id": 3,
             "layer_id": 1,
-            "start_time": 36176870,
-            "end_time": 36708055,
+            "start_time": 81559656,
+            "end_time": 82090850,
             "inference_time": 1,
-            "flops": 1015.9830496535827
+            "flops": 1021.0598173557278
         },
         {
             "pe_id": 3,
             "layer_id": 2,
-            "start_time": 37674750,
-            "end_time": 39061737,
+            "start_time": 83056414,
+            "end_time": 84423977,
             "inference_time": 1,
-            "flops": 989.8199563239475
+            "flops": 1043.1353414697567
         },
         {
             "pe_id": 3,
             "layer_id": 3,
-            "start_time": 39354327,
-            "end_time": 39631509,
+            "start_time": 84737196,
+            "end_time": 85014376,
             "inference_time": 1,
-            "flops": 1002.8705588956041
+            "flops": 1004.0225121179564
         },
         {
             "pe_id": 3,
             "layer_id": 4,
-            "start_time": 39865632,
-            "end_time": 41191058,
+            "start_time": 85242327,
+            "end_time": 86584972,
             "inference_time": 1,
-            "flops": 1024.3861445147893
+            "flops": 1014.736854002568
         },
         {
             "pe_id": 3,
             "layer_id": 7,
-            "start_time": 42784864,
-            "end_time": 43644918,
+            "start_time": 88161777,
+            "end_time": 88940589,
             "inference_time": 1,
-            "flops": 982.5268065268062
+            "flops": 989.6995804195799
         },
         {
             "pe_id": 3,
             "layer_id": 8,
-            "start_time": 44313495,
-            "end_time": 48151369,
+            "start_time": 32804933,
+            "end_time": 36575268,
+            "inference_time": 0,
+            "flops": 1039.564851730163
+        },
+        {
+            "pe_id": 3,
+            "layer_id": 8,
+            "start_time": 89601264,
+            "end_time": 93437697,
             "inference_time": 1,
-            "flops": 1017.6580444073292
+            "flops": 1016.7678778304264
         },
         {
             "pe_id": 3,
             "layer_id": 16,
-            "start_time": 14926431,
-            "end_time": 19064063,
+            "start_time": 43963529,
+            "end_time": 48098860,
             "inference_time": 0,
-            "flops": 1032.0945386467217
+            "flops": 1014.297991824729
         },
         {
             "pe_id": 3,
             "layer_id": 16,
-            "start_time": 50159390,
-            "end_time": 55274434,
+            "start_time": 95427712,
+            "end_time": 100538013,
             "inference_time": 1,
-            "flops": 1020.7758521558969
+            "flops": 1022.2210220152449
         },
         {
             "pe_id": 3,
             "layer_id": 18,
-            "start_time": 20375706,
-            "end_time": 21250924,
+            "start_time": 63886597,
+            "end_time": 65727930,
             "inference_time": 0,
-            "flops": 1017.5572331757243
+            "flops": 1043.1785381653585
         },
         {
             "pe_id": 3,
             "layer_id": 18,
-            "start_time": 56606739,
-            "end_time": 57473179,
+            "start_time": 101828707,
+            "end_time": 102686010,
             "inference_time": 1,
-            "flops": 1016.9088456974478
+            "flops": 1040.3481497524574
         },
         {
             "pe_id": 3,
             "layer_id": 20,
-            "start_time": 22079839,
-            "end_time": 27153235,
+            "start_time": 67043697,
+            "end_time": 72137177,
             "inference_time": 0,
-            "flops": 1031.89233534467
+            "flops": 1012.3034649178862
         },
         {
             "pe_id": 3,
             "layer_id": 20,
-            "start_time": 58391730,
-            "end_time": 63500658,
+            "start_time": 103604621,
+            "end_time": 108713778,
             "inference_time": 1,
-            "flops": 1023.858980969966
+            "flops": 1016.964456509305
         },
         {
             "pe_id": 3,
             "layer_id": 22,
-            "start_time": 28156694,
-            "end_time": 33709991,
+            "start_time": 73137202,
+            "end_time": 78665742,
             "inference_time": 0,
-            "flops": 1011.5554689014139
+            "flops": 1028.3548588254587
         },
         {
             "pe_id": 3,
             "layer_id": 22,
-            "start_time": 64502505,
-            "end_time": 70014885,
+            "start_time": 109715117,
+            "end_time": 115243135,
             "inference_time": 1,
-            "flops": 1029.052836584427
+            "flops": 1011.3127163363258
         },
         {
             "pe_id": 4,
             "layer_id": 0,
-            "start_time": 36061035,
-            "end_time": 36194509,
+            "start_time": 81443739,
+            "end_time": 81577051,
             "inference_time": 1,
-            "flops": 1044.1000484687258
+            "flops": 1060.861801664553
         },
         {
             "pe_id": 4,
             "layer_id": 1,
-            "start_time": 36376990,
-            "end_time": 36980342,
+            "start_time": 81759529,
+            "end_time": 82363028,
             "inference_time": 1,
-            "flops": 1035.8422705595735
+            "flops": 1009.0346028979912
         },
         {
             "pe_id": 4,
             "layer_id": 2,
-            "start_time": 37926216,
-            "end_time": 39316825,
+            "start_time": 83298209,
+            "end_time": 84699607,
             "inference_time": 1,
-            "flops": 1036.3373423615878
+            "flops": 1026.132157080872
         },
         {
             "pe_id": 4,
             "layer_id": 3,
-            "start_time": 39392256,
-            "end_time": 39667853,
+            "start_time": 84775039,
+            "end_time": 85050601,
             "inference_time": 1,
-            "flops": 996.6644842090706
+            "flops": 1013.2008708941165
         },
         {
             "pe_id": 4,
             "layer_id": 4,
-            "start_time": 39894061,
-            "end_time": 41229184,
+            "start_time": 85276901,
+            "end_time": 86602323,
             "inference_time": 1,
-            "flops": 1019.7346275393038
+            "flops": 1026.1263670920434
         },
         {
             "pe_id": 4,
             "layer_id": 7,
-            "start_time": 42784417,
-            "end_time": 43645586,
+            "start_time": 88161536,
+            "end_time": 88941609,
             "inference_time": 1,
-            "flops": 991.2237158919507
+            "flops": 993.0307747154802
         },
         {
             "pe_id": 4,
             "layer_id": 10,
-            "start_time": 44573202,
-            "end_time": 49016099,
-            "inference_time": 1,
-            "flops": 1038.346563779311
-        },
-        {
-            "pe_id": 4,
-            "layer_id": 14,
-            "start_time": 14699231,
-            "end_time": 18813295,
+            "start_time": 36882572,
+            "end_time": 43121149,
             "inference_time": 0,
-            "flops": 1031.049499940935
+            "flops": 888.4011881408052
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 10,
+            "start_time": 89879106,
+            "end_time": 94312599,
+            "inference_time": 1,
+            "flops": 1030.7427267783153
         },
         {
             "pe_id": 4,
             "layer_id": 14,
-            "start_time": 49863930,
-            "end_time": 54001722,
+            "start_time": 43806579,
+            "end_time": 47939013,
+            "inference_time": 0,
+            "flops": 1012.9963874801364
+        },
+        {
+            "pe_id": 4,
+            "layer_id": 14,
+            "start_time": 95147130,
+            "end_time": 99271184,
             "inference_time": 1,
-            "flops": 1021.6112132991268
+            "flops": 1040.0365350043853
         },
         {
             "pe_id": 4,
             "layer_id": 18,
-            "start_time": 20094982,
-            "end_time": 20976106,
+            "start_time": 63518263,
+            "end_time": 65352833,
             "inference_time": 0,
-            "flops": 1017.1606327900652
+            "flops": 1056.3090823031746
         },
         {
             "pe_id": 4,
             "layer_id": 20,
-            "start_time": 22006191,
-            "end_time": 27124775,
+            "start_time": 67065326,
+            "end_time": 72175839,
             "inference_time": 0,
-            "flops": 1007.8745790686072
+            "flops": 1022.4316061861559
         },
         {
             "pe_id": 4,
             "layer_id": 20,
-            "start_time": 57157462,
-            "end_time": 62261095,
+            "start_time": 102473168,
+            "end_time": 107567781,
             "inference_time": 1,
-            "flops": 1021.9526641556382
+            "flops": 1035.696778047946
         },
         {
             "pe_id": 4,
             "layer_id": 23,
-            "start_time": 29613011,
-            "end_time": 35150916,
+            "start_time": 74983845,
+            "end_time": 80533089,
             "inference_time": 0,
-            "flops": 1020.5087736764604
+            "flops": 1030.321955214762
         },
         {
             "pe_id": 4,
             "layer_id": 23,
-            "start_time": 64739065,
-            "end_time": 70278518,
+            "start_time": 109980178,
+            "end_time": 115508369,
             "inference_time": 1,
-            "flops": 1021.3443380194439
+            "flops": 1023.3870621210381
         },
         {
             "pe_id": 5,
             "layer_id": 0,
-            "start_time": 36007427,
-            "end_time": 36147934,
+            "start_time": 81395332,
+            "end_time": 81536784,
             "inference_time": 1,
-            "flops": 1114.909114829215
+            "flops": 1028.5194511959762
         },
         {
             "pe_id": 5,
             "layer_id": 1,
-            "start_time": 36330538,
-            "end_time": 36955792,
+            "start_time": 81719347,
+            "end_time": 82344602,
             "inference_time": 1,
-            "flops": 1020.6365131337278
+            "flops": 1021.701446539978
         },
         {
             "pe_id": 5,
             "layer_id": 2,
-            "start_time": 37900935,
-            "end_time": 39273473,
+            "start_time": 83293178,
+            "end_time": 84661562,
             "inference_time": 1,
-            "flops": 1027.731797225754
+            "flops": 1041.5395598142356
         },
         {
             "pe_id": 5,
             "layer_id": 3,
-            "start_time": 39364636,
-            "end_time": 39735854,
+            "start_time": 84752736,
+            "end_time": 85123961,
             "inference_time": 1,
-            "flops": 1028.573844768324
+            "flops": 1023.9203584537119
         },
         {
             "pe_id": 5,
             "layer_id": 4,
-            "start_time": 39980901,
-            "end_time": 41304932,
+            "start_time": 85365049,
+            "end_time": 86691157,
             "inference_time": 1,
-            "flops": 1030.3968017924494
+            "flops": 1029.503076570562
         },
         {
             "pe_id": 5,
             "layer_id": 7,
-            "start_time": 42784522,
-            "end_time": 43696521,
+            "start_time": 88161775,
+            "end_time": 88992095,
             "inference_time": 1,
-            "flops": 996.7599260023505
+            "flops": 1005.7567776602598
         },
         {
             "pe_id": 5,
             "layer_id": 9,
-            "start_time": 44547694,
-            "end_time": 48953039,
+            "start_time": 32974259,
+            "end_time": 37333532,
+            "inference_time": 0,
+            "flops": 1030.4840424722431
+        },
+        {
+            "pe_id": 5,
+            "layer_id": 9,
+            "start_time": 89849124,
+            "end_time": 94239100,
             "inference_time": 1,
-            "flops": 1022.898456435939
+            "flops": 1031.0723727863517
         },
         {
             "pe_id": 5,
             "layer_id": 14,
-            "start_time": 14764798,
-            "end_time": 18892668,
+            "start_time": 38252039,
+            "end_time": 44311608,
             "inference_time": 0,
-            "flops": 1023.9511133986741
+            "flops": 1010.7866311770997
         },
         {
             "pe_id": 5,
             "layer_id": 14,
-            "start_time": 49871822,
-            "end_time": 53981296,
+            "start_time": 95162653,
+            "end_time": 99312499,
             "inference_time": 1,
-            "flops": 1021.0974928832732
+            "flops": 1015.5106446371344
         },
         {
             "pe_id": 5,
             "layer_id": 18,
-            "start_time": 20193694,
-            "end_time": 21065897,
+            "start_time": 64348696,
+            "end_time": 66119977,
             "inference_time": 0,
-            "flops": 1016.9968693445519
+            "flops": 1016.1133939016848
         },
         {
             "pe_id": 5,
             "layer_id": 18,
-            "start_time": 55265089,
-            "end_time": 56128157,
+            "start_time": 100611727,
+            "end_time": 101483566,
             "inference_time": 1,
-            "flops": 1024.4411233008273
+            "flops": 1000.8488737922165
         },
         {
             "pe_id": 5,
             "layer_id": 20,
-            "start_time": 22048528,
-            "end_time": 27133358,
+            "start_time": 67070909,
+            "end_time": 72129440,
             "inference_time": 0,
-            "flops": 1025.5898561433328
+            "flops": 1050.2077088578887
         },
         {
             "pe_id": 5,
             "layer_id": 20,
-            "start_time": 57162631,
-            "end_time": 62258321,
+            "start_time": 102468216,
+            "end_time": 107573092,
             "inference_time": 1,
-            "flops": 1029.2633715983202
+            "flops": 1022.2772779269812
         },
         {
             "pe_id": 5,
             "layer_id": 23,
-            "start_time": 29637019,
-            "end_time": 35170739,
+            "start_time": 75009986,
+            "end_time": 80557622,
             "inference_time": 0,
-            "flops": 1015.5361489694745
+            "flops": 1018.8887810937306
         },
         {
             "pe_id": 5,
             "layer_id": 23,
-            "start_time": 64765331,
-            "end_time": 70303624,
+            "start_time": 110002795,
+            "end_time": 115533483,
             "inference_time": 1,
-            "flops": 1038.2549464182953
+            "flops": 1025.196465652214
         },
         {
             "pe_id": 6,
             "layer_id": 0,
-            "start_time": 36070961,
-            "end_time": 36204466,
+            "start_time": 81445496,
+            "end_time": 81578950,
             "inference_time": 1,
-            "flops": 1055.680594135669
+            "flops": 983.7484827239455
         },
         {
             "pe_id": 6,
             "layer_id": 1,
-            "start_time": 36374397,
-            "end_time": 36912031,
+            "start_time": 81748881,
+            "end_time": 82286443,
             "inference_time": 1,
-            "flops": 1009.1876213409867
+            "flops": 1023.059693058732
         },
         {
             "pe_id": 6,
             "layer_id": 2,
-            "start_time": 37854101,
-            "end_time": 39246029,
+            "start_time": 83229752,
+            "end_time": 84631588,
             "inference_time": 1,
-            "flops": 1035.7472066064022
+            "flops": 1014.5622046408532
         },
         {
             "pe_id": 6,
             "layer_id": 3,
-            "start_time": 39359295,
-            "end_time": 39726720,
+            "start_time": 84741976,
+            "end_time": 85109418,
             "inference_time": 1,
-            "flops": 1020.5107462318658
+            "flops": 1005.2707344184618
         },
         {
             "pe_id": 6,
             "layer_id": 5,
-            "start_time": 40218838,
-            "end_time": 42402105,
+            "start_time": 85513854,
+            "end_time": 87676708,
             "inference_time": 1,
-            "flops": 1021.3023197930814
+            "flops": 1015.6838473111624
         },
         {
             "pe_id": 6,
             "layer_id": 7,
-            "start_time": 43617232,
-            "end_time": 43755844,
+            "start_time": 18683214,
+            "end_time": 32085707,
+            "inference_time": 0,
+            "flops": 1007.0385669850125
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 7,
+            "start_time": 88912908,
+            "end_time": 89051522,
             "inference_time": 1,
-            "flops": 1003.6378560578232
+            "flops": 997.0125150875831
         },
         {
             "pe_id": 6,
             "layer_id": 10,
-            "start_time": 44612585,
-            "end_time": 48986305,
+            "start_time": 32999907,
+            "end_time": 37405525,
+            "inference_time": 0,
+            "flops": 1022.7172825170712
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 10,
+            "start_time": 89915553,
+            "end_time": 94272082,
             "inference_time": 1,
-            "flops": 1017.7621386801375
+            "flops": 1025.6191354053508
         },
         {
             "pe_id": 6,
             "layer_id": 15,
-            "start_time": 14871504,
-            "end_time": 18997171,
+            "start_time": 43903543,
+            "end_time": 48004684,
             "inference_time": 0,
-            "flops": 1036.1223465329642
+            "flops": 1030.8984917321418
         },
         {
             "pe_id": 6,
             "layer_id": 15,
-            "start_time": 49933996,
-            "end_time": 54028010,
+            "start_time": 95220793,
+            "end_time": 99347369,
             "inference_time": 1,
-            "flops": 1023.0338720826769
+            "flops": 1020.3166971070889
         },
         {
             "pe_id": 6,
             "layer_id": 18,
-            "start_time": 20293900,
-            "end_time": 21178331,
+            "start_time": 63515368,
+            "end_time": 65380548,
             "inference_time": 0,
-            "flops": 1008.6790212376301
+            "flops": 1010.4492588342
         },
         {
             "pe_id": 6,
             "layer_id": 18,
-            "start_time": 55327646,
-            "end_time": 56197483,
+            "start_time": 100651614,
+            "end_time": 101509651,
             "inference_time": 1,
-            "flops": 1008.023486483984
+            "flops": 1036.7812449687488
         },
         {
             "pe_id": 6,
             "layer_id": 20,
-            "start_time": 22043151,
-            "end_time": 27143506,
+            "start_time": 67067116,
+            "end_time": 72174421,
             "inference_time": 0,
-            "flops": 1030.2253679049127
+            "flops": 1018.1669805485249
         },
         {
             "pe_id": 6,
             "layer_id": 20,
-            "start_time": 57161065,
-            "end_time": 62260097,
+            "start_time": 102476521,
+            "end_time": 107560139,
             "inference_time": 1,
-            "flops": 1029.9733796531127
-        },
-        {
-            "pe_id": 6,
-            "layer_id": 23,
-            "start_time": 29613025,
-            "end_time": 35155068,
-            "inference_time": 0,
-            "flops": 1015.5305107032749
+            "flops": 1043.4915842202668
         },
         {
             "pe_id": 6,
             "layer_id": 23,
-            "start_time": 64739727,
-            "end_time": 70284601,
+            "start_time": 74983889,
+            "end_time": 80533294,
+            "inference_time": 0,
+            "flops": 1029.0422294596192
+        },
+        {
+            "pe_id": 6,
+            "layer_id": 23,
+            "start_time": 109981357,
+            "end_time": 115511529,
             "inference_time": 1,
-            "flops": 1014.3282154767164
+            "flops": 1036.189893232164
         },
         {
             "pe_id": 7,
             "layer_id": 0,
-            "start_time": 36177908,
-            "end_time": 36277482,
+            "start_time": 81560208,
+            "end_time": 81658901,
             "inference_time": 1,
-            "flops": 1006.0564835266999
+            "flops": 1041.7246286813536
         },
         {
             "pe_id": 7,
             "layer_id": 1,
-            "start_time": 36428603,
-            "end_time": 36978622,
+            "start_time": 81810028,
+            "end_time": 82360104,
             "inference_time": 1,
-            "flops": 1014.8465788901431
+            "flops": 1001.1741947376594
         },
         {
             "pe_id": 7,
             "layer_id": 2,
-            "start_time": 37927665,
-            "end_time": 39274102,
+            "start_time": 83321694,
+            "end_time": 84661677,
             "inference_time": 1,
-            "flops": 1034.282990920771
+            "flops": 1046.979419178539
         },
         {
             "pe_id": 7,
             "layer_id": 3,
-            "start_time": 39354418,
-            "end_time": 39633037,
+            "start_time": 84737336,
+            "end_time": 85015936,
             "inference_time": 1,
-            "flops": 990.8859565859652
+            "flops": 1018.302790037783
         },
         {
             "pe_id": 7,
             "layer_id": 4,
-            "start_time": 39895276,
-            "end_time": 41414656,
+            "start_time": 85282883,
+            "end_time": 86808089,
             "inference_time": 1,
-            "flops": 1030.133987512215
+            "flops": 1018.4171486205046
         },
         {
             "pe_id": 7,
             "layer_id": 7,
-            "start_time": 42784453,
-            "end_time": 43696266,
+            "start_time": 88161393,
+            "end_time": 88992025,
             "inference_time": 1,
-            "flops": 1007.7448976038246
+            "flops": 1003.8668250452334
         },
         {
             "pe_id": 7,
             "layer_id": 8,
-            "start_time": 44368736,
-            "end_time": 48200855,
+            "start_time": 32758117,
+            "end_time": 36589924,
+            "inference_time": 0,
+            "flops": 1017.4742631789658
+        },
+        {
+            "pe_id": 7,
+            "layer_id": 8,
+            "start_time": 89669355,
+            "end_time": 93526605,
             "inference_time": 1,
-            "flops": 1043.067377560631
+            "flops": 1031.8329850334806
         },
         {
             "pe_id": 7,
             "layer_id": 16,
-            "start_time": 15071680,
-            "end_time": 20211564,
+            "start_time": 44121511,
+            "end_time": 49243536,
             "inference_time": 0,
-            "flops": 1013.8015647982561
+            "flops": 1019.1981809768192
         },
         {
             "pe_id": 7,
             "layer_id": 16,
-            "start_time": 50214354,
-            "end_time": 55346075,
+            "start_time": 95495254,
+            "end_time": 100597033,
             "inference_time": 1,
-            "flops": 1018.5107333356323
+            "flops": 1026.7032032292968
         },
         {
             "pe_id": 7,
             "layer_id": 18,
-            "start_time": 21500534,
-            "end_time": 22362119,
+            "start_time": 64275567,
+            "end_time": 66114961,
             "inference_time": 0,
-            "flops": 1026.8214285623606
+            "flops": 1038.8555904353566
         },
         {
             "pe_id": 7,
             "layer_id": 18,
-            "start_time": 56638402,
-            "end_time": 57514238,
+            "start_time": 101899066,
+            "end_time": 102767861,
             "inference_time": 1,
-            "flops": 1008.9248044928746
+            "flops": 1025.6814341756042
         },
         {
             "pe_id": 7,
             "layer_id": 20,
-            "start_time": 23281830,
-            "end_time": 28386066,
+            "start_time": 67118700,
+            "end_time": 72223081,
             "inference_time": 0,
-            "flops": 1025.202893751504
+            "flops": 1023.8278182896096
         },
         {
             "pe_id": 7,
             "layer_id": 20,
-            "start_time": 58433171,
-            "end_time": 63510241,
+            "start_time": 103685590,
+            "end_time": 108789717,
             "inference_time": 1,
-            "flops": 1025.312750046609
+            "flops": 1007.1227130505916
         },
         {
             "pe_id": 7,
             "layer_id": 24,
-            "start_time": 29655629,
-            "end_time": 35172105,
+            "start_time": 75027568,
+            "end_time": 80558820,
             "inference_time": 0,
-            "flops": 890.9090909090908
+            "flops": 854.5454545454542
         },
         {
             "pe_id": 7,
             "layer_id": 24,
-            "start_time": 64781180,
-            "end_time": 70304793,
+            "start_time": 110022006,
+            "end_time": 115534684,
             "inference_time": 1,
-            "flops": 860.6060606060604
+            "flops": 872.7272727272724
         },
         {
             "pe_id": 8,
             "layer_id": 0,
-            "start_time": 34608359,
-            "end_time": 34748977,
+            "start_time": 79637899,
+            "end_time": 79779898,
             "inference_time": 1,
-            "flops": 1074.227723715531
+            "flops": 1004.8034154827568
         },
         {
             "pe_id": 8,
             "layer_id": 1,
-            "start_time": 36297352,
-            "end_time": 36853591,
+            "start_time": 81680168,
+            "end_time": 82236415,
             "inference_time": 1,
-            "flops": 1026.7485874125737
+            "flops": 1024.4419717330177
         },
         {
             "pe_id": 8,
             "layer_id": 2,
-            "start_time": 37862280,
-            "end_time": 39240423,
+            "start_time": 83241748,
+            "end_time": 84606446,
             "inference_time": 1,
-            "flops": 1011.9807656483441
+            "flops": 1045.2783451591504
         },
         {
             "pe_id": 8,
             "layer_id": 3,
-            "start_time": 39355978,
-            "end_time": 39634402,
+            "start_time": 84738619,
+            "end_time": 85017062,
             "inference_time": 1,
-            "flops": 1018.2265596657782
+            "flops": 1010.949675003323
         },
         {
             "pe_id": 8,
             "layer_id": 4,
-            "start_time": 39875481,
-            "end_time": 41203687,
+            "start_time": 85262990,
+            "end_time": 86583019,
             "inference_time": 1,
-            "flops": 1023.1958680720038
+            "flops": 1035.950745033133
         },
         {
             "pe_id": 8,
             "layer_id": 7,
-            "start_time": 43241656,
-            "end_time": 43696276,
+            "start_time": 16701004,
+            "end_time": 32084154,
+            "inference_time": 0,
+            "flops": 1011.5946357817044
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 7,
+            "start_time": 88523347,
+            "end_time": 88992133,
             "inference_time": 1,
-            "flops": 1006.4492797765113
+            "flops": 1003.5447353256476
         },
         {
             "pe_id": 8,
             "layer_id": 8,
-            "start_time": 44508680,
-            "end_time": 48906497,
+            "start_time": 32937667,
+            "end_time": 37298107,
+            "inference_time": 0,
+            "flops": 1024.0237925488952
+        },
+        {
+            "pe_id": 8,
+            "layer_id": 8,
+            "start_time": 89808651,
+            "end_time": 94199525,
             "inference_time": 1,
-            "flops": 1028.434880726823
+            "flops": 1037.9921748823172
         },
         {
             "pe_id": 8,
             "layer_id": 13,
-            "start_time": 14650258,
-            "end_time": 18734687,
+            "start_time": 38128526,
+            "end_time": 44189971,
             "inference_time": 0,
-            "flops": 1027.6805543485286
+            "flops": 1029.9885876908854
         },
         {
             "pe_id": 8,
             "layer_id": 13,
-            "start_time": 49778955,
-            "end_time": 53882099,
+            "start_time": 95066881,
+            "end_time": 99166426,
             "inference_time": 1,
-            "flops": 1030.2367945470073
+            "flops": 1015.0908648235336
         },
         {
             "pe_id": 8,
             "layer_id": 18,
-            "start_time": 20031630,
-            "end_time": 20893755,
+            "start_time": 63898336,
+            "end_time": 65738081,
             "inference_time": 0,
-            "flops": 1028.4606160479175
+            "flops": 1008.4858161215333
         },
         {
             "pe_id": 8,
             "layer_id": 18,
-            "start_time": 55162839,
-            "end_time": 56017846,
+            "start_time": 100460325,
+            "end_time": 101327410,
             "inference_time": 1,
-            "flops": 1052.9434646394682
+            "flops": 1021.069824380463
         },
         {
             "pe_id": 8,
             "layer_id": 20,
-            "start_time": 22117858,
-            "end_time": 27274031,
+            "start_time": 67126665,
+            "end_time": 72286930,
             "inference_time": 0,
-            "flops": 1029.562583822088
+            "flops": 1017.7928916011515
         },
         {
             "pe_id": 8,
             "layer_id": 20,
-            "start_time": 57174600,
-            "end_time": 62213162,
+            "start_time": 102491957,
+            "end_time": 107529859,
             "inference_time": 1,
-            "flops": 1034.6250333082867
+            "flops": 1031.81107792405
         },
         {
             "pe_id": 8,
             "layer_id": 22,
-            "start_time": 28278550,
-            "end_time": 33771029,
+            "start_time": 73281919,
+            "end_time": 78800060,
             "inference_time": 0,
-            "flops": 1046.4936522945397
+            "flops": 1023.8365002546282
         },
         {
             "pe_id": 8,
             "layer_id": 22,
-            "start_time": 63209023,
-            "end_time": 68817466,
+            "start_time": 108529355,
+            "end_time": 114152855,
             "inference_time": 1,
-            "flops": 1043.4242716421825
+            "flops": 1026.837029067528
         },
         {
             "pe_id": 9,
             "layer_id": 0,
-            "start_time": 35941181,
-            "end_time": 35994531,
+            "start_time": 81276534,
+            "end_time": 81330156,
             "inference_time": 1,
-            "flops": 1019.8085001428805
+            "flops": 1050.6051365705614
         },
         {
             "pe_id": 9,
             "layer_id": 1,
-            "start_time": 36291342,
-            "end_time": 36847631,
+            "start_time": 81673372,
+            "end_time": 82229645,
             "inference_time": 1,
-            "flops": 1020.8224103262107
+            "flops": 1023.2442815165492
         },
         {
             "pe_id": 9,
             "layer_id": 2,
-            "start_time": 37808332,
-            "end_time": 39173683,
+            "start_time": 83191642,
+            "end_time": 84555057,
             "inference_time": 1,
-            "flops": 1014.8227706340384
+            "flops": 1019.5472720808416
         },
         {
             "pe_id": 9,
             "layer_id": 3,
-            "start_time": 39361323,
-            "end_time": 39732695,
+            "start_time": 84744125,
+            "end_time": 85115453,
             "inference_time": 1,
-            "flops": 1006.0901020078018
+            "flops": 1017.4457968894666
         },
         {
             "pe_id": 9,
             "layer_id": 4,
-            "start_time": 39978968,
-            "end_time": 41296122,
+            "start_time": 85355380,
+            "end_time": 86661754,
             "inference_time": 1,
-            "flops": 1020.9468814066252
+            "flops": 1034.0569368880028
         },
         {
             "pe_id": 9,
             "layer_id": 7,
-            "start_time": 43019499,
-            "end_time": 43694818,
+            "start_time": 88259463,
+            "end_time": 88990379,
             "inference_time": 1,
-            "flops": 1004.8647298238286
+            "flops": 1008.1448598454501
         },
         {
             "pe_id": 9,
             "layer_id": 10,
-            "start_time": 44648429,
-            "end_time": 48991901,
+            "start_time": 33005703,
+            "end_time": 37373591,
+            "inference_time": 0,
+            "flops": 1024.0151966989365
+        },
+        {
+            "pe_id": 9,
+            "layer_id": 10,
+            "start_time": 89951426,
+            "end_time": 94276101,
             "inference_time": 1,
-            "flops": 1024.8332263436923
+            "flops": 1006.37492276631
         },
         {
             "pe_id": 9,
             "layer_id": 12,
-            "start_time": 14563598,
-            "end_time": 18663629,
+            "start_time": 38069826,
+            "end_time": 44123385,
             "inference_time": 0,
-            "flops": 1025.6927431731242
+            "flops": 1022.2263680255137
         },
         {
             "pe_id": 9,
             "layer_id": 12,
-            "start_time": 49671509,
-            "end_time": 53752393,
+            "start_time": 94972344,
+            "end_time": 99123051,
             "inference_time": 1,
-            "flops": 1037.477698849524
+            "flops": 1007.2355496972032
         },
         {
             "pe_id": 9,
             "layer_id": 18,
-            "start_time": 19968117,
-            "end_time": 20843997,
+            "start_time": 63141368,
+            "end_time": 65000638,
             "inference_time": 0,
-            "flops": 1032.078620416297
+            "flops": 975.7554623935882
         },
         {
             "pe_id": 9,
             "layer_id": 18,
-            "start_time": 55047477,
-            "end_time": 55921547,
+            "start_time": 100417782,
+            "end_time": 101303812,
             "inference_time": 1,
-            "flops": 1034.8833350007778
+            "flops": 1006.5648225024205
         },
         {
             "pe_id": 9,
             "layer_id": 21,
-            "start_time": 23376634,
-            "end_time": 28449076,
+            "start_time": 68740971,
+            "end_time": 73801417,
             "inference_time": 0,
-            "flops": 1022.0578562920027
+            "flops": 1026.698858779666
         },
         {
             "pe_id": 9,
             "layer_id": 21,
-            "start_time": 58505129,
-            "end_time": 63575890,
+            "start_time": 103709441,
+            "end_time": 108842324,
             "inference_time": 1,
-            "flops": 1009.637382621074
+            "flops": 1003.4649009712062
         },
         {
             "pe_id": 9,
             "layer_id": 22,
-            "start_time": 29455157,
-            "end_time": 34981449,
+            "start_time": 74800785,
+            "end_time": 80309763,
             "inference_time": 0,
-            "flops": 1008.111648755396
+            "flops": 1028.408536081144
         },
         {
             "pe_id": 9,
             "layer_id": 22,
-            "start_time": 64576865,
-            "end_time": 70085924,
+            "start_time": 109852533,
+            "end_time": 115379208,
             "inference_time": 1,
-            "flops": 1032.9623695536307
+            "flops": 1017.8402777001613
         },
         {
             "pe_id": 10,
             "layer_id": 0,
-            "start_time": 35898573,
-            "end_time": 35952887,
+            "start_time": 81289212,
+            "end_time": 81342498,
             "inference_time": 1,
-            "flops": 981.6972087913124
+            "flops": 1051.3825065485792
         },
         {
             "pe_id": 10,
             "layer_id": 1,
-            "start_time": 36247273,
-            "end_time": 36732363,
+            "start_time": 81629611,
+            "end_time": 82114716,
             "inference_time": 1,
-            "flops": 1025.8339374074844
+            "flops": 1027.6938319855017
         },
         {
             "pe_id": 10,
             "layer_id": 2,
-            "start_time": 37689289,
-            "end_time": 39061549,
+            "start_time": 83067682,
+            "end_time": 84441842,
             "inference_time": 1,
-            "flops": 1005.3666149499369
+            "flops": 995.8322382092884
         },
         {
             "pe_id": 10,
             "layer_id": 3,
-            "start_time": 39357361,
-            "end_time": 39635895,
+            "start_time": 84740292,
+            "end_time": 85018799,
             "inference_time": 1,
-            "flops": 1017.3516965475815
+            "flops": 1010.4961542527273
         },
         {
             "pe_id": 10,
             "layer_id": 4,
-            "start_time": 39915952,
-            "end_time": 41411526,
+            "start_time": 85299237,
+            "end_time": 86809840,
             "inference_time": 1,
-            "flops": 1033.2905787089087
+            "flops": 1019.5538304578431
         },
         {
             "pe_id": 10,
             "layer_id": 7,
-            "start_time": 42784788,
-            "end_time": 43694485,
+            "start_time": 32054275,
+            "end_time": 32199338,
+            "inference_time": 0,
+            "flops": 64.41154413194077
+        },
+        {
+            "pe_id": 10,
+            "layer_id": 7,
+            "start_time": 88161419,
+            "end_time": 88990220,
             "inference_time": 1,
-            "flops": 1001.3504746299568
+            "flops": 990.9731907143839
         },
         {
             "pe_id": 10,
             "layer_id": 11,
-            "start_time": 9536856,
-            "end_time": 13888648,
+            "start_time": 37356580,
+            "end_time": 43129669,
             "inference_time": 0,
-            "flops": 1010.2597985974124
+            "flops": 62.99720674700404
         },
         {
             "pe_id": 10,
             "layer_id": 11,
-            "start_time": 44686342,
-            "end_time": 49057260,
+            "start_time": 89994522,
+            "end_time": 94352783,
             "inference_time": 1,
-            "flops": 1007.1185517432243
+            "flops": 1000.8245022426377
         },
         {
             "pe_id": 10,
             "layer_id": 16,
-            "start_time": 15118070,
-            "end_time": 20240870,
+            "start_time": 51764216,
+            "end_time": 65642988,
             "inference_time": 0,
-            "flops": 1021.7742821107116
+            "flops": 838.1391444354839
         },
         {
             "pe_id": 10,
             "layer_id": 16,
-            "start_time": 50258947,
-            "end_time": 55395788,
+            "start_time": 95502317,
+            "end_time": 100604134,
             "inference_time": 1,
-            "flops": 1016.3674376531714
+            "flops": 1027.3138363004384
         },
         {
             "pe_id": 10,
             "layer_id": 18,
-            "start_time": 21540065,
-            "end_time": 22418886,
+            "start_time": 66940165,
+            "end_time": 67801656,
             "inference_time": 0,
-            "flops": 999.98252429145
+            "flops": 1045.8280352838347
         },
         {
             "pe_id": 10,
             "layer_id": 18,
-            "start_time": 56691185,
-            "end_time": 57559964,
+            "start_time": 101888851,
+            "end_time": 102745150,
             "inference_time": 1,
-            "flops": 1027.1991396662488
+            "flops": 1060.8080529237989
         },
         {
             "pe_id": 10,
             "layer_id": 20,
-            "start_time": 23328274,
-            "end_time": 28406916,
+            "start_time": 68717853,
+            "end_time": 73792681,
             "inference_time": 0,
-            "flops": 1026.1419617075971
+            "flops": 1032.6566004064568
         },
         {
             "pe_id": 10,
             "layer_id": 20,
-            "start_time": 58479730,
-            "end_time": 63546797,
+            "start_time": 103660631,
+            "end_time": 108742510,
             "inference_time": 1,
-            "flops": 1033.7163521714178
+            "flops": 1026.902867253331
         },
         {
             "pe_id": 10,
             "layer_id": 22,
-            "start_time": 29407993,
-            "end_time": 34936617,
+            "start_time": 74792754,
+            "end_time": 80324392,
             "inference_time": 0,
-            "flops": 1018.3590023368014
+            "flops": 1021.3324215475419
         },
         {
             "pe_id": 10,
             "layer_id": 22,
-            "start_time": 64549860,
-            "end_time": 70061970,
+            "start_time": 109746406,
+            "end_time": 115251783,
             "inference_time": 1,
-            "flops": 1033.8864181626695
+            "flops": 1029.565124284837
         },
         {
             "pe_id": 11,
             "layer_id": 0,
-            "start_time": 36059296,
-            "end_time": 36196531,
+            "start_time": 81443647,
+            "end_time": 81580050,
             "inference_time": 1,
-            "flops": 1004.2888230608891
+            "flops": 1038.3945961397721
         },
         {
             "pe_id": 11,
             "layer_id": 1,
-            "start_time": 36347462,
-            "end_time": 36813790,
+            "start_time": 81730964,
+            "end_time": 82197245,
             "inference_time": 1,
-            "flops": 1020.639777783818
+            "flops": 1020.118743818059
         },
         {
             "pe_id": 11,
             "layer_id": 2,
-            "start_time": 37786644,
-            "end_time": 39162897,
+            "start_time": 83173125,
+            "end_time": 84558466,
             "inference_time": 1,
-            "flops": 1016.6880649833585
+            "flops": 1002.5770738859198
         },
         {
             "pe_id": 11,
             "layer_id": 3,
-            "start_time": 39357180,
-            "end_time": 39726713,
+            "start_time": 84740212,
+            "end_time": 85109765,
             "inference_time": 1,
-            "flops": 1015.4531418298433
+            "flops": 1015.613599945412
         },
         {
             "pe_id": 11,
             "layer_id": 4,
-            "start_time": 39955104,
-            "end_time": 41284967,
+            "start_time": 85338745,
+            "end_time": 86666399,
             "inference_time": 1,
-            "flops": 1021.6433298881956
+            "flops": 1019.0485301051478
         },
         {
             "pe_id": 11,
             "layer_id": 7,
-            "start_time": 42784420,
-            "end_time": 43694412,
+            "start_time": 88161989,
+            "end_time": 88990483,
             "inference_time": 1,
-            "flops": 1004.2891839771816
+            "flops": 1016.481409929123
         },
         {
             "pe_id": 11,
             "layer_id": 10,
-            "start_time": 44583914,
-            "end_time": 49054765,
+            "start_time": 33004458,
+            "end_time": 37373712,
+            "inference_time": 0,
+            "flops": 1029.9342695434002
+        },
+        {
+            "pe_id": 11,
+            "layer_id": 10,
+            "start_time": 89888688,
+            "end_time": 94350997,
             "inference_time": 1,
-            "flops": 1033.9801629895262
+            "flops": 1028.0311207945497
         },
         {
             "pe_id": 11,
             "layer_id": 17,
-            "start_time": 15180545,
-            "end_time": 20252371,
+            "start_time": 52627379,
+            "end_time": 65644122,
             "inference_time": 0,
-            "flops": 1010.3151652738298
+            "flops": 1022.5937824354198
         },
         {
             "pe_id": 11,
             "layer_id": 17,
-            "start_time": 50315867,
-            "end_time": 55396968,
+            "start_time": 95559306,
+            "end_time": 100605654,
             "inference_time": 1,
-            "flops": 1016.1367612826723
+            "flops": 1023.9400473111745
         },
         {
             "pe_id": 11,
             "layer_id": 18,
-            "start_time": 21561290,
-            "end_time": 22415722,
+            "start_time": 66936077,
+            "end_time": 67796536,
             "inference_time": 0,
-            "flops": 1065.0102669610808
+            "flops": 1048.9805049652311
         },
         {
             "pe_id": 11,
             "layer_id": 18,
-            "start_time": 56698523,
-            "end_time": 57584663,
+            "start_time": 101907778,
+            "end_time": 102787012,
             "inference_time": 1,
-            "flops": 991.1640103358693
+            "flops": 1007.0436917540403
         },
         {
             "pe_id": 11,
             "layer_id": 20,
-            "start_time": 23332644,
-            "end_time": 28418780,
+            "start_time": 68715346,
+            "end_time": 73791388,
             "inference_time": 0,
-            "flops": 1020.4837405595335
+            "flops": 1035.1043754586258
         },
         {
             "pe_id": 11,
             "layer_id": 20,
-            "start_time": 58407960,
-            "end_time": 63489345,
+            "start_time": 103619683,
+            "end_time": 108698774,
             "inference_time": 1,
-            "flops": 1027.0348725297843
+            "flops": 1028.0521856315756
         },
         {
             "pe_id": 11,
             "layer_id": 24,
-            "start_time": 29657116,
-            "end_time": 35172267,
+            "start_time": 75028186,
+            "end_time": 80559062,
             "inference_time": 0,
-            "flops": 903.0303030303029
+            "flops": 921.2121212121211
         },
         {
             "pe_id": 11,
             "layer_id": 24,
-            "start_time": 64781627,
-            "end_time": 70305285,
+            "start_time": 110021507,
+            "end_time": 115535142,
             "inference_time": 1,
-            "flops": 878.7878787878784
+            "flops": 860.6060606060607
         },
         {
             "pe_id": 12,
             "layer_id": 0,
-            "start_time": 34624768,
-            "end_time": 34679195,
+            "start_time": 79617152,
+            "end_time": 79670076,
             "inference_time": 1,
-            "flops": 982.0410114085593
+            "flops": 1048.6238077084427
         },
         {
             "pe_id": 12,
             "layer_id": 1,
-            "start_time": 36291100,
-            "end_time": 36847402,
+            "start_time": 81673920,
+            "end_time": 82230206,
             "inference_time": 1,
-            "flops": 1023.9484225374081
+            "flops": 1017.5034073542105
         },
         {
             "pe_id": 12,
             "layer_id": 2,
-            "start_time": 37904694,
-            "end_time": 39274059,
+            "start_time": 83296891,
+            "end_time": 84655725,
             "inference_time": 1,
-            "flops": 1009.5232031238079
+            "flops": 1028.085597451028
         },
         {
             "pe_id": 12,
             "layer_id": 3,
-            "start_time": 39357381,
-            "end_time": 39635893,
+            "start_time": 84740173,
+            "end_time": 85018686,
             "inference_time": 1,
-            "flops": 1007.8373200978673
+            "flops": 1011.6215016989665
         },
         {
             "pe_id": 12,
             "layer_id": 4,
-            "start_time": 39878798,
-            "end_time": 41195006,
+            "start_time": 85261178,
+            "end_time": 86579110,
             "inference_time": 1,
-            "flops": 1018.9311166348109
+            "flops": 1020.3760925088361
         },
         {
             "pe_id": 12,
             "layer_id": 7,
-            "start_time": 43464608,
-            "end_time": 43645212,
+            "start_time": 17730400,
+            "end_time": 32059610,
+            "inference_time": 0,
+            "flops": 984.7993198957903
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 7,
+            "start_time": 88727279,
+            "end_time": 88940901,
             "inference_time": 1,
-            "flops": 988.0729466611816
+            "flops": 995.5475990675986
         },
         {
             "pe_id": 12,
             "layer_id": 8,
-            "start_time": 44385761,
-            "end_time": 48150989,
+            "start_time": 32810220,
+            "end_time": 36597919,
+            "inference_time": 0,
+            "flops": 1021.0466527477647
+        },
+        {
+            "pe_id": 12,
+            "layer_id": 8,
+            "start_time": 89685590,
+            "end_time": 93502281,
             "inference_time": 1,
-            "flops": 1038.566542096129
+            "flops": 1011.8818639750557
         },
         {
             "pe_id": 12,
             "layer_id": 12,
-            "start_time": 13710873,
-            "end_time": 17844298,
+            "start_time": 37372915,
+            "end_time": 44159135,
             "inference_time": 0,
-            "flops": 1023.5461733599499
+            "flops": 1034.18212473311
         },
         {
             "pe_id": 12,
             "layer_id": 12,
-            "start_time": 48846542,
-            "end_time": 52940710,
+            "start_time": 94189375,
+            "end_time": 98315614,
             "inference_time": 1,
-            "flops": 1024.9926562781723
+            "flops": 1026.0451982736138
         },
         {
             "pe_id": 12,
             "layer_id": 18,
-            "start_time": 19136910,
-            "end_time": 20728801,
+            "start_time": 64345293,
+            "end_time": 66107585,
             "inference_time": 0,
-            "flops": 1004.3561930193895
+            "flops": 1053.4791923487878
         },
         {
             "pe_id": 12,
             "layer_id": 18,
-            "start_time": 54234754,
-            "end_time": 55869470,
+            "start_time": 99631570,
+            "end_time": 101076390,
             "inference_time": 1,
-            "flops": 1015.5909563735606
+            "flops": 1017.4157083802814
         },
         {
             "pe_id": 12,
             "layer_id": 20,
-            "start_time": 22062851,
-            "end_time": 27145186,
+            "start_time": 67085116,
+            "end_time": 72146738,
             "inference_time": 0,
-            "flops": 1021.2859493364383
+            "flops": 1042.2526001869458
         },
         {
             "pe_id": 12,
             "layer_id": 20,
-            "start_time": 57117384,
-            "end_time": 62195101,
+            "start_time": 102433704,
+            "end_time": 107508258,
             "inference_time": 1,
-            "flops": 1030.5357024701107
+            "flops": 1029.5684487926687
         },
         {
             "pe_id": 12,
             "layer_id": 22,
-            "start_time": 28144166,
-            "end_time": 33662795,
+            "start_time": 73150040,
+            "end_time": 78657299,
             "inference_time": 0,
-            "flops": 1030.13681894928
+            "flops": 1030.071765799704
         },
         {
             "pe_id": 12,
             "layer_id": 22,
-            "start_time": 63200434,
-            "end_time": 68710724,
+            "start_time": 108500930,
+            "end_time": 114004294,
             "inference_time": 1,
-            "flops": 1026.8417486217452
+            "flops": 1037.5654566440494
         },
         {
             "pe_id": 13,
             "layer_id": 0,
-            "start_time": 34674749,
-            "end_time": 34773640,
+            "start_time": 79773367,
+            "end_time": 79871123,
             "inference_time": 1,
-            "flops": 1032.2467787994349
+            "flops": 1086.0516530009638
         },
         {
             "pe_id": 13,
             "layer_id": 1,
-            "start_time": 36278852,
-            "end_time": 36828872,
+            "start_time": 81660977,
+            "end_time": 82210989,
             "inference_time": 1,
-            "flops": 1014.3941483669679
+            "flops": 1016.5842560355229
         },
         {
             "pe_id": 13,
             "layer_id": 2,
-            "start_time": 37833396,
-            "end_time": 39187341,
+            "start_time": 83206866,
+            "end_time": 84549950,
             "inference_time": 1,
-            "flops": 1018.9550683722535
+            "flops": 1032.0088914886217
         },
         {
             "pe_id": 13,
             "layer_id": 3,
-            "start_time": 39357543,
-            "end_time": 39729047,
+            "start_time": 84740116,
+            "end_time": 85111606,
             "inference_time": 1,
-            "flops": 1012.2475287321469
+            "flops": 1006.2464692599882
         },
         {
             "pe_id": 13,
             "layer_id": 4,
-            "start_time": 39969933,
-            "end_time": 41283753,
+            "start_time": 85358134,
+            "end_time": 86658871,
             "inference_time": 1,
-            "flops": 1018.363370865561
+            "flops": 1038.4412243903612
         },
         {
             "pe_id": 13,
             "layer_id": 7,
-            "start_time": 43217323,
-            "end_time": 43695945,
+            "start_time": 15697841,
+            "end_time": 32083664,
+            "inference_time": 0,
+            "flops": 1011.377516884452
+        },
+        {
+            "pe_id": 13,
+            "layer_id": 7,
+            "start_time": 88509894,
+            "end_time": 88992037,
             "inference_time": 1,
-            "flops": 1010.3100512400412
+            "flops": 999.1543517615326
         },
         {
             "pe_id": 13,
             "layer_id": 10,
-            "start_time": 44619466,
-            "end_time": 48990439,
+            "start_time": 89922538,
+            "end_time": 94277040,
             "inference_time": 1,
-            "flops": 1016.0452762329319
+            "flops": 1029.2505650571725
         },
         {
             "pe_id": 13,
             "layer_id": 12,
-            "start_time": 14589637,
-            "end_time": 18669791,
+            "start_time": 38058697,
+            "end_time": 44119764,
             "inference_time": 0,
-            "flops": 1032.3025313044614
+            "flops": 1025.2472979807728
         },
         {
             "pe_id": 13,
             "layer_id": 12,
-            "start_time": 49713811,
-            "end_time": 53852255,
+            "start_time": 94999592,
+            "end_time": 99138605,
             "inference_time": 1,
-            "flops": 1022.3029225724651
+            "flops": 1013.0393991879228
         },
         {
             "pe_id": 13,
             "layer_id": 18,
-            "start_time": 19961023,
-            "end_time": 20828269,
+            "start_time": 63520916,
+            "end_time": 65365485,
             "inference_time": 0,
-            "flops": 1054.9384428195767
+            "flops": 1006.4360973095974
         },
         {
             "pe_id": 13,
             "layer_id": 18,
-            "start_time": 55187509,
-            "end_time": 56054839,
+            "start_time": 100414441,
+            "end_time": 101284601,
             "inference_time": 1,
-            "flops": 1041.4470461231656
+            "flops": 1029.6529126241487
         },
         {
             "pe_id": 13,
             "layer_id": 20,
-            "start_time": 22009595,
-            "end_time": 27103117,
+            "start_time": 67075533,
+            "end_time": 72172510,
             "inference_time": 0,
-            "flops": 1032.8182094349525
+            "flops": 1027.7534505797687
         },
         {
             "pe_id": 13,
             "layer_id": 20,
-            "start_time": 57098115,
-            "end_time": 62189824,
+            "start_time": 102412771,
+            "end_time": 107492093,
             "inference_time": 1,
-            "flops": 1020.7419898925438
+            "flops": 1028.0585924809875
         },
         {
             "pe_id": 13,
             "layer_id": 22,
-            "start_time": 28115771,
-            "end_time": 33676797,
+            "start_time": 73187255,
+            "end_time": 78772106,
             "inference_time": 0,
-            "flops": 1041.7475998104471
+            "flops": 1018.2514652917561
         },
         {
             "pe_id": 13,
             "layer_id": 22,
-            "start_time": 63198220,
-            "end_time": 68805790,
+            "start_time": 108504080,
+            "end_time": 114098618,
             "inference_time": 1,
-            "flops": 1015.4048807127984
+            "flops": 1017.7554480620112
         },
         {
             "pe_id": 14,
             "layer_id": 0,
-            "start_time": 35933320,
-            "end_time": 35987266,
+            "start_time": 81277225,
+            "end_time": 81330985,
             "inference_time": 1,
-            "flops": 1061.0036140532186
+            "flops": 1009.6782148926977
         },
         {
             "pe_id": 14,
             "layer_id": 1,
-            "start_time": 36247025,
-            "end_time": 36732124,
+            "start_time": 81629543,
+            "end_time": 82114649,
             "inference_time": 1,
-            "flops": 1027.9157317074391
+            "flops": 1019.5329033097272
         },
         {
             "pe_id": 14,
             "layer_id": 2,
-            "start_time": 37728659,
-            "end_time": 39082107,
+            "start_time": 83118413,
+            "end_time": 84478028,
             "inference_time": 1,
-            "flops": 1034.0644847828428
+            "flops": 1023.5935730156835
         },
         {
             "pe_id": 14,
             "layer_id": 3,
-            "start_time": 39471616,
-            "end_time": 39732650,
+            "start_time": 84854472,
+            "end_time": 85115499,
             "inference_time": 1,
-            "flops": 1019.5949310023539
+            "flops": 1018.6034728748957
         },
         {
             "pe_id": 14,
             "layer_id": 4,
-            "start_time": 39977313,
-            "end_time": 41279448,
+            "start_time": 85364220,
+            "end_time": 86668094,
             "inference_time": 1,
-            "flops": 1029.602539657945
+            "flops": 1022.2248707639939
         },
         {
             "pe_id": 14,
             "layer_id": 7,
-            "start_time": 42825978,
-            "end_time": 43694380,
+            "start_time": 88161333,
+            "end_time": 88990014,
             "inference_time": 1,
-            "flops": 995.1430993144604
+            "flops": 992.1810006049981
         },
         {
             "pe_id": 14,
             "layer_id": 10,
-            "start_time": 44652828,
-            "end_time": 48991285,
+            "start_time": 33008151,
+            "end_time": 37373858,
+            "inference_time": 0,
+            "flops": 1030.1463072221545
+        },
+        {
+            "pe_id": 14,
+            "layer_id": 10,
+            "start_time": 89959769,
+            "end_time": 94276940,
             "inference_time": 1,
-            "flops": 1025.4038604245318
+            "flops": 1021.8789769231038
         },
         {
             "pe_id": 14,
             "layer_id": 12,
-            "start_time": 14564845,
-            "end_time": 18702139,
+            "start_time": 38060666,
+            "end_time": 44111581,
             "inference_time": 0,
-            "flops": 1018.734080414992
+            "flops": 1024.71814143888
         },
         {
             "pe_id": 14,
             "layer_id": 12,
-            "start_time": 49682811,
-            "end_time": 53793991,
+            "start_time": 94969844,
+            "end_time": 99108583,
             "inference_time": 1,
-            "flops": 1024.589373009381
+            "flops": 1014.7587439427004
         },
         {
             "pe_id": 14,
             "layer_id": 18,
-            "start_time": 20003622,
-            "end_time": 20884543,
+            "start_time": 64271614,
+            "end_time": 66110336,
             "inference_time": 0,
-            "flops": 1018.782871782406
+            "flops": 1065.4496303523335
         },
         {
             "pe_id": 14,
             "layer_id": 18,
-            "start_time": 55088239,
-            "end_time": 55947559,
+            "start_time": 100415221,
+            "end_time": 101292983,
             "inference_time": 1,
-            "flops": 1076.8519633297165
+            "flops": 1030.1720366010147
         },
         {
             "pe_id": 14,
             "layer_id": 21,
-            "start_time": 23377487,
-            "end_time": 28449067,
+            "start_time": 68741290,
+            "end_time": 73802189,
             "inference_time": 0,
-            "flops": 1016.4406451753229
+            "flops": 1029.0509904351595
         },
         {
             "pe_id": 14,
             "layer_id": 21,
-            "start_time": 58507286,
-            "end_time": 63577288,
+            "start_time": 103711252,
+            "end_time": 108843935,
             "inference_time": 1,
-            "flops": 992.619835981439
+            "flops": 1010.7751441393227
         },
         {
             "pe_id": 14,
             "layer_id": 22,
-            "start_time": 29457597,
-            "end_time": 34970842,
+            "start_time": 74806043,
+            "end_time": 80311313,
             "inference_time": 0,
-            "flops": 1029.0405859412683
+            "flops": 1037.3789009082411
         },
         {
             "pe_id": 14,
             "layer_id": 22,
-            "start_time": 64582234,
-            "end_time": 70086199,
+            "start_time": 109847497,
+            "end_time": 115364720,
             "inference_time": 1,
-            "flops": 1034.7673210846688
+            "flops": 1027.4706358416847
         },
         {
             "pe_id": 15,
             "layer_id": 0,
-            "start_time": 35885999,
-            "end_time": 36026714,
+            "start_time": 81265825,
+            "end_time": 81406450,
             "inference_time": 1,
-            "flops": 1075.1686016408
+            "flops": 1071.5589820595412
         },
         {
             "pe_id": 15,
             "layer_id": 1,
-            "start_time": 36252957,
-            "end_time": 36738100,
+            "start_time": 81635455,
+            "end_time": 82120635,
             "inference_time": 1,
-            "flops": 1014.3080412608315
+            "flops": 1016.9318716454611
         },
         {
             "pe_id": 15,
             "layer_id": 2,
-            "start_time": 37685457,
-            "end_time": 39048673,
+            "start_time": 83078807,
+            "end_time": 84466179,
             "inference_time": 1,
-            "flops": 1042.4685142569151
+            "flops": 998.238941312333
         },
         {
             "pe_id": 15,
             "layer_id": 3,
-            "start_time": 39355841,
-            "end_time": 39634279,
+            "start_time": 84738612,
+            "end_time": 85017056,
             "inference_time": 1,
-            "flops": 1011.0274165814909
+            "flops": 1008.771612105976
         },
         {
             "pe_id": 15,
             "layer_id": 4,
-            "start_time": 39879972,
-            "end_time": 41217144,
+            "start_time": 85260920,
+            "end_time": 86591008,
             "inference_time": 1,
-            "flops": 1019.2394352476971
+            "flops": 1022.2503243726126
         },
         {
             "pe_id": 15,
             "layer_id": 7,
-            "start_time": 42784495,
-            "end_time": 43696063,
+            "start_time": 88161496,
+            "end_time": 88991767,
             "inference_time": 1,
-            "flops": 1014.5557488317162
+            "flops": 999.4955861094853
         },
         {
             "pe_id": 15,
             "layer_id": 10,
-            "start_time": 44578189,
-            "end_time": 48995834,
+            "start_time": 33006098,
+            "end_time": 37376713,
+            "inference_time": 0,
+            "flops": 1023.4379733754726
+        },
+        {
+            "pe_id": 15,
+            "layer_id": 10,
+            "start_time": 89887244,
+            "end_time": 94282277,
             "inference_time": 1,
-            "flops": 1026.2769234581094
+            "flops": 1017.4753864477607
         },
         {
             "pe_id": 15,
             "layer_id": 17,
-            "start_time": 15179858,
-            "end_time": 20252037,
+            "start_time": 52626700,
+            "end_time": 65644621,
             "inference_time": 0,
-            "flops": 1006.3218644787355
+            "flops": 1010.5312131849466
         },
         {
             "pe_id": 15,
             "layer_id": 17,
-            "start_time": 50316150,
-            "end_time": 55397240,
+            "start_time": 95559444,
+            "end_time": 100606342,
             "inference_time": 1,
-            "flops": 1022.3667347442671
+            "flops": 1005.7584536949936
         },
         {
             "pe_id": 15,
             "layer_id": 18,
-            "start_time": 21548275,
-            "end_time": 22424566,
+            "start_time": 66946389,
+            "end_time": 67813527,
             "inference_time": 0,
-            "flops": 1007.6231488350015
+            "flops": 1030.4496439963905
         },
         {
             "pe_id": 15,
             "layer_id": 18,
-            "start_time": 56703105,
-            "end_time": 57576305,
+            "start_time": 101905840,
+            "end_time": 102770994,
             "inference_time": 1,
-            "flops": 997.209487327147
+            "flops": 1017.9730470486741
         },
         {
             "pe_id": 15,
             "layer_id": 21,
-            "start_time": 23378503,
-            "end_time": 28471266,
+            "start_time": 68741386,
+            "end_time": 73845910,
             "inference_time": 0,
-            "flops": 1031.403533490313
+            "flops": 1017.8765699722068
         },
         {
             "pe_id": 15,
             "layer_id": 21,
-            "start_time": 58507151,
-            "end_time": 63599913,
+            "start_time": 103751462,
+            "end_time": 108843720,
             "inference_time": 1,
-            "flops": 1025.369769339857
+            "flops": 1039.012864227233
         },
         {
             "pe_id": 15,
             "layer_id": 22,
-            "start_time": 29530991,
-            "end_time": 35046432,
+            "start_time": 74902152,
+            "end_time": 80428559,
             "inference_time": 0,
-            "flops": 1018.0773446721012
+            "flops": 1015.037152029
         },
         {
             "pe_id": 15,
             "layer_id": 22,
-            "start_time": 64576809,
-            "end_time": 70201420,
+            "start_time": 109816272,
+            "end_time": 115425728,
             "inference_time": 1,
-            "flops": 1024.0114440367124
+            "flops": 1040.4536740634853
         }
     ]
 }

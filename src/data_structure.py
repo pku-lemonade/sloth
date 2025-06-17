@@ -1,7 +1,8 @@
 import os
 import sys
+import json
 from typing import List
-from pydantic import BaseModel
+from pydantic import ValidationError, BaseModel
 from typing import Tuple
 from collections import defaultdict
 
@@ -9,11 +10,19 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from analysis.comm_fail import comm_analyzer
 from analysis.comp_fail import comp_analyzer
-from analysis.trace_format import InstTrace, CommInst, CompInst
+from analysis.trace_format import InstTrace, CommInst, CompInst, CommTrace
 from src.sim_type import TaskType
 import hashlib
+
+def comm_analyzer(filename: str) -> CommTrace:
+    with open(filename, 'r') as file:
+        data = json.load(file)
+        try:
+            fail = CommTrace.model_validate(data)
+            return fail
+        except ValidationError as e:
+            print(e.json())
 
 class CompressedTrace(BaseModel):
     layer_id: int
@@ -130,7 +139,7 @@ class RunningTrack:
     
 # Stage 2: Snapshotting（聚合高负载模式）
 # 具有相似失速模式的指令集合
-class BurstPattern:
+class FailSlowPattern:
     def __init__(self, key: str, start_time: int, end_time: int, attr: CompressedTrace):
         self.key = key
         self.start_time = start_time
@@ -192,7 +201,7 @@ class SnapshotTable:
         if key not in self.table:
             if len(self.table) >= self.max_size:
                 self._evict()
-            self.table[key] = BurstPattern(key, start_time, end_time, attr)
+            self.table[key] = FailSlowPattern(key, start_time, end_time, attr)
         else:
             self.table[key].update(start_time, end_time, attr)
 
@@ -208,7 +217,7 @@ class SnapshotTable:
         comp_compressed_trace = [pattern.summary() for pattern in self.table.values() if pattern.key[0] == 'p']
         return comm_compressed_trace, comp_compressed_trace
 
-class BurstSketchLikeCompressor:
+class FailSlowCompressor:
     def __init__(self, num_hashes=3, num_buckets=128, stage2_size=128, threshold=10):
         self.stage1 = RunningTrack(num_hashes, num_buckets, threshold)
         self.stage2 = SnapshotTable(stage2_size)
@@ -219,27 +228,17 @@ class BurstSketchLikeCompressor:
             # insert 到 Stage 2
             self.stage2.insert(key, start_time, end_time, attr)
 
-    def summaries(self, file_path):
+    def summaries(self):
         # 返回所有压缩后的 burst 模式摘要
         comm, comp = self.stage2.get_summaries()
         comm_model = CommSummary(trace=comm)
         comp_model = CompSummary(trace=comp)
 
-        comm_json = comm_model.model_dump_json(indent=4)
-        comp_json = comp_model.model_dump_json(indent=4)
+        return comm_model, comp_model
 
-        comp_json_file = os.path.join(file_path, "comp_trace_compress.json")
-        comm_json_file = os.path.join(file_path, "comm_trace_compress.json")
-
-        with open(comp_json_file, "w") as file:
-            print(comp_json, file=file)
-
-        with open(comm_json_file, "w") as file:
-            print(comm_json, file=file)
-
-ds = BurstSketchLikeCompressor(num_hashes=5, num_buckets=1024, stage2_size=512)
+ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=512)
 comm_file = "data/darknet19/link/comm_trace.json"
-comp_file = "data/darknet19/link/comp_trace.json"
+comp_file = "data/darknet19/tpu/comp_trace.json"
 
 comm_data = comm_analyzer(comm_file)
 comp_data = comp_analyzer(comp_file)
@@ -254,4 +253,17 @@ for trace in comp_data.trace:
         key, attr = trace_to_key_attr(trace)
         ds.insert(key, attr.start_time, attr.end_time, attr)
 
-ds.summaries(file_path="analysis")
+file_path="analysis"
+comm_model, comp_model = ds.summaries()
+
+comm_json = comm_model.model_dump_json(indent=4)
+comp_json = comp_model.model_dump_json(indent=4)
+
+comp_json_file = os.path.join(file_path, "comp_trace_compress.json")
+comm_json_file = os.path.join(file_path, "comm_trace_compress.json")
+
+with open(comp_json_file, "w") as file:
+    print(comp_json, file=file)
+
+with open(comm_json_file, "w") as file:
+    print(comm_json, file=file)
