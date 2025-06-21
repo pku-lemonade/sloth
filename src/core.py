@@ -231,7 +231,7 @@ class TableScheduler:
         for infe_time in range(self.inference_time):
             for id, inst in enumerate(self.program):
                 # 多次推理的指令 index
-                true_index = inst.index + 100000 * infe_time
+                true_index = inst.index + 1000000 * infe_time
                 # 多次推理的 task_id
                 task_id = id + len(self.program) * infe_time
                 self.index2taskid[true_index] = task_id
@@ -403,7 +403,7 @@ class TableScheduler:
 
         # 更新被触发的指令
         for idx in range(len(self.program[inst_id].trigger_index)):
-            true_trigger_index = self.program[inst_id].trigger_index[idx] + inference_time * 100000
+            true_trigger_index = self.program[inst_id].trigger_index[idx] + inference_time * 1000000
 
             logger.debug(f"data{data.index} triggered {true_trigger_index}")
             tri_task_id = self.index2taskid[true_trigger_index]
@@ -452,7 +452,7 @@ class TableScheduler:
 
     # 输入改为task
     def task_update(self, task):
-        inst_index = task.index + task.inference_time * 100000
+        inst_index = task.index + task.inference_time * 1000000
         logger.debug(f"updating task{inst_index}")
         # 将指令的index转换成core内部task id
         self.task_counter += 1
@@ -482,7 +482,7 @@ class TableScheduler:
             # WRITE指令存在触发关系
             if len(self.program[inst_id].trigger_index) != 0:
                 for id in range(len(self.program[inst_id].trigger_index)):
-                    true_trigger_index = self.program[inst_id].trigger_index[id] + task.inference_time * 100000
+                    true_trigger_index = self.program[inst_id].trigger_index[id] + task.inference_time * 1000000
 
                     tri_core_id = self.program[inst_id].trigger_core_id[id]
                     pur_sche = self.cores[tri_core_id].scheduler if tri_core_id != self.id else self
@@ -539,7 +539,7 @@ class TableScheduler:
         # 处理其他指令
         else:
             for idx in range(len(self.program[inst_id].trigger_index)):
-                true_trigger_index = self.program[inst_id].trigger_index[idx] + task.inference_time * 100000
+                true_trigger_index = self.program[inst_id].trigger_index[idx] + task.inference_time * 1000000
 
                 logger.debug(f"task{inst_index} triggered {true_trigger_index}")
                 tri_task_id = self.index2taskid[true_trigger_index]
@@ -961,7 +961,7 @@ class Core:
                     if event.triggered:
                         # updated = True
                         task = self.event2task[event]
-                        true_inst_index = task.index + task.inference_time * 100000
+                        true_inst_index = task.index + task.inference_time * 1000000
                         task_id = self.scheduler.index2taskid[true_inst_index]
                         inst_id = task_id % len(self.program)
 

@@ -234,10 +234,20 @@ class FailSlowCompressor:
         comm_model = CommSummary(trace=comm)
         comp_model = CompSummary(trace=comp)
 
+        # MB
+        comp_ds = len(comp_model.trace)*12/1024
+        comm_ds = len(comm_model.trace)*18/1024
+
+        print(f"comp_data_size: {comp_ds:.2f}MB")
+        print(f"comm_data_size: {comm_ds:.2f}MB")
+
+        print(f"comp_compress_rate: {(1.2-comp_ds/1024)/1.2*100:.2f}%")
+        print(f"comm_compress_rate: {(3.94-comm_ds/1024)/3.94*100:.2f}%")
+
         return comm_model, comp_model
 
-ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=512)
-comm_file = "data/darknet19/link/comm_trace.json"
+ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=2048, threshold=10)
+comm_file = "data/darknet19/tpu/comm_trace.json"
 comp_file = "data/darknet19/tpu/comp_trace.json"
 
 comm_data = comm_analyzer(comm_file)

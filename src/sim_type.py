@@ -174,8 +174,8 @@ class ComputeTask(Task):
         ins.record.flops = self.flops
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         true_tpu_flops = core.core_dist.generate()
-        if true_tpu_flops < 500:
-            print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
+        # if true_tpu_flops < 500:
+        #     print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
         yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
     
@@ -360,7 +360,7 @@ class Send(CommunicationTask):
         startup_time = 10
         yield core.env.timeout(startup_time)
 
-        true_index = self.index + self.inference_time * 100000
+        true_index = self.index + self.inference_time * 1000000
         yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
         ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
@@ -375,7 +375,7 @@ class Send(CommunicationTask):
         
         # 把SEND指令解释为若干packet
         packet_num = ceil(Slice(tensor_slice=self.tensor_slice).size(), 16)
-        true_index = self.index + self.inference_time * 100000
+        true_index = self.index + self.inference_time * 1000000
         for index in range(packet_num):
             if index == 0:
                 yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, start=True))

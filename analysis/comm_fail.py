@@ -458,7 +458,7 @@ class Mesh:
 
             # print(f"==========group_id:{group_id}==========")
             # print(self.core_failslow_prob[start_id:end_id])
-            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=50000)
+            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=500000)
             # print(group_prob)
 
             for id in range(self.num):
@@ -829,9 +829,9 @@ def detection_new(inference_time, file_path = None, data_compress = None):
         np.savetxt("new_data.csv", np.concatenate([X, y.reshape(-1, 1)], axis=1), delimiter=',', fmt='%f')
 
         # 基于 EM 算法的分布估计
-        my_EM_Model = EM_Model(link_name=model.link_name)
-        samples = my_EM_Model.load_samples_from_csv("new_data.csv")
-        my_EM_Model.fit(samples)
+        # my_EM_Model = EM_Model(link_name=model.link_name)
+        # samples = my_EM_Model.load_samples_from_csv("new_data.csv")
+        # my_EM_Model.fit(samples)
 
         # 回归得到的是带宽的倒数
         bandwidth, c2rbandwidth, node_latency, startup_time = model.solve(X, y)
@@ -1015,7 +1015,7 @@ def get_ground_truth():
 if __name__ == '__main__':
     net = json_analyzer("tests/darknet19/mapping.json")
     arch_configs = config_analyzer("arch/gemini4_4.json")
-    comm_trace = comm_analyzer("data/darknet19/link/comm_trace.json")
+    comm_trace = comm_analyzer("data/darknet19/tpu/comm_trace.json")
     comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
     
     layer_group_info = layer_group_analyzer("data/darknet19/tpu/layer_info.json")
@@ -1061,7 +1061,7 @@ if __name__ == '__main__':
     cur_layer_id = id
     layer_group_divide.append(group_layers)
 
-    ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=512)
+    ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=8192, threshold=10)
     # 利用数据结构进行数据压缩
     for trace in comm_trace.trace:
         if trace.instruction_type not in io_inst:
@@ -1088,7 +1088,8 @@ if __name__ == '__main__':
     # failslow_link = detection_new(inference_time=2, file_path="data/darknet19/link/comm_trace.json")
 
     # 使用压缩数据进行检测
-    failslow_link = detection_new(inference_time=2, data_compress=comm_compress)
+    # print(len(comm_compress.trace))
+    failslow_link = detection_new(inference_time=16, data_compress=comm_compress)
 
     # RCA 解决多重共线性问题
     failslow_period = set()
@@ -1096,16 +1097,20 @@ if __name__ == '__main__':
         failslow_period.add(link[0])
 
     # 枚举失速区间
-    for period in range(2):
+    for period in range(16):
         # 处理comp指令数据
         # 取出当前period的指令
         comp_trace_layer = [[] for _ in range(len(net.layers))]
         # 记录非潜在失速层
-        tag = [[False for __ in range(16)] for _ in range(100)]
+        tag = [[False for __ in range(16)] for _ in range(200)]
 
         for inst_trace in comp_compress.trace:
             if inst_trace.inference_time != period:
                 continue
+
+            # if inst_trace.layer_id >= len(net.layers):
+            #     print(inst_trace.layer_id)
+
             comp_trace_layer[inst_trace.layer_id].append(inst_trace)
             tag[inst_trace.layer_id][inst_trace.pe_id] = True
 
