@@ -124,8 +124,8 @@ class Arch:
 
         self.cores = self.build_cores(arch.core, program, model, inference_time)
 
-        self.layer_start = [-1 for _ in range(101)]
-        self.layer_end = [-1 for _ in range(101)]
+        self.layer_start = [-1 for _ in range(200)]
+        self.layer_end = [-1 for _ in range(200)]
 
         self.net_name = net_name
         self.end_time = 0
