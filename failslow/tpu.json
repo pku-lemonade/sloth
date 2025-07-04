@@ -5,14 +5,8 @@
     "tpu" : [
         {
             "start_time" : 5000000,
-            "end_time" : 60000000,
+            "end_time" : 150000000,
             "pe_id" : 10,
-            "times" : 16
-        },
-        {
-            "start_time" : 20000000,
-            "end_time" : 40000000,
-            "pe_id" : 4,
             "times" : 16
         }
     ]

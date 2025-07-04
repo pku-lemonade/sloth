@@ -4,7 +4,12 @@ import json
 import math
 import numpy as np
 from typing import List
-from trace_format import CompTrace, InstTrace
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from analysis.trace_format import CompTrace, InstTrace
 from pydantic import ValidationError
 from sklearn.neighbors import NearestNeighbors
 

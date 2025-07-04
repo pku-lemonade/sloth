@@ -4,7 +4,7 @@
 		"x" : 6,
 		"y" : 6,
 		"width" : 8,
-		"blk_size" : 20,
+		"blk_size" : 10,
 		"spm" : {
 			"size" : 2097152,
 			"delay" : 0

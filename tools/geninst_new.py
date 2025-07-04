@@ -21,7 +21,7 @@ def config_analyzer(filename: str) -> ArchConfig:
         except ValidationError as e:
             print(e.json())
 
-arch_configs = config_analyzer("arch/gemini8_8.json")
+arch_configs = config_analyzer("arch/gemini6_6.json")
 arch_configs.core.spm.size /= 4
 
 class Core(BaseModel):
@@ -238,7 +238,7 @@ def get_spm_size(layer: Layer):
     return spm_size
  
 if __name__ == "__main__":
-    net = json_analyzer("tools/mapping.json")
+    net = json_analyzer("tests/resnet50/mesh6_6/mapping.json")
     core_num = arch_configs.core.x * arch_configs.core.y
 
     inf = 100000
