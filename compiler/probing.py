@@ -26,9 +26,9 @@ def fail_probing(
         return tasks
 
     for inst in tasks:
-        inst_type = inst.get("opcode", "nop")
-        layer_id = inst.get("layer_id", -1)
-        index = inst.get("index", -1)
+        inst_type = inst.opcode
+        layer_id = inst.layer_id
+        index = inst.index
 
         # 判断是否应插入 probe
         if (target_inst_types is not None and inst_type not in target_inst_types):
@@ -50,7 +50,7 @@ def fail_probing(
                     "data_size": -1,
                     "src": -1
                 }
-            tasks.probe_st = Probe(
+            inst.probe_st = Probe(
                 flag = 0,
                 metric = probe_metric
             )
@@ -67,7 +67,7 @@ def fail_probing(
                     "end_time": -1,
                     "dst": -1
                 }
-            tasks.probe_st = Probe(
+            inst.probe_ed = Probe(
                 flag = 1,
                 metric = probe_metric
             )

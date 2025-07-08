@@ -538,7 +538,7 @@ class Arch:
         if self.stage == "post_analysis":
             self.process()
 
-        self.output_data(self.net_name, self.fail_kind)
+        # self.output_data(self.net_name, self.fail_kind)
 
         # self.draw()
 

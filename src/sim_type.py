@@ -130,6 +130,16 @@ class Probe(BaseModel):
     metric: dict = {}
 
     def run(self, core, inst_index, layer_id, opcode, flops=None, data_size=None, src=None, dst=None):
+        if inst_index not in core.probe_data:
+            core.probe_data[inst_index] = ProbeData(metric={})
+        
+        # 前置 probe 记录基础信息
+        if self.flag == 0:
+            core.probe_data[inst_index].metric["instruction_id"] = inst_index
+            core.probe_data[inst_index].metric["instruction_type"] = opcode2type[opcode]
+            core.probe_data[inst_index].metric["layer_id"] = layer_id
+            core.probe_data[inst_index].metric["pe_id"] = core.id
+        
         # 根据用户定义的 metric 进行记录
         for key in self.metric.keys():
             if key not in core.probe_data[inst_index].metric:
@@ -147,12 +157,6 @@ class Probe(BaseModel):
                     case "dst":
                         core.probe_data[inst_index].metric[key] = dst
 
-        # 前置 probe 记录基础信息
-        if self.flag == 0:
-            core.probe_data[inst_index].metric["instruction_id"] = inst_index
-            core.probe_data[inst_index].metric["instruction_type"] = opcode2type[opcode]
-            core.probe_data[inst_index].metric["layer_id"] = layer_id
-            core.probe_data[inst_index].metric["pe_id"] = core.id
 
 class Task(BaseModel):
     layer_id: int = -1
@@ -191,10 +195,10 @@ class IOTask(Task):
         raise NotImplementedError(f"{self.opcode} 类未实现 output_size 方法")
 
     def run(self, core, ins):
-        ins.record.ready_run_time.append((core.env.now, self.inference_time))
-        ins.record.pe_id = core.id
+        # ins.record.ready_run_time.append((core.env.now, self.inference_time))
+        # ins.record.pe_id = core.id
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins, v=self.inference_time)
+        yield core.lsu.execute(self.opcode+str(self.index), ceil(self.size(), core.lsu_bandwidth), ins)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
 
 class ComputeTask(Task):
@@ -231,7 +235,7 @@ class ComputeTask(Task):
         true_tpu_flops = core.core_dist.generate()
         # if true_tpu_flops < 500:
         #     print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
-        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.inference_time)
+        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
 
         # 执行后置探针代码
@@ -422,13 +426,15 @@ class Send(CommunicationTask):
         startup_time = 10
         yield core.env.timeout(startup_time)
 
-        true_index = self.index + self.inference_time * INST_OFFSET
+        # true_index = self.index + self.inference_time * INST_OFFSET
+        true_index = self.index
         yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
-        ins.record.exe_end_time.append((core.env.now, self.inference_time))
+        # ins.record.exe_end_time.append((core.env.now, self.inference_time))
 
         # 执行后置探针代码
         self.probe_ed.run(core, self.index, ins.layer_id, self.opcode)
 
+    # 未进行修改
     def run_hop(self, core, ins):
         ins.record.pe_id = core.id
         ins.record.ready_run_time.append((core.env.now, self.inference_time))
