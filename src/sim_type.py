@@ -142,20 +142,20 @@ class Probe(BaseModel):
         
         # 根据用户定义的 metric 进行记录
         for key in self.metric.keys():
-            if key not in core.probe_data[inst_index].metric:
-                match key:
-                    case "start_time":
-                        core.probe_data[inst_index].metric[key] = core.env.now
-                    case "end_time":
-                        core.probe_data[inst_index].metric[key] = core.env.now
-                    case "flops":
-                        core.probe_data[inst_index].metric[key] = flops
-                    case "data_size":
-                        core.probe_data[inst_index].metric[key] = data_size
-                    case "src":
-                        core.probe_data[inst_index].metric[key] = src
-                    case "dst":
-                        core.probe_data[inst_index].metric[key] = dst
+            # print(key)
+            match key:
+                case "start_time":
+                    core.probe_data[inst_index].metric[key] = core.env.now
+                case "end_time":
+                    core.probe_data[inst_index].metric[key] = core.env.now
+                case "flops":
+                    core.probe_data[inst_index].metric[key] = flops
+                case "data_size":
+                    core.probe_data[inst_index].metric[key] = data_size
+                case "src_id":
+                    core.probe_data[inst_index].metric[key] = src
+                case "dst_id":
+                    core.probe_data[inst_index].metric[key] = dst
 
 
 class Task(BaseModel):

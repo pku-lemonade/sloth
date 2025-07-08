@@ -844,7 +844,7 @@ class Core:
             # self.program[inst_id].record.exe_end_time.append((self.env.now, inference_time))
             
             # 执行后置探针代码
-            self.scheduler.tasks[task_id].probe_ed.run(self, msg.data.index, msg.ins.layer_id, "Recv")
+            self.scheduler.tasks[task_id].probe_ed.run(self, msg.data.index, msg.ins.layer_id, "Recv", dst=self.id)
             
             self.scheduler.data_update(msg.data)
         else:

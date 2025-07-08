@@ -520,6 +520,81 @@ class Arch:
 
         print("Finished.")
 
+    def probe_output(self, net: str, fail: str):
+        print("Writing performance data...")
+
+        fail = fail.split("/")
+        fail = fail[-1].split(".")[0]
+
+        file_path = os.path.join("data/", net)
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+
+        file_path = os.path.join(file_path, fail)
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+
+        compute_trace = []
+        
+        # inst_index -> ProbeData
+        comm_record = {}
+        comm_trace = []
+
+        recv_probes = []
+
+        for id, core in enumerate(self.cores):
+            for inst_index, probe_data in core.probe_data.items():
+                task_id = core.scheduler.index2taskid[inst_index]
+
+                if core.scheduler.new_program[task_id].inst_type in compute_task:
+                    inference_time = inst_index // INST_OFFSET
+                    compute_trace.append(
+                        CompInst(
+                            instruction_id = probe_data.metric["instruction_id"],
+                            instruction_type = probe_data.metric["instruction_type"],
+                            layer_id = probe_data.metric["layer_id"],
+                            pe_id = probe_data.metric["pe_id"],
+                            start_time = probe_data.metric["start_time"],
+                            end_time = probe_data.metric["end_time"],
+                            inference_time = inference_time,
+                            flops = probe_data.metric["flops"]
+                        )
+                    )
+                elif core.scheduler.new_program[task_id].inst_type in communication_task:
+                    if core.scheduler.new_program[task_id].inst_type == TaskType.SEND:
+                        comm_record[inst_index] = probe_data
+                    else:
+                        recv_probes.append((inst_index, probe_data))
+
+        for (inst_index, recv_probe) in recv_probes:
+            inference_time = recv_probe.metric["instruction_id"] // INST_OFFSET
+            comm_trace.append(
+                CommInst(
+                    instruction_id = inst_index,
+                    instruction_type = recv_probe.metric["instruction_type"],
+                    layer_id = recv_probe.metric["layer_id"],
+                    pe_id = recv_probe.metric["pe_id"],
+                    start_time = comm_record[inst_index].metric["end_time"],
+                    end_time = recv_probe.metric["start_time"],
+                    inference_time = inference_time,
+                    data_size = comm_record[inst_index].metric["data_size"],
+                    src_id = comm_record[inst_index].metric["src_id"],
+                    dst_id = recv_probe.metric["dst_id"],
+                )
+            )
+
+        compute_trace = CompTrace(trace=compute_trace)
+        comp_json_file = os.path.join(file_path, "comp_trace.json")
+        with open(comp_json_file, "w") as file:
+            comp_json = compute_trace.model_dump_json(indent=4)
+            print(comp_json, file=file)
+
+        comm_trace = CommTrace(trace=comm_trace)
+        comp_json_file = os.path.join(file_path, "comm_trace.json")
+        with open(comp_json_file, "w") as file:
+            comp_json = comm_trace.model_dump_json(indent=4)
+            print(comp_json, file=file)
+
     def run(self):
         print("Start simulation.")
         
@@ -539,6 +614,7 @@ class Arch:
             self.process()
 
         # self.output_data(self.net_name, self.fail_kind)
+        self.probe_output(self.net_name, self.fail_kind)
 
         # self.draw()
 
