@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import List
 from pydantic import BaseModel
 
+INST_OFFSET = 1000000
 
 def ceil(a: int, b: int):
     return (a + b - 1) // b
@@ -58,8 +59,20 @@ class TaskType(IntEnum):
     PTP = 10
     TRANS = 11
 
-    # 将 probe 作为特殊的任务
-    PROBE = 99
+opcode2type = {
+    "Read": TaskType.READ,
+    "Write": TaskType.WRITE,
+    "Send": TaskType.SEND,
+    "Recv": TaskType.RECV,
+    "Stay": TaskType.STAY,
+    "Conv": TaskType.CONV,
+    "Pool": TaskType.POOL,
+    "FC": TaskType.FC,
+    "Elem": TaskType.ELEM,
+    "GConv": TaskType.GCONV,
+    "PTP": TaskType.PTP,
+    "Trans": TaskType.TRANS
+}
 
 compute_task = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
 communication_task = [TaskType.SEND, TaskType.RECV]
@@ -108,6 +121,38 @@ class Data(BaseModel):
 
     def __lt__(self, other: "Data") -> bool:
         return self.index < other.index
+    
+class ProbeData(BaseModel):
+    metric: dict = {}
+    
+class Probe(BaseModel):
+    flag: int 
+    metric: dict = {}
+
+    def run(self, core, inst_index, layer_id, opcode, flops=None, data_size=None, src=None, dst=None):
+        # 根据用户定义的 metric 进行记录
+        for key in self.metric.keys():
+            if key not in core.probe_data[inst_index].metric:
+                match key:
+                    case "start_time":
+                        core.probe_data[inst_index].metric[key] = core.env.now
+                    case "end_time":
+                        core.probe_data[inst_index].metric[key] = core.env.now
+                    case "flops":
+                        core.probe_data[inst_index].metric[key] = flops
+                    case "data_size":
+                        core.probe_data[inst_index].metric[key] = data_size
+                    case "src":
+                        core.probe_data[inst_index].metric[key] = src
+                    case "dst":
+                        core.probe_data[inst_index].metric[key] = dst
+
+        # 前置 probe 记录基础信息
+        if self.flag == 0:
+            core.probe_data[inst_index].metric["instruction_id"] = inst_index
+            core.probe_data[inst_index].metric["instruction_type"] = opcode2type[opcode]
+            core.probe_data[inst_index].metric["layer_id"] = layer_id
+            core.probe_data[inst_index].metric["pe_id"] = core.id
 
 class Task(BaseModel):
     layer_id: int = -1
@@ -118,19 +163,18 @@ class Task(BaseModel):
     num_operands: int
     feat_num: int = 0
     para_num: int = 0
-    inference_time: int
     inference_end: bool = False
     feat: List[Data] = []
     para: List[Data] = []
     inst: "Instruction" = None
+
+    probe_st: Probe = None
+    probe_ed: Probe = None
+
     def size(self) -> int:
         cur_slice = Slice(tensor_slice=self.tensor_slice)
         return cur_slice.size()
     
-class Probe(Task):
-    def run(self, core):
-        pass
-
 class Nop(Task):
     def run(self, core, ins):
         ins.record.exe_start_time.append((core.env.now, self.inference_time))
@@ -176,15 +220,22 @@ class ComputeTask(Task):
     
     def run(self, core, ins):
         self.calc_flops()
-        ins.record.ready_run_time.append((core.env.now, self.inference_time))
-        ins.record.pe_id = core.id
-        ins.record.flops = self.flops
+        # ins.record.ready_run_time.append((core.env.now, self.inference_time))
+        # ins.record.pe_id = core.id
+        # ins.record.flops = self.flops
+        
+        # 执行前置探针代码
+        self.probe_st.run(core, self.index, ins.layer_id, self.opcode, flops=self.flops)
+        
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
         true_tpu_flops = core.core_dist.generate()
         # if true_tpu_flops < 500:
         #     print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
         yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.inference_time)
         core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
+
+        # 执行后置探针代码
+        self.probe_ed.run(core, self.index, ins.layer_id, self.opcode)
     
 class Record(BaseModel):
     # 记录的格式是 (时间，推理次数)
@@ -215,6 +266,7 @@ class Instruction(BaseModel):
     tensor_slice: List[DimSlice]
     feat_num: int = 0
     para_num: int = 0
+    inference_end: bool = False
 
     # 在想应该累计每个block对后面造成的影响，这样的热点或许更有效
     start_time: int = -1
@@ -357,19 +409,25 @@ class Send(CommunicationTask):
     src: int = -1
     feat_num: int = 1
     def run(self, core, ins):
-        # 分析时send/recv合并处理，因为index一致
-        ins.record.pe_id = core.id
-        ins.record.ready_run_time.append((core.env.now, self.inference_time))
-        # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
-        ins.record.exe_start_time.append((core.env.now, self.inference_time))
+        # # 分析时send/recv合并处理，因为index一致
+        # ins.record.pe_id = core.id
+        # ins.record.ready_run_time.append((core.env.now, self.inference_time))
+        # # yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        # ins.record.exe_start_time.append((core.env.now, self.inference_time))
+
+        # 执行前置探针代码
+        self.probe_st.run(core, self.index, ins.layer_id, self.opcode, data_size=Slice(tensor_slice=self.tensor_slice).size(), src=core.id)
 
         # startup time
         startup_time = 10
         yield core.env.timeout(startup_time)
 
-        true_index = self.index + self.inference_time * 1000000
+        true_index = self.index + self.inference_time * INST_OFFSET
         yield core.data_out.put(Message(data=Data(index=true_index, tensor_slice=self.tensor_slice), dst=self.dst, src=core.id, ins=ins))
         ins.record.exe_end_time.append((core.env.now, self.inference_time))
+
+        # 执行后置探针代码
+        self.probe_ed.run(core, self.index, ins.layer_id, self.opcode)
 
     def run_hop(self, core, ins):
         ins.record.pe_id = core.id
@@ -382,7 +440,7 @@ class Send(CommunicationTask):
         
         # 把SEND指令解释为若干packet
         packet_num = ceil(Slice(tensor_slice=self.tensor_slice).size(), 16)
-        true_index = self.index + self.inference_time * 1000000
+        true_index = self.index + self.inference_time * INST_OFFSET
         for index in range(packet_num):
             if index == 0:
                 yield core.data_out.put_hop(Packet(ins=ins, data=Data(index=true_index, tensor_slice=self.tensor_slice), src=core.id, dst=self.dst, start=True))
