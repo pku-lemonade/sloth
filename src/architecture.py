@@ -530,6 +530,10 @@ class Arch:
         if not os.path.exists(file_path):
             os.mkdir(file_path)
 
+        # file_path = os.path.join(file_path, "experiment")
+        # if not os.path.exists(file_path):
+        #     os.mkdir(file_path)
+
         file_path = os.path.join(file_path, fail)
         if not os.path.exists(file_path):
             os.mkdir(file_path)

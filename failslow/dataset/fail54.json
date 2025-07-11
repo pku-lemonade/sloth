@@ -2,11 +2,11 @@
     "router": [],
     "link": [
         {
-            "start_time": 690169517,
-            "end_time": 1015341015,
-            "router_id": 0,
-            "direction": 3,
-            "times": 21
+            "start_time": 21706477,
+            "end_time": 252501707,
+            "router_id": 8,
+            "direction": 2,
+            "times": 27
         }
     ],
     "lsu": [],

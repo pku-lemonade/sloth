@@ -834,9 +834,6 @@ class Core:
         if task_id in range(self.scheduler.start, self.scheduler.end):
             slice = Slice(tensor_slice=msg.data.tensor_slice)
 
-            # 执行前置探针代码
-            self.scheduler.tasks[task_id].probe_st.run(self, msg.data.index, msg.ins.layer_id, "Recv", data_size=Slice(tensor_slice=msg.data.tensor_slice).size())
-
             # self.program[inst_id].record.exe_start_time.append((self.env.now, inference_time))
             # 分配接收数据空间
             yield self.env.process(self.spm_manager.allocate("recv"+str(msg.data.index), slice.size()))
@@ -936,6 +933,9 @@ class Core:
                     # self.program[inst_id].record.ready_run_time.append((self.env.now, inference_time))
                     # # 多次推理每条指令执行的core也不会变
                     # self.program[inst_id].record.pe_id = self.id
+                    
+                    # 执行前置探针代码
+                    self.scheduler.tasks[task_id].probe_st.run(self, msg.data.index, msg.ins.layer_id, "Recv", data_size=Slice(tensor_slice=msg.data.tensor_slice).size())
 
                     # 暂时没用到
                     if self.stage == "post_analysis":

@@ -14,17 +14,18 @@ class CoreDist:
     def __init__(self, mu = 1024, sigma = 62.25):
         self.mu = mu
         self.sigma = sigma
-        self.dist = norm_pdf(mu=mu, sigma=sigma)
+        self.normal_dist = norm_pdf(mu=mu, sigma=sigma/4)
+        self.abnormal_dist = norm_pdf(mu=mu, sigma=sigma*2)
 
     def range_cdf(self, a, b):
-        return self.dist.cdf(b) - self.dist.cdf(a)
+        return self.normal_dist.cdf(b) - self.normal_dist.cdf(a)
     
     def failslow_prob(self, x):
         tx = self.mu - abs(x - self.mu)
-        return 1 - self.dist.cdf(tx) * 2
+        return 1 - self.abnormal_dist.cdf(tx) * 2
     
     def generate(self, size=1):
-        numbers = self.dist.rvs(size=size)
+        numbers = self.normal_dist.rvs(size=size)
         return numbers[0]
     
 class NoCDist:

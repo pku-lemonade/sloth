@@ -95,7 +95,7 @@ def generate_dataset(num_samples: int, fail_ratios: dict, output_dir: str = "fai
     print(f"数据集包含：{fail_counts}")
 
     # 失速起始时间 0s 到 2s
-    time_range = (0, 2000000000)
+    time_range = (0, 200000000)
     id_range = (0, 16)
     # 生成数据点
     index = 1
@@ -111,10 +111,10 @@ def generate_dataset(num_samples: int, fail_ratios: dict, output_dir: str = "fai
 # ==== 执行 ====
 if __name__ == "__main__":
     # 设置总样本数和比例（可修改）
-    total_samples = 100
+    total_samples = 119
     fail_ratios = {
-        'router': 0.5,
-        'link': 0.5,
+        'router': 0.3,
+        'link': 0.7,
         'lsu': 0,
         'tpu': 0
     }

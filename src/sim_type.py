@@ -228,18 +228,21 @@ class ComputeTask(Task):
         # ins.record.pe_id = core.id
         # ins.record.flops = self.flops
         
-        # 执行前置探针代码
-        self.probe_st.run(core, self.index, ins.layer_id, self.opcode, flops=self.flops)
-        
         yield core.env.process(core.spm_manager.allocate(self.opcode+str(self.index), self.output_size()))
+        
+        # 执行前置探针代码 (应该在req后执行，common里有修改)
+        # self.probe_st.run(core, self.index, ins.layer_id, self.opcode, flops=self.flops)
+        
         true_tpu_flops = core.core_dist.generate()
         # if true_tpu_flops < 500:
         #     print(f"yes, core{core.id} time{core.env.now}, id{ins.index}")
-        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins)
-        core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
+        yield core.tpu.execute(self.opcode+str(self.index), ceil(self.flops, true_tpu_flops), ins, v=self.probe_st, core=core, index=self.index, opcode=self.opcode, flops=self.flops)
 
         # 执行后置探针代码
         self.probe_ed.run(core, self.index, ins.layer_id, self.opcode)
+
+        core.env.process(core.spm_manager.free(self.opcode+str(self.index), self.input_size()))
+
     
 class Record(BaseModel):
     # 记录的格式是 (时间，推理次数)
