@@ -58,6 +58,9 @@ class TaskType(IntEnum):
     PTP = 10
     TRANS = 11
 
+    # 将 probe 作为特殊的任务
+    PROBE = 99
+
 compute_task = [TaskType.CONV, TaskType.POOL, TaskType.FC, TaskType.ELEM, TaskType.GCONV, TaskType.PTP, TaskType.TRANS]
 communication_task = [TaskType.SEND, TaskType.RECV]
 io_task = [TaskType.READ, TaskType.WRITE]
@@ -123,6 +126,10 @@ class Task(BaseModel):
     def size(self) -> int:
         cur_slice = Slice(tensor_slice=self.tensor_slice)
         return cur_slice.size()
+    
+class Probe(Task):
+    def run(self, core):
+        pass
 
 class Nop(Task):
     def run(self, core, ins):
