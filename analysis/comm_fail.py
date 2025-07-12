@@ -214,6 +214,16 @@ def softmax(x, beta = 1.0):
     e_x = np.exp(beta * (x - np.max(x)))
     return e_x / e_x.sum()
 
+class FailSlow(BaseModel):
+    kind: str
+    id: int
+    dst_id: int = -1
+    start_time: int = 0
+    end_time: int = 0
+
+class FailSlows(BaseModel):
+    data: List[FailSlow] = []
+
 # 物理链路回溯，建反向边
 class Mesh:
     def __init__(self, group_num: int, x: int, y: int):
@@ -452,6 +462,8 @@ class Mesh:
             self.backtracking(curNode=nextNode[0], father=curNode, failslow=failslow, step=step+1, limit=limit)
 
     def pagerank_summary(self, k=30, threshold=0.6):
+        failslow = FailSlows()
+
         # output_file = 'output.csv'
         # np.savetxt(output_file, self.transition_matrix, delimiter=',', fmt='%f')
 
@@ -473,6 +485,7 @@ class Mesh:
                     continue
                 node_id = start_id + id
                 print(f"[FailSlow-PE] Id: {node_id%self.num} Duration: [{self.time_range[node_id][0]},{self.time_range[node_id][1]}] Prob: {group_prob[id]*100:.2f}%.")
+                failslow.data.append(FailSlow(kind="pe", id=node_id%self.num, start_time=self.time_range[node_id][0], end_time=self.time_range[node_id][1]))
 
             # 链路失速故障
             self.link_failslow_prob[:] = 0
@@ -493,14 +506,16 @@ class Mesh:
 
             max_index = np.argmax(self.link_failslow_prob)
             failslow_link = np.unravel_index(max_index, self.link_failslow_prob.shape)
-            if failslow_link[0] > failslow_link[1]:
+            if failslow_link[0]%self.num > failslow_link[1]%self.num:
                 failslow_link = (failslow_link[1], failslow_link[0])
 
             if failslow_link not in self.link_time_range:
                 continue
             fail_range = self.link_time_range[failslow_link]
             print(f"[FailSlow-Link] Id: {failslow_link[0]%self.num}-{failslow_link[1]%self.num} Duration: [{fail_range[0]},{fail_range[1]}]")
+            failslow.data.append(FailSlow(kind="link", id=failslow_link[0]%self.num, dst_id=failslow_link[1]%self.num))
 
+        return failslow
         # sorted_PR_id = np.argsort(-self.core_failslow_prob[0:self.N-1])
         # sorted_PR = self.core_failslow_prob[sorted_PR_id]
         # sorted_PR = sorted_PR ** 2
@@ -1046,6 +1061,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--network", type=str, help="Workload mapping file")
     parser.add_argument("--arch", type=str, help="Architecture configuration file")
+    parser.add_argument("--report", type=str, help="Report file")
 
     parser.add_argument("normal_trace", type=str, help="Path to trace without fail-slow")
     parser.add_argument("detect_trace", type=str, help="Path to real runtime trace")
@@ -1130,7 +1146,7 @@ if __name__ == '__main__':
     
     # 设置 groundtruth
     detection_new(inference_time=1, ground_truth=True, data_compress=normal_comm_compress)
-    failslow_link = detection_new(inference_time=2, data_compress=detect_comm_compress)
+    failslow_link = detection_new(inference_time=16, data_compress=detect_comm_compress)
 
     # RCA 解决多重共线性问题
     failslow_period = set()
@@ -1138,7 +1154,7 @@ if __name__ == '__main__':
         failslow_period.add(link[0])
 
     # 枚举失速区间
-    for period in range(2):
+    for period in range(16):
         # 处理comp指令数据
         # 取出当前period的指令
         comp_trace_layer = [[] for _ in range(len(net.layers))]
@@ -1197,7 +1213,11 @@ if __name__ == '__main__':
         print("="*40)
         print("Root Cause Analysis:")
         mesh.pagerank()
-        mesh.pagerank_summary()
+        failslow = mesh.pagerank_summary()
+
+        with open(args.report, "w") as file:
+            comp_json = failslow.model_dump_json(indent=4)
+            print(comp_json, file=file)
 
     # comm_graph.debug()
 
