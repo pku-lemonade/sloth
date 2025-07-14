@@ -12,6 +12,16 @@ if project_root not in sys.path:
 
 from src.sim_type import Direction, RouterFail, LinkFail, LsuFail, TpuFail, FailSlow
 
+def check(pe_id, Direction):
+    if Direction == Direction.NORTH:
+        return pe_id % 4 != 3
+    elif Direction == Direction.SOUTH:
+        return pe_id % 4 != 0
+    elif Direction == Direction.EAST:
+        return pe_id // 4 != 3
+    else:
+        return pe_id // 4 != 0
+
 # 生成单个数据点
 def generate_single_fail_slow(fail_type: str, time_range: tuple[int, int], id_range: tuple[int, int]) -> FailSlow:
     start_time = random.randint(*time_range)
@@ -41,12 +51,18 @@ def generate_single_fail_slow(fail_type: str, time_range: tuple[int, int], id_ra
             )
         )
     elif fail_type == 'link':
+        direction = random.choice(list(Direction))
+
+        # 确保链路一定存在
+        while not check(pe_id, direction):
+            direction = random.choice(list(Direction))
+
         fail_data['link'].append(
             LinkFail(
                 start_time = start_time,
                 end_time = end_time,
                 router_id = router_id,
-                direction = random.choice(list(Direction)),
+                direction = direction,
                 times = times
             )
         )
@@ -95,7 +111,7 @@ def generate_dataset(num_samples: int, fail_ratios: dict, output_dir: str = "fai
     print(f"数据集包含：{fail_counts}")
 
     # 失速起始时间 0s 到 2s
-    time_range = (0, 2000000000)
+    time_range = (0, 200000000)
     id_range = (0, 16)
     # 生成数据点
     index = 1
@@ -111,11 +127,11 @@ def generate_dataset(num_samples: int, fail_ratios: dict, output_dir: str = "fai
 # ==== 执行 ====
 if __name__ == "__main__":
     # 设置总样本数和比例（可修改）
-    total_samples = 100
+    total_samples = 119
     fail_ratios = {
-        'router': 0.5,
-        'link': 0.5,
+        'router': 0,
+        'link': 0.7,
         'lsu': 0,
-        'tpu': 0
+        'tpu': 0.3
     }
     generate_dataset(total_samples, fail_ratios)

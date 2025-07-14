@@ -47,11 +47,13 @@ class MonitoredResource(simpy.Resource):
         else:
             return False
 
-    def exe(self, task, delay, ins, v=None, attributes=None):
+    def exe(self, task, delay, ins, v=None, core=None, index=None, opcode=None, flops=None, attributes=None):
         req = super().request()
         yield req
         if v is not None:
-            ins.record.exe_start_time.append((self._env.now, v))
+            # ins.record.exe_start_time.append((self._env.now, v))
+            # 执行前置探针代码
+            v.run(core, index, ins.layer_id, opcode, flops=flops)
         if self.checkneed():
             if attributes is None:
                 self.data.append((task, self._env.now, len(self.queue), "req", "B"))
@@ -66,12 +68,12 @@ class MonitoredResource(simpy.Resource):
                 self.data.append((task, self._env.now, len(self.queue), "req", "E"))
             else:
                 self.data.append((task, self._env.now, len(self.queue), "req", "E", attributes))
-        if v is not None:
-            ins.record.exe_end_time.append((self._env.now, v))
+        # if v is not None:
+        #     ins.record.exe_end_time.append((self._env.now, v))
         super().release(req)
 
-    def execute(self, task, delay, ins, v=None, attributes=None):
-        return self._env.process(self.exe(task, delay, ins, v, attributes))
+    def execute(self, task, delay, ins, v=None, core=None, index=None, opcode=None, flops=None, attributes=None):
+        return self._env.process(self.exe(task, delay, ins, v=v, core=core, index=index, opcode=opcode, flops=flops, attributes=attributes))
         
 ind2ins = []
 def init_graph(program):

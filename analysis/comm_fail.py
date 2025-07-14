@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import math
+import argparse
 import numpy as np
 from typing import List
 from scipy.stats import norm
@@ -24,6 +25,8 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from tools.geninst_new import json_analyzer, config_analyzer
+
+parser = argparse.ArgumentParser()
 
 layer2group = {}
 layer_group_divide = []
@@ -210,6 +213,16 @@ def softmax(x, beta = 1.0):
     x = np.array(x)
     e_x = np.exp(beta * (x - np.max(x)))
     return e_x / e_x.sum()
+
+class FailSlow(BaseModel):
+    kind: str
+    id: int
+    dst_id: int = -1
+    start_time: int = 0
+    end_time: int = 0
+
+class FailSlows(BaseModel):
+    data: List[FailSlow] = []
 
 # 物理链路回溯，建反向边
 class Mesh:
@@ -406,13 +419,15 @@ class Mesh:
     def core_prob_init(self, layer_group, pe_id, flops, start_time, end_time):
         core_id = (layer_group-1) * self.num + pe_id
         # 初始化结点故障概率
+        # print(f"core{pe_id}: {flops}--{self.core_dist.failslow_prob(flops)}")
         self.core_failslow_prob[core_id] = self.core_dist.failslow_prob(flops)# + (1 / (self.N))
         # print(f"core:{core_id}, flops:{flops} prob:{self.core_failslow_prob[core_id]}")
         self.time_range[core_id] = (start_time, end_time)
 
     # 参考GrootRank进行根因定位
-    def pagerank(self, alpha = 0.85, tol = 1e-2, max_iter = 100):
+    def pagerank(self, alpha = 0.85, tol = 1e-4, max_iter = 1000):
         jump_prob = self.core_failslow_prob
+        # print(jump_prob)
 
         for _ in range(max_iter):
             new_prob = alpha * self.transition_matrix.T @ self.core_failslow_prob
@@ -446,7 +461,9 @@ class Mesh:
                 self.count[curNode][nextNode[0]] += 1
             self.backtracking(curNode=nextNode[0], father=curNode, failslow=failslow, step=step+1, limit=limit)
 
-    def pagerank_summary(self, k=30, threshold=0.5):
+    def pagerank_summary(self, k=30, threshold=0.6):
+        failslow = FailSlows()
+
         # output_file = 'output.csv'
         # np.savetxt(output_file, self.transition_matrix, delimiter=',', fmt='%f')
 
@@ -457,8 +474,10 @@ class Mesh:
             end_id = start_id + self.num
 
             # print(f"==========group_id:{group_id}==========")
+            # print("PR")
             # print(self.core_failslow_prob[start_id:end_id])
-            group_prob = softmax(self.core_failslow_prob[start_id:end_id] ** 2, beta=500000)
+            group_prob = softmax(self.core_failslow_prob[start_id:end_id], beta=200)
+            # print("Prob")
             # print(group_prob)
 
             for id in range(self.num):
@@ -466,6 +485,7 @@ class Mesh:
                     continue
                 node_id = start_id + id
                 print(f"[FailSlow-PE] Id: {node_id%self.num} Duration: [{self.time_range[node_id][0]},{self.time_range[node_id][1]}] Prob: {group_prob[id]*100:.2f}%.")
+                failslow.data.append(FailSlow(kind="pe", id=node_id%self.num, start_time=self.time_range[node_id][0], end_time=self.time_range[node_id][1]))
 
             # 链路失速故障
             self.link_failslow_prob[:] = 0
@@ -486,14 +506,16 @@ class Mesh:
 
             max_index = np.argmax(self.link_failslow_prob)
             failslow_link = np.unravel_index(max_index, self.link_failslow_prob.shape)
-            if failslow_link[0] > failslow_link[1]:
+            if failslow_link[0]%self.num > failslow_link[1]%self.num:
                 failslow_link = (failslow_link[1], failslow_link[0])
 
             if failslow_link not in self.link_time_range:
                 continue
             fail_range = self.link_time_range[failslow_link]
             print(f"[FailSlow-Link] Id: {failslow_link[0]%self.num}-{failslow_link[1]%self.num} Duration: [{fail_range[0]},{fail_range[1]}]")
+            failslow.data.append(FailSlow(kind="link", id=failslow_link[0]%self.num, dst_id=failslow_link[1]%self.num))
 
+        return failslow
         # sorted_PR_id = np.argsort(-self.core_failslow_prob[0:self.N-1])
         # sorted_PR = self.core_failslow_prob[sorted_PR_id]
         # sorted_PR = sorted_PR ** 2
@@ -762,7 +784,8 @@ def layer_group_analyzer(filename: str) -> LayerGroupsInfo:
 
 # file_path 支持使用原始数据检测
 # data_compress 支持使用压缩数据检测
-def detection_new(inference_time, file_path = None, data_compress = None):
+bw = {}
+def detection_new(inference_time, ground_truth = False, file_path = None, data_compress = None):
     detection_trace = None
 
     if file_path is not None:
@@ -814,7 +837,6 @@ def detection_new(inference_time, file_path = None, data_compress = None):
     #             (inference_paths_size_mp[time][key]/inference_paths_num_mp[time][key], inference_paths_time_mp[time][key]/inference_paths_num_mp[time][key], key[0], key[1])
     #         )
 
-    bw = {}
     # (inference_time, link_start, link_end)
     failslow_links = []
 
@@ -844,7 +866,7 @@ def detection_new(inference_time, file_path = None, data_compress = None):
 
             true_bandwidth = 1 / bandwidth[link]
             # print(f"Link_{link[0]}_{link[1]}: {true_bandwidth} B/cycle.")
-            if time == 0:
+            if ground_truth is True:
                 bw[(link[0], link[1])] = true_bandwidth
             else:
                 if (link[0], link[1]) in bw:
@@ -1012,13 +1034,53 @@ def get_ground_truth():
             else:
                 layer_link_data[tag] += link_bandwidth_data.data_size
 
-if __name__ == '__main__':
-    net = json_analyzer("tests/darknet19/mapping.json")
-    arch_configs = config_analyzer("arch/gemini4_4.json")
-    comm_trace = comm_analyzer("data/darknet19/tpu/comm_trace.json")
-    comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
+# 利用数据结构进行数据压缩
+def compress(comm_trace, comp_trace):
+    ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=8192, threshold=10)
     
-    layer_group_info = layer_group_analyzer("data/darknet19/tpu/layer_info.json")
+    for trace in comm_trace.trace:
+        if trace.instruction_type not in io_inst:
+            key, attr = trace_to_key_attr(trace)
+            ds.insert(key, attr.start_time, attr.end_time, attr)
+    
+    for trace in comp_trace.trace:
+        if trace.instruction_type not in io_inst:
+            key, attr = trace_to_key_attr(trace)
+            ds.insert(key, attr.start_time, attr.end_time, attr)
+
+    return ds.summaries()
+
+if __name__ == '__main__':
+    # net = json_analyzer("tests/darknet19/mapping.json")
+    # arch_configs = config_analyzer("arch/gemini4_4.json")
+    # comm_trace = comm_analyzer("data/darknet19/tpu/comm_trace.json")
+    # comp_trace = comp_analyzer("data/darknet19/tpu/comp_trace.json")
+    
+    # layer_group_info = layer_group_analyzer("data/darknet19/tpu/layer_info.json")
+
+
+    parser.add_argument("--network", type=str, help="Workload mapping file")
+    parser.add_argument("--arch", type=str, help="Architecture configuration file")
+    parser.add_argument("--report", type=str, help="Report file")
+
+    parser.add_argument("normal_trace", type=str, help="Path to trace without fail-slow")
+    parser.add_argument("detect_trace", type=str, help="Path to real runtime trace")
+
+    args = parser.parse_args()
+
+    net = json_analyzer(args.network)
+    arch_configs = config_analyzer(args.arch)
+
+    normal_comm_path = os.path.join(args.normal_trace, "comm_trace.json")
+    normal_comm_trace = comm_analyzer(normal_comm_path)
+    normal_comp_path = os.path.join(args.normal_trace, "comp_trace.json")
+    normal_comp_trace = comp_analyzer(normal_comp_path)
+
+    detect_comm_path = os.path.join(args.detect_trace, "comm_trace.json")
+    detect_comm_trace = comm_analyzer(detect_comm_path)
+    detect_comp_path = os.path.join(args.detect_trace, "comp_trace.json")
+    detect_comp_trace = comp_analyzer(detect_comp_path)
+
 
     core_num = arch_configs.core.x * arch_configs.core.y
     layer_mapping = [[] for _ in range(len(net.layers))]
@@ -1028,15 +1090,15 @@ if __name__ == '__main__':
     # 获取层组划分情况
     cur_layer_id = 0
     for id, layer in enumerate(net.layers):
-        if layer.layer_group_id not in layer_group_start_time:
-            layer_group_start_time[layer.layer_group_id] = layer_group_info.info[id].start
-        else:
-            layer_group_start_time[layer.layer_group_id] = min(layer_group_start_time[layer.layer_group_id], layer_group_info.info[id].start)
+        # if layer.layer_group_id not in layer_group_start_time:
+        #     layer_group_start_time[layer.layer_group_id] = layer_group_info.info[id].start
+        # else:
+        #     layer_group_start_time[layer.layer_group_id] = min(layer_group_start_time[layer.layer_group_id], layer_group_info.info[id].start)
         
-        if layer.layer_group_id not in layer_group_end_time:
-            layer_group_end_time[layer.layer_group_id] = layer_group_info.info[id].end
-        else:
-            layer_group_end_time[layer.layer_group_id] = max(layer_group_end_time[layer.layer_group_id], layer_group_info.info[id].end)
+        # if layer.layer_group_id not in layer_group_end_time:
+        #     layer_group_end_time[layer.layer_group_id] = layer_group_info.info[id].end
+        # else:
+        #     layer_group_end_time[layer.layer_group_id] = max(layer_group_end_time[layer.layer_group_id], layer_group_info.info[id].end)
 
         if layer.layer_group_id != net.layers[cur_layer_id].layer_group_id:
             group_layers = []
@@ -1061,19 +1123,11 @@ if __name__ == '__main__':
     cur_layer_id = id
     layer_group_divide.append(group_layers)
 
-    ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=8192, threshold=10)
-    # 利用数据结构进行数据压缩
-    for trace in comm_trace.trace:
-        if trace.instruction_type not in io_inst:
-            key, attr = trace_to_key_attr(trace)
-            ds.insert(key, attr.start_time, attr.end_time, attr)
-    
-    for trace in comp_data.trace:
-        if trace.instruction_type not in io_inst:
-            key, attr = trace_to_key_attr(trace)
-            ds.insert(key, attr.start_time, attr.end_time, attr)
-    
-    comm_compress, comp_compress = ds.summaries()
+
+    # 利用数据结构进行数据压缩 (正常数据)
+    normal_comm_compress, normal_comp_compress = compress(normal_comm_trace, normal_comp_trace)
+    # 利用数据结构进行数据压缩 (检测数据)
+    detect_comm_compress, detect_comp_compress = compress(detect_comm_trace, detect_comp_trace)
 
     # get_ground_truth()
     # link_failslow_detection()
@@ -1085,11 +1139,14 @@ if __name__ == '__main__':
     print("Detecting potential failslow links:")
     
     # 使用原始数据进行检测
-    # failslow_link = detection_new(inference_time=2, file_path="data/darknet19/link/comm_trace.json")
+    # detection_new(inference_time=1, ground_truth=True, file_path=normal_comm_path)
+    # failslow_link = detection_new(inference_time=2, file_path=detect_comm_path)
 
     # 使用压缩数据进行检测
-    # print(len(comm_compress.trace))
-    failslow_link = detection_new(inference_time=16, data_compress=comm_compress)
+    
+    # 设置 groundtruth
+    detection_new(inference_time=1, ground_truth=True, data_compress=normal_comm_compress)
+    failslow_link = detection_new(inference_time=16, data_compress=detect_comm_compress)
 
     # RCA 解决多重共线性问题
     failslow_period = set()
@@ -1104,18 +1161,15 @@ if __name__ == '__main__':
         # 记录非潜在失速层
         tag = [[False for __ in range(16)] for _ in range(200)]
 
-        for inst_trace in comp_compress.trace:
+        for inst_trace in detect_comp_compress.trace:
             if inst_trace.inference_time != period:
                 continue
-
-            # if inst_trace.layer_id >= len(net.layers):
-            #     print(inst_trace.layer_id)
 
             comp_trace_layer[inst_trace.layer_id].append(inst_trace)
             tag[inst_trace.layer_id][inst_trace.pe_id] = True
 
         # 非潜在失速核心用原始数据填充
-        for inst_trace in comp_trace.trace:
+        for inst_trace in detect_comp_trace.trace:
             if inst_trace.inference_time != period:
                 continue
             if tag[inst_trace.layer_id][inst_trace.pe_id] is False:
@@ -1123,7 +1177,7 @@ if __name__ == '__main__':
 
         # 处理comm指令数据
         comm_trace_inference = []
-        for inst_trace in comm_trace.trace:
+        for inst_trace in detect_comm_trace.trace:
             if inst_trace.inference_time != period:
                 continue
             comm_trace_inference.append(inst_trace)
@@ -1150,6 +1204,8 @@ if __name__ == '__main__':
                 mesh.core_prob_init(layer_group=layer2group[layer_id], pe_id=pe_id, flops=average_flops[id],
                                     start_time=start_time[pe_id], end_time=end_time[pe_id])
         print("[Info] Finish initializing core PR values.")
+        # print(mesh.core_failslow_prob)
+
         mesh.link_prob_init()
         mesh.link_variance_init(failslow_link)
         print("[Info] Finish initializing link weights.")
@@ -1157,7 +1213,11 @@ if __name__ == '__main__':
         print("="*40)
         print("Root Cause Analysis:")
         mesh.pagerank()
-        mesh.pagerank_summary()
+        failslow = mesh.pagerank_summary()
+
+        with open(args.report, "w") as file:
+            comp_json = failslow.model_dump_json(indent=4)
+            print(comp_json, file=file)
 
     # comm_graph.debug()
 

@@ -161,6 +161,10 @@ class FailSlowPattern:
         # if self.merged_attr.flops != -1:
         #     print(f"{self.merged_attr.flops} -- {self.count}")
         self.merged_attr.merge(attr)
+        if self.merged_attr.flops != -1:
+            if self.merged_attr.pe_id == 10:
+                return True
+        return False
 
     # 以 Summary 格式返回
     def summary(self):
@@ -203,7 +207,9 @@ class SnapshotTable:
                 self._evict()
             self.table[key] = FailSlowPattern(key, start_time, end_time, attr)
         else:
-            self.table[key].update(start_time, end_time, attr)
+            result = self.table[key].update(start_time, end_time, attr)
+            # if result is True:
+            #     print(f"{key}:{self.table[key].merged_attr.pe_id} {self.table[key].merged_attr.flops/self.table[key].count}")
 
     def _evict(self):
         # 删除最早的指令模式（其他移除方式？）
@@ -238,42 +244,42 @@ class FailSlowCompressor:
         comp_ds = len(comp_model.trace)*12/1024
         comm_ds = len(comm_model.trace)*18/1024
 
-        print(f"comp_data_size: {comp_ds:.2f}MB")
-        print(f"comm_data_size: {comm_ds:.2f}MB")
+        # print(f"comp_data_size: {comp_ds:.2f}MB")
+        # print(f"comm_data_size: {comm_ds:.2f}MB")
 
-        print(f"comp_compress_rate: {(1.2-comp_ds/1024)/1.2*100:.2f}%")
-        print(f"comm_compress_rate: {(3.94-comm_ds/1024)/3.94*100:.2f}%")
+        # print(f"comp_compress_rate: {(1.2-comp_ds/1024)/1.2*100:.2f}%")
+        # print(f"comm_compress_rate: {(3.94-comm_ds/1024)/3.94*100:.2f}%")
 
         return comm_model, comp_model
 
-ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=2048, threshold=10)
-comm_file = "data/darknet19/tpu/comm_trace.json"
-comp_file = "data/darknet19/tpu/comp_trace.json"
+# ds = FailSlowCompressor(num_hashes=5, num_buckets=1024, stage2_size=2048, threshold=10)
+# comm_file = "data/darknet19/tpu/comm_trace.json"
+# comp_file = "data/darknet19/tpu/comp_trace.json"
 
-comm_data = comm_analyzer(comm_file)
-comp_data = comp_analyzer(comp_file)
+# comm_data = comm_analyzer(comm_file)
+# comp_data = comp_analyzer(comp_file)
 
-for trace in comm_data.trace:
-    if trace.instruction_type not in io_inst:
-        key, attr = trace_to_key_attr(trace)
-        ds.insert(key, attr.start_time, attr.end_time, attr)
+# for trace in comm_data.trace:
+#     if trace.instruction_type not in io_inst:
+#         key, attr = trace_to_key_attr(trace)
+#         ds.insert(key, attr.start_time, attr.end_time, attr)
 
-for trace in comp_data.trace:
-    if trace.instruction_type not in io_inst:
-        key, attr = trace_to_key_attr(trace)
-        ds.insert(key, attr.start_time, attr.end_time, attr)
+# for trace in comp_data.trace:
+#     if trace.instruction_type not in io_inst:
+#         key, attr = trace_to_key_attr(trace)
+#         ds.insert(key, attr.start_time, attr.end_time, attr)
 
-file_path="analysis"
-comm_model, comp_model = ds.summaries()
+# file_path="analysis"
+# comm_model, comp_model = ds.summaries()
 
-comm_json = comm_model.model_dump_json(indent=4)
-comp_json = comp_model.model_dump_json(indent=4)
+# comm_json = comm_model.model_dump_json(indent=4)
+# comp_json = comp_model.model_dump_json(indent=4)
 
-comp_json_file = os.path.join(file_path, "comp_trace_compress.json")
-comm_json_file = os.path.join(file_path, "comm_trace_compress.json")
+# comp_json_file = os.path.join(file_path, "comp_trace_compress.json")
+# comm_json_file = os.path.join(file_path, "comm_trace_compress.json")
 
-with open(comp_json_file, "w") as file:
-    print(comp_json, file=file)
+# with open(comp_json_file, "w") as file:
+#     print(comp_json, file=file)
 
-with open(comm_json_file, "w") as file:
-    print(comm_json, file=file)
+# with open(comm_json_file, "w") as file:
+#     print(comm_json, file=file)

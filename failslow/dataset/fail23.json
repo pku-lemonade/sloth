@@ -1,13 +1,14 @@
 {
-    "router": [
+    "router": [],
+    "link": [
         {
-            "start_time": 1676617853,
-            "end_time": 1960833699,
-            "router_id": 1,
-            "times": 17
+            "start_time": 30086630,
+            "end_time": 445388300,
+            "router_id": 8,
+            "direction": 3,
+            "times": 48
         }
     ],
-    "link": [],
     "lsu": [],
     "tpu": []
 }
