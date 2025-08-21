@@ -1,0 +1,19 @@
+{
+    "router" : [],
+    "link" : [],
+    "lsu" : [],
+    "tpu" : [
+        {
+            "start_time" : 0,
+            "end_time" : 100000000,
+            "pe_id" : 6,
+            "times" : 10
+        },
+        {
+            "start_time" : 0,
+            "end_time" : 100000000,
+            "pe_id" : 11,
+            "times" : 10
+        }
+    ]
+}

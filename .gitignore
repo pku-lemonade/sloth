@@ -15,11 +15,7 @@ __pycache__/
 .AppleDouble
 .LSOverride
 
-tools/*.json
-tests/**/*.json
 gen/*.json
 build/*.json
 
 logging/*.log
-data/**/*.json
-data/**/*.txt
