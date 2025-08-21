@@ -7,72 +7,89 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.sim_type import Task, Probe
+from evaluater.sim_type import Task, Probe
 
 compute_code = ["Conv", "Pool", "FC", "Elem", "GConv", "PTP", "Trans"]
 communication_code = ["Send", "Recv"]
+io_code = ["Read", "Write"]
 
-# 输入原始 Task 序列，根据用户配置插入 收集代码片段
 def fail_probing(
-    pe_id: int,
-    # 原始 Task 序列
     tasks: list[Task],
-    mode: str = "both",
-    # 插入指令类型
-    target_inst_types: list[str] = None,
-    # 插入层 id
-    target_layer_ids: list[int] = None,
+    fragment: str,
+    type: str,
+    location: str,
+    level: str,
+    structure: str,
 ) -> list:
-    assert mode in ("before", "after", "both", "none"), f"Unsupported mode: {mode}"
+    assert fragment in ("Exec", "Route", "Mem"), f"Unsupported fragment: {fragment}"
+    assert type in ("Comm", "Comp", "IO"), f"Unsupported type: {type}"
+    assert location in ("Post", "Pre", "Surround"), f"Unsupported location: {location}"
+    assert level in ("Inst", "Stage"), f"Unsupported level: {level}"
+    assert structure in ("List", "Sketch"), f"Unsupported structure: {structure}"
 
-    if mode == "none":
-        return tasks
+    PreExec = { "start_time": -1, "flops": -1 }
+    PostExec = { "end_time": -1 }
+    PreRoute = { "start_time": -1, "data_size": -1, "src_id": -1 }
+    PostRoute = { "end_time": -1, "dst_id": -1 }
+    PreMem = { "start_time": -1, "data_size": -1 }
+    PostMem = { "end_time": -1 }
 
     for inst in tasks:
         inst_type = inst.opcode
         layer_id = inst.layer_id
         index = inst.index
 
-        # 判断是否应插入 probe
-        if (target_inst_types is not None and inst_type not in target_inst_types):
-            continue
-        if (target_layer_ids is not None and layer_id not in target_layer_ids):
-            continue
+        if location in ("Pre", "Surround"):
+            if inst_type in compute_code and type == "Comp":
+                match fragment:
+                    case "Exec":
+                        inst.probe_st = Probe(flag = 0, metric = PreExec)
+                    case "Route":
+                        inst.probe_st = Probe(flag = 0, metric = PreRoute)
+                    case "Mem":
+                        inst.probe_st = Probe(flag = 0, metric = PreMem)
+            elif inst_type in communication_code and type == "Comm":
+                match fragment:
+                    case "Exec":
+                        inst.probe_st = Probe(flag = 0, metric = PreExec)
+                    case "Route":
+                        inst.probe_st = Probe(flag = 0, metric = PreRoute)
+                    case "Mem":
+                        inst.probe_st = Probe(flag = 0, metric = PreMem)
+            elif inst_type in io_code and type == "IO":
+                match fragment:
+                    case "Exec":
+                        inst.probe_st = Probe(flag = 0, metric = PreExec)
+                    case "Route":
+                        inst.probe_st = Probe(flag = 0, metric = PreRoute)
+                    case "Mem":
+                        inst.probe_st = Probe(flag = 0, metric = PreMem)
 
-        # 插入前置 probe
-        if mode in ("before", "both"):
-            probe_metric = {}
-            if inst_type in compute_code:
-                probe_metric = {
-                    "start_time": -1,
-                    "flops": -1
-                }
-            elif inst_type in communication_code:
-                probe_metric = {
-                    "start_time": -1,
-                    "data_size": -1,
-                    "src_id": -1
-                }
-            inst.probe_st = Probe(
-                flag = 0,
-                metric = probe_metric
-            )
 
-        # 插入后置 probe
-        if mode in ("after", "both"):
-            probe_metric = {}
-            if inst_type in compute_code:
-                probe_metric = {
-                    "end_time": -1,
-                }
-            elif inst_type in communication_code:
-                probe_metric = {
-                    "end_time": -1,
-                    "dst_id": -1
-                }
-            inst.probe_ed = Probe(
-                flag = 1,
-                metric = probe_metric
-            )
+        if location in ("Post", "Surround"):
+            if inst_type in compute_code and type == "Comp":
+                match fragment:
+                    case "Exec":
+                        inst.probe_ed = Probe(flag = 1, metric = PostExec)
+                    case "Route":
+                        inst.probe_ed = Probe(flag = 1, metric = PostRoute)
+                    case "Mem":
+                        inst.probe_ed = Probe(flag = 1, metric = PostMem)
+            elif inst_type in communication_code and type == "Comm":
+                match fragment:
+                    case "Exec":
+                        inst.probe_ed = Probe(flag = 1, metric = PostExec)
+                    case "Route":
+                        inst.probe_ed = Probe(flag = 1, metric = PostRoute)
+                    case "Mem":
+                        inst.probe_ed = Probe(flag = 1, metric = PostMem)
+            elif inst_type in io_code and type == "IO":
+                match fragment:
+                    case "Exec":
+                        inst.probe_ed = Probe(flag = 1, metric = PostExec)
+                    case "Route":
+                        inst.probe_ed = Probe(flag = 1, metric = PostRoute)
+                    case "Mem":
+                        inst.probe_ed = Probe(flag = 1, metric = PostMem)
 
     return tasks
