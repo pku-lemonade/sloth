@@ -171,6 +171,9 @@ class Probe(BaseModel):
                 case "dst_id":
                     core.probe_data[inst_index].metric[key] = dst
 
+        if getattr(core, "trace_recorder", None) is not None:
+            core.trace_recorder.observe_probe_metrics(inst_index, core.probe_data[inst_index].metric)
+
 
 class Task(BaseModel):
     layer_id: int = -1
@@ -230,7 +233,6 @@ class ComputeTask(Task):
 
     def output_size(self):
         return self.size()
-    
     def calc_flops(self):
         raise NotImplementedError(f"{self.opcode} 类未实现 calc_flops 方法")
     
@@ -451,4 +453,3 @@ class Recv(CommunicationTask):
 
     def output_size(self):
         return self.size()
-    

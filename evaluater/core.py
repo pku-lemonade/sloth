@@ -3,8 +3,9 @@ import heapq
 import simpy
 import logging
 from queue import Queue
-from common.common import MonitoredResource, cfg
+from common.common import MonitoredResource
 from common.arch_config import CoreConfig, ScratchpadConfig
+from common.runtime_config import MonitoringConfig
 from evaluater.noc import Link, Router
 from evaluater.sim_type import *
 from typing import List
@@ -126,7 +127,7 @@ class TableScheduler:
                     self.tasks.append(Trans(index=inst.index, feat_num=inst.feat_num, para_num=inst.para_num, tensor_slice=inst.tensor_slice, inference_end=inst.inference_end, inst=inst, layer_id=inst.layer_id))
 
         self.tasks = fail_probing(tasks=self.tasks, fragment=probe[0], type=probe[1], location=probe[2], level=probe[3], structure=probe[4])
-        self.tasks = fail_probing(tasks=self.tasks, fragment="Route", type="Comm", location="Surround", level="Inst", structure="List")
+        self.tasks = fail_probing(tasks=self.tasks, fragment="Route", type="Comm", location="Surround", level="Stage", structure="Sketch")
 
         self.task_block_update()
 
@@ -493,7 +494,22 @@ def print_event_queue(env):
 
 
 class Core:
-    def __init__(self, env, config: CoreConfig, program: List[Instruction], id: int, arch, link1, link2, model, inference_time, probe, stage=None):
+    def __init__(
+        self,
+        env,
+        config: CoreConfig,
+        program: List[Instruction],
+        id: int,
+        arch,
+        link1,
+        link2,
+        model,
+        inference_time,
+        probe,
+        trace_recorder,
+        monitoring_config: MonitoringConfig,
+        stage=None,
+    ):
         self.env = env
         self.type = config.type
         self.program = program
@@ -506,6 +522,8 @@ class Core:
         self.inference_time = inference_time
         self.cur_inference_time = 0
         self.config = config
+        self.trace_recorder = trace_recorder
+        self.monitoring_config = monitoring_config
 
         self.mu = self.config.tpu.flops
         self.sigma = self.mu * 0.1 / 1.645
@@ -523,8 +541,8 @@ class Core:
 
         self.lsu_bandwidth = config.lsu.width
         self.tpu_flops = config.tpu.flops
-        self.lsu = MonitoredResource(env=env, capacity=4)
-        self.tpu = MonitoredResource(env=env, capacity=1)
+        self.lsu = MonitoredResource(env=env, capacity=4, monitoring_config=self.monitoring_config)
+        self.tpu = MonitoredResource(env=env, capacity=1, monitoring_config=self.monitoring_config)
 
         self.probe_data = {}
         
@@ -627,8 +645,8 @@ class Core:
                     task_id = self.scheduler.index2taskid[msg.ins.index]
                     self.scheduler.tasks[task_id].probe_st.run(self, msg.data.index, msg.ins.layer_id, "Recv", data_size=Slice(tensor_slice=msg.data.tensor_slice).size())
 
-                    if cfg.flow and self.env.now >= cfg.simstart and self.env.now <= cfg.simend:
-                        self.flow_in.append((msg.ins.index, self.scheduler.new_program[inst_id].inst_type, "recv", self.env.now))
+                    if self.monitoring_config.enable_flow_trace and self.monitoring_config.should_record(self.env.now):
+                        self.flow_in.append((msg.ins.index, self.scheduler.new_program[task_id].inst_type, "recv", self.env.now))
 
                     logger.debug("Time %.2f: PE%d receive data%d", self.env.now, self.id, msg.ins.index)
                     logger.debug("function call: receive_data()")
@@ -671,4 +689,4 @@ class Core:
                 self.end_time.append(self.env.now)
                 self.cur_inference_time += 1
                 
-                print(f"Time {self.env.now:.2f}: PE{self.id} finished processing all of its instructions.")
+                logger.info("Time %.2f: PE%d finished processing all of its instructions.", self.env.now, self.id)

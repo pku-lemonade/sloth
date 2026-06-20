@@ -71,7 +71,8 @@ class EM_Model:
 
         grad_start /= len(samples)
         grad_node /= len(samples)
-        grad_bw_inv /= size_count
+        safe_size_count = np.where(size_count == 0, 1, size_count)
+        grad_bw_inv /= safe_size_count
         return loss, grad_start, grad_node, grad_bw_inv
         
     def fit(self, samples):

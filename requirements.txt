@@ -1,3 +1,5 @@
 pydantic
 simpy
 numpy
+scipy
+scikit-learn

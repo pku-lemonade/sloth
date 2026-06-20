@@ -1,0 +1,16 @@
+{
+    "arch": "mesh",
+    "pattern": "center",
+    "resolution": "4x4",
+    "total_samples": 100,
+    "config": {
+        "pattern": "center",
+        "sigma": 1.0
+    },
+    "ratios": {
+        "router": 0.0,
+        "link": 0.3,
+        "lsu": 0.0,
+        "tpu": 0.7
+    }
+}

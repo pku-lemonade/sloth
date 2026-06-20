@@ -2,12 +2,14 @@ import simpy
 import os
 import sys
 import logging
+from dataclasses import dataclass
 from functools import partial, wraps
 from evaluater.core import Core
 from evaluater.noc import NoC, Link, Direction
 from common.arch_config import CoreConfig, NoCConfig, ArchConfig, LinkConfig, MemConfig
+from common.runtime_config import MonitoringConfig, RecorderConfig
 from evaluater.sim_type import *
-from common.common import cfg
+from recorder.online_recorder import OnlineRecorderConfig, OnlineTraceRecorder
 from recorder.trace_format import *
 from typing import List
 logger = logging.getLogger("Arch")
@@ -16,13 +18,55 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+
+@dataclass(frozen=True)
+class PESummary:
+    pe_id: int
+    processed_tasks: int
+    total_tasks: int
+    max_buffer_usage: int
+    remaining_capacity: int
+    buffer_capacity: int
+
+
+@dataclass(frozen=True)
+class SimulationRunSummary:
+    workload_name: str
+    pe_count: int
+    total_cycles: float
+    trace_output_dir: str
+    monitor_output_dir: str
+    per_pe_stats: List[PESummary]
+
 class Arch:
-    def __init__(self, arch: ArchConfig, program: List[List[Instruction]], fail: FailSlow, net_name: str, fail_kind: str, model: str, inference_time: int, probe, stage=None):
-        print("Constructing hardware architecture.")
+    def __init__(
+        self,
+        arch: ArchConfig,
+        program: List[List[Instruction]],
+        fail: FailSlow,
+        net_name: str,
+        fail_kind: str,
+        model: str,
+        inference_time: int,
+        probe,
+        recorder_config: RecorderConfig,
+        monitoring_config: MonitoringConfig,
+        stage=None,
+    ):
         self.env = simpy.Environment()
         self.stage = stage
         self.arch = arch
         self.inference_time = inference_time
+        self.monitoring_config = monitoring_config
+        self.recorder_config = recorder_config
+        self.trace_recorder = OnlineTraceRecorder(
+            OnlineRecorderConfig(
+                num_hashes=recorder_config.hash,
+                num_buckets=recorder_config.bucket,
+                stage2_size=recorder_config.size,
+                threshold=recorder_config.threshold,
+            )
+        )
         
         self.probe = probe
         self.noc = self.build_noc(arch.noc, model)
@@ -38,7 +82,6 @@ class Arch:
         self.fail_kind = fail_kind
 
         self.fail_slow = fail
-        print("Construction finished.")
 
     def link_fail(self, fail: LinkFail):
         yield self.env.timeout(fail.start_time)
@@ -105,9 +148,23 @@ class Arch:
     def build_cores(self, config: CoreConfig, program: List[List[Instruction]], model: str, inference_time: int) -> List[Core]:
         cores = []
         for id in range(config.x * config.y):
-            link1 = Link(self.env, LinkConfig(width=128, delay=1))
-            link2 = Link(self.env, LinkConfig(width=128, delay=1))
-            core = Core(self.env, config, program[id], id, self, link1, link2, model, inference_time, self.probe, self.stage)
+            link1 = Link(self.env, LinkConfig(width=128, delay=1), self.monitoring_config)
+            link2 = Link(self.env, LinkConfig(width=128, delay=1), self.monitoring_config)
+            core = Core(
+                self.env,
+                config,
+                program[id],
+                id,
+                self,
+                link1,
+                link2,
+                model,
+                inference_time,
+                self.probe,
+                self.trace_recorder,
+                self.monitoring_config,
+                self.stage,
+            )
 
             self.noc.routers[id].bound_with_core(link1, link2)
             cores.append(core)
@@ -119,9 +176,16 @@ class Arch:
         return cores
 
     def build_noc(self, config: NoCConfig, model: str) -> NoC:
-        print("Building NoC architecture.")
-        return NoC(self.env, config, model).build_connection()
-
+        if config.type == "Mesh":
+            return NoC(self.env, config, model, self.monitoring_config).build_connection()
+        elif config.type == "Torus":
+            return NoC(self.env, config, model, self.monitoring_config).build_connection_torus()
+        elif config.type == "RingRoad":
+            return NoC(self.env, config, model, self.monitoring_config).build_connection_ring_road()
+        elif config.type == "Dragonfly":
+            return NoC(self.env, config, model, self.monitoring_config).build_connection_dragonfly()
+        else:
+            print("Unsupported NoC topology.")
 
     def make_print_lsu():
         count = 0
@@ -195,7 +259,7 @@ class Arch:
             self.processesmonitorlink(self.noc.r2r_links[i].linkentry.data,"gen/link"+str(i)+".json",i,"link")
 
         
-        if cfg.flow:
+        if self.monitoring_config.enable_flow_trace:
             for i in range(len(self.cores)):
                 self.processesflow(self.cores[i].flow_in,"gen/flow_in"+str(i)+".json",i,"flow_in")
             for i in range(len(self.cores)):
@@ -372,8 +436,6 @@ class Arch:
         print("Finished.")
 
     def probe_output(self, workload: str, fail: str):
-        print("Writing performance data...")
-
         fail = fail.split("/")
         fail = fail[-1].split(".")[0]
 
@@ -447,21 +509,49 @@ class Arch:
             comp_json = comm_trace.model_dump_json(indent=4)
             print(comp_json, file=file)
 
+        return file_path
+
+    def compressed_probe_output(self, workload: str, fail: str):
+        fail = fail.split("/")
+        fail = fail[-1].split(".")[0]
+
+        file_path = os.path.join("trace", workload)
+        os.makedirs(file_path, exist_ok=True)
+
+        file_path = os.path.join(file_path, fail)
+        os.makedirs(file_path, exist_ok=True)
+
+        self.trace_recorder.write_outputs(file_path)
+        return file_path
+
     def run(self):
-        print("Start simulation.")
-        
         self.run_fail_slow()
 
         self.env.run()
 
+        pe_summaries = []
         for id in range(len(self.cores)):
             self.end_time = max(self.end_time, self.cores[id].end_time[0])
-            print(f"PE{id} processed [{self.cores[id].scheduler.task_counter}/{len(self.cores[id].scheduler.tasks)}] instructions.")
-            print(f"Max buffer usage is {self.cores[id].spm_manager.max_buf}. [{self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level}/{self.cores[id].spm_manager.container.capacity}]")
+            pe_summaries.append(
+                PESummary(
+                    pe_id=id,
+                    processed_tasks=self.cores[id].scheduler.task_counter,
+                    total_tasks=len(self.cores[id].scheduler.tasks),
+                    max_buffer_usage=self.cores[id].spm_manager.max_buf,
+                    remaining_capacity=self.cores[id].spm_manager.container.capacity-self.cores[id].spm_manager.container.level,
+                    buffer_capacity=self.cores[id].spm_manager.container.capacity,
+                )
+            )
 
-        print("Simulation finished.")
         self.make_print()
 
-        self.probe_output(self.net_name, self.fail_kind)
+        trace_output_dir = self.compressed_probe_output(self.net_name, self.fail_kind)
         
-        return self.env
+        return SimulationRunSummary(
+            workload_name=self.net_name,
+            pe_count=len(self.cores),
+            total_cycles=self.end_time,
+            trace_output_dir=trace_output_dir,
+            monitor_output_dir="gen",
+            per_pe_stats=pe_summaries,
+        )

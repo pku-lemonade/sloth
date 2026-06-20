@@ -1,10 +1,9 @@
 #!/bin/bash
-
-python tracer/root_cause_analysis.py \
+python3 tracer/root_cause_analysis.py \
     --mapping data/mapping_example.json \
     --arch data/arch_example.json \
-    --report trace/result/report.json \
     --normal trace/example/normal_example \
-    --detect trace/example/rca_example \
-    --output trace/result/overall.json \
-    --record trace/result/record.json
+    --detect trace/example/fail_example \
+    --report trace/result/fail_example/report.json \
+    --output trace/result/fail_example/overall.json \
+    --record trace/result/fail_example/record.json

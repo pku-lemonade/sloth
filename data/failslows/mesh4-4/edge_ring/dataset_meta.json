@@ -1,0 +1,16 @@
+{
+    "arch": "mesh",
+    "pattern": "edge_ring",
+    "resolution": "4x4",
+    "total_samples": 100,
+    "config": {
+        "pattern": "edge_ring",
+        "sigma": 1.3333333333333333
+    },
+    "ratios": {
+        "router": 0.0,
+        "link": 0.3,
+        "lsu": 0.0,
+        "tpu": 0.7
+    }
+}

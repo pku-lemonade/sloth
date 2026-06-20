@@ -1,21 +1,62 @@
-# python
-*.pyc
+# Python
+*.py[cod]
 __pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# vscode files
+# Virtual environments and local env files
+/.venv/
+venv/
+env/
+.env
+.env.*
+
+# Editor files
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+.idea/
+*.swp
+*.swo
 
-# macOS files
+# OS files
 .DS_Store
 .AppleDouble
 .LSOverride
 
-gen/*.json
-build/*.json
+# Local agent/spec state
+/.agents/
+/.codex/
+/openspec/
 
-logging/*.log
+# Build and simulator artifacts
+build/
+gen/
+logging/
+trace/
+result/
+results/
+
+# Experiment datasets and generated figures kept outside source control
+data/dataset/
+data/failslows/
+data/failslow-*/
+data/trace/
+data/experiment/
+data/results/
+data/sweep/
+data/wjc/
+data/**/*.png
+data/**/*.pdf
+data/**/*_profile.json
+scripts/*.py
+
+# External baseline outputs
+baseline-results/
+perseus-results/

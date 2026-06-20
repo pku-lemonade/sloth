@@ -1,0 +1,24 @@
+{
+    "arch": "mesh",
+    "pattern": "scratch",
+    "resolution": "4x4",
+    "total_samples": 100,
+    "config": {
+        "pattern": "scratch",
+        "sigma": 0.8,
+        "p1": [
+            0.7234664798834748,
+            0.0546990451424636
+        ],
+        "p2": [
+            2.474826970974779,
+            2.6334210197835684
+        ]
+    },
+    "ratios": {
+        "router": 0.0,
+        "link": 0.3,
+        "lsu": 0.0,
+        "tpu": 0.7
+    }
+}
